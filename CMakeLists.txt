@@ -24,7 +24,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/libKanoopGit.pc.in" "libKanoopGit.pc
 
 target_include_directories(${PROJ} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Kanoop)
+target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Kanoop/git)
 
 # For submoudles projects, KanoopCommon is expected to reside at the same level as KanoopGit
 get_directory_property(PARENT_DIR PARENT_DIRECTORY)

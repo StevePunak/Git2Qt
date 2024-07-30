@@ -1,9 +1,10 @@
 #include "kgit.h"
 
-#include "gitcredentialresolver.cpp"
+#include "credentialresolver.cpp"
 
 #include <Kanoop/commonexception.h>
 #include <Kanoop/klog.h>
+#include <Kanoop/pathutil.h>
 
 bool KGit::_git2Initialized = false;
 
@@ -15,19 +16,27 @@ KGit::KGit() :
     }
 }
 
+void KGit::ensureInitialized()
+{
+    if(!_git2Initialized) {
+        initializeLibGit2();
+    }
+}
+
 bool KGit::clone(const QString& remoteUrl, const QString& localPath)
 {
     bool result = false;
-    git_repository *repo = NULL;
+    git_repository *repo = nullptr;
 
     try
     {
         git_clone_options clone_opts = GIT_CLONE_OPTIONS_INIT;
         clone_opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+        clone_opts.bare = 0;
 
         clone_opts.fetch_opts.callbacks.payload = this;
-        clone_opts.fetch_opts.callbacks.credentials = credentialsCallback;
-        clone_opts.fetch_opts.callbacks.transfer_progress = progressCallback;
+        // clone_opts.fetch_opts.callbacks.credentials = credentialsCallback;
+        // clone_opts.fetch_opts.callbacks.transfer_progress = progressCallback;
 
         /* try to clone */
         throwOnError(git_clone(&repo, remoteUrl.toUtf8().constData(), localPath.toUtf8().constData(), &clone_opts));
@@ -47,20 +56,37 @@ bool KGit::clone(const QString& remoteUrl, const QString& localPath)
 
 bool KGit::checkoutBranch(const QString& localPath, const QString& branchName)
 {
+    walkBranches(localPath);
     walkRefs(localPath);
     bool result = false;
     git_repository *repo = nullptr;
+    git_reference* head = nullptr;
+    git_reference* newBranch = nullptr;
     git_object *treeish = nullptr;
+    git_annotated_commit* headAnnotatedCommit = nullptr;
 
     try
     {
         git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
         opts.checkout_strategy = GIT_CHECKOUT_SAFE;
 
+        // load repo
         throwOnError(git_repository_init(&repo, localPath.toUtf8().constData(), false));
+
+        // get head
+        throwOnError(git_repository_head(&head, repo));
+
+        // create new branch from head
+        throwOnError(git_annotated_commit_from_ref(&headAnnotatedCommit, repo, head));
+        throwOnError(git_branch_create_from_annotated(&newBranch, repo, branchName.toUtf8().constData(), headAnnotatedCommit, false));
+
+        // check the new branch out
         throwOnError(git_revparse_single(&treeish, repo, branchName.toUtf8().constData()));
         throwOnError(git_checkout_tree(repo, treeish, &opts));
-        throwOnError(git_repository_set_head(repo, "refs/remotes/origin/develop" /*branchName.toUtf8().constData()*/));
+
+        // track remote branch
+        QString refName = makeReferenceName(branchName);
+        throwOnError(git_repository_set_head(repo, refName.toUtf8().constData()));
 
         result = true;
     }
@@ -70,13 +96,12 @@ bool KGit::checkoutBranch(const QString& localPath, const QString& branchName)
         result = false;
     }
 
-    if(repo != nullptr) {
-        git_repository_free(repo);
-    }
+    if(repo != nullptr)                 git_repository_free(repo);
+    if(treeish != nullptr)              git_object_free(treeish);
+    if(head != nullptr)                 git_reference_free(head);
+    if(newBranch != nullptr)            git_reference_free(newBranch);
+    if(headAnnotatedCommit != nullptr)  git_annotated_commit_free(headAnnotatedCommit);
 
-    if(treeish != nullptr) {
-        git_object_free(treeish);
-    }
     return result;
 }
 
@@ -125,6 +150,7 @@ bool KGit::walkBranches(const QString& localPath)
         while(!git_branch_next(&ref, &type, it)) {
             const char* name;
             git_branch_name(&name, ref);
+            KLog::sysLogText(KLOG_DEBUG, QString("Branch: %1").arg(name));
             git_reference_free(ref);
         }
 
@@ -182,7 +208,9 @@ bool KGit::walkRefs(const QString& localPath)
 
 void KGit::initializeLibGit2()
 {
-    git_libgit2_init();
+    if(_git2Initialized == false) {
+        git_libgit2_init();
+    }
     _git2Initialized = true;
 }
 
@@ -198,6 +226,12 @@ void KGit::throwOnError(int result) const
     }
 }
 
+QString KGit::makeReferenceName(const QString& branchName)
+{
+    return PathUtil::combine("refs", "heads", branchName);
+}
+
+#if 0
 int KGit::credentialsCallback(git_cred** cred, const char* url, const char* username, unsigned int allowed_types, void* payload)
 {
     KLog::sysLogText(KLOG_DEBUG, QString("%1  url: %2  username: %3  allowed_types: %4").arg(__FUNCTION__).arg(url).arg(username).arg(allowed_types, 0, 16));
@@ -221,10 +255,10 @@ int KGit::credentialsCallback(git_cred** cred, const char* url, const char* user
                 throw CommonException("Remote is asking for username/password and no resolver is set");
             }
             GitCredentialResolver* resolver = kgit->_credentialResolver;
-            if(resolver->getUsernameAndPassword() == false) {
+            if(resolver->getUsername() == false) {
                 throw CommonException("Failed to obtain username and password from resolver");
             }
-            git_cred_userpass_plaintext_new(cred, resolver->username().toUtf8().constData(), resolver->password().toUtf8().constData());
+            git_cred_userpass_plaintext_new(cred, resolver->getUsername().toUtf8().constData(), resolver->getPassword().toUtf8().constData());
         }
         else {
             throw CommonException("Allowed type not implemented");
@@ -248,3 +282,4 @@ int KGit::progressCallback(const git_transfer_progress* stats, void* payload)
     git->emitProgress(stats->received_bytes, stats->received_objects, stats->total_objects);
     return 0;
 }
+#endif
