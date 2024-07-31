@@ -1,6 +1,7 @@
 #ifndef REMOTE_H
 #define REMOTE_H
 #include <Kanoop/git/gitentity.h>
+#include <Kanoop/git/handle.h>
 #include <QList>
 
 namespace GIT {
@@ -10,7 +11,6 @@ class ReferenceCollection;
 class Remote : public GitEntity
 {
 public:
-    Remote(Repository* repo, git_remote* handle);
     Remote(Repository* repo, const QString& name);
     virtual ~Remote();
 
@@ -22,9 +22,9 @@ public:
 
     QString fetchSpecTransformToSource(const QString& value);
 
-    git_remote* handle() const { return _handle; }
+    RemoteHandle handle() const { return createHandle(); }
 
-    virtual bool isNull() const override { return _handle == nullptr; }
+    virtual bool isNull() const override { return createHandle().isNull(); }
 
     class List : public QList<Remote*>
     {
@@ -42,11 +42,11 @@ public:
 
 private:
     void commonInit();
+    RemoteHandle createHandle() const;
 
     QString _name;
     QString _url;
 
-    git_remote* _handle = nullptr;
     ReferenceCollection* _references = nullptr;
 };
 

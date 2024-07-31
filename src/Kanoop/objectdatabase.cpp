@@ -12,7 +12,12 @@ ObjectDatabase::ObjectDatabase(Repository* repo) :
 {
 }
 
-Commit ObjectDatabase::createCommit(const Signature& author, const Signature& committer, const QString& message, Tree* tree, const Commit::List& parents, bool prettifyMessage, const QChar& commentChar)
+Commit ObjectDatabase::createCommit(const Signature& author, const Signature& committer,
+                                    const QString& message,
+                                    const Tree& tree,
+                                    const Commit::List& parents,
+                                    bool prettifyMessage,
+                                    const QChar& commentChar)
 {
     Commit result(repository());
     try
@@ -25,11 +30,10 @@ Commit ObjectDatabase::createCommit(const Signature& author, const Signature& co
             }
         }
 
-        ObjectId::List parentIds = parents.objectIds();
         const git_commit* parentCommits[parents.count()] = { 0 };
         for(int i = 0;i < parents.count();i++) {
             git_commit* commit = nullptr;
-            if(git_commit_lookup(&commit, repository()->handle(), parents.at(i).objectId().toNative()) == 0) {
+            if(git_commit_lookup(&commit, repository()->handle().value(), parents.at(i).objectId().toNative()) == 0) {
                 parentCommits[i] = commit;
             }
         }
@@ -37,7 +41,19 @@ Commit ObjectDatabase::createCommit(const Signature& author, const Signature& co
         Signature authorSig = author;
         Signature committerSig = committer;
         git_oid commitOid;
-        throwOnError(git_commit_create(&commitOid, repository()->handle(), nullptr, authorSig.toNative(), committerSig.toNative(), "utf8", msg.toUtf8().constData(), tree->treeHandle(), parents.count(), parentCommits));
+        TreeHandle treeHandle = tree.createTreeHandle();
+        git_repository* repoHandle = repository()->handle().value();
+        git_tree* tree = treeHandle.value();
+
+        throwOnError(git_commit_create(&commitOid,
+                                       repoHandle,
+                                       nullptr, authorSig.toNative(),
+                                       committerSig.toNative(), "utf8",
+                                       msg.toUtf8().constData(),
+                                       tree,
+                                       parents.count(),
+                                       parentCommits));
+        treeHandle.dispose();
 
         result = repository()->lookupCommit(commitOid);
     }

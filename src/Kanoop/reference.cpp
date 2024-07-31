@@ -20,9 +20,6 @@ Reference::Reference(Repository* repo, const QString& canonicalName, const QStri
 
 Reference::~Reference()
 {
-    if(_reference != nullptr) {
-        git_reference_free(_reference);
-    }
 }
 
 Reference* Reference::create(Repository* repo, git_reference* handle)
@@ -68,7 +65,7 @@ Reference* Reference::create(Repository* repo, const QString& name, const Object
 {
     Reference* result = nullptr;
     git_reference* ref = nullptr;
-    if(git_reference_create(&ref, repo->handle(), name.toUtf8().constData(), targetId.toNative(), allowOverwrite, logMessage.toUtf8().constData()) == 0) {
+    if(git_reference_create(&ref, repo->handle().value(), name.toUtf8().constData(), targetId.toNative(), allowOverwrite, logMessage.toUtf8().constData()) == 0) {
         result = create(repo, ref);
     }
     return result;
@@ -78,7 +75,7 @@ Reference* Reference::lookup(Repository* repo, const QString& name)
 {
     Reference* result = nullptr;
     git_reference* ref = nullptr;
-    if(git_reference_lookup(&ref, repo->handle(), name.toUtf8()) == 0) {
+    if(git_reference_lookup(&ref, repo->handle().value(), name.toUtf8()) == 0) {
         result = create(repo, ref);
     }
     return result;
@@ -99,11 +96,11 @@ ObjectId Reference::objectId() const
     return objectIdFromHandle(_reference);
 }
 
-Reference::ReferenceType Reference::typeFromHandle(git_reference* handle)
+Reference::ReferenceType Reference::typeFromHandle(const ReferenceHandle& handle)
 {
     ReferenceType result = UnknownReferenceType;
 
-    git_reference_t type = git_reference_type(handle);
+    git_reference_t type = git_reference_type(handle.value());
     if(type == GIT_REFERENCE_DIRECT) {
         result = DirectReferenceType;
     }
@@ -113,22 +110,22 @@ Reference::ReferenceType Reference::typeFromHandle(git_reference* handle)
     return result;
 }
 
-QString Reference::nameFromHandle(git_reference* handle)
+QString Reference::nameFromHandle(const ReferenceHandle& handle)
 {
-    const char* name = git_reference_name(handle);
+    const char* name = git_reference_name(handle.value());
     return name;
 }
 
-QString Reference::symbolicTargetNameFromHandle(git_reference* handle)
+QString Reference::symbolicTargetNameFromHandle(const ReferenceHandle& handle)
 {
-    const char* name = git_reference_symbolic_target(handle);
+    const char* name = git_reference_symbolic_target(handle.value());
     return name;
 }
 
-ObjectId Reference::objectIdFromHandle(git_reference* handle)
+ObjectId Reference::objectIdFromHandle(const ReferenceHandle& handle)
 {
     ObjectId result;
-    const git_oid* oid = git_reference_target(handle);
+    const git_oid* oid = git_reference_target(handle.value());
     if(oid != nullptr) {
         GitOid gitOid(oid->id, GIT_OID_MAX_SIZE);
         result = ObjectId(gitOid);

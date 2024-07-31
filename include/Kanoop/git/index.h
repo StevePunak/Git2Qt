@@ -2,6 +2,7 @@
 #define INDEX_H
 #include <Kanoop/git/gitentity.h>
 #include <Kanoop/git/indexentry.h>
+#include <Kanoop/git/handle.h>
 
 namespace GIT {
 
@@ -17,12 +18,12 @@ public:
     ObjectId writeTree();
 
     IndexEntry::List entries() const { return _entries; }
-    git_index *handle() const { return _handle; }
+    IndexHandle handle() const { return createHandle(); }
 
-    virtual bool isNull() const override { return _handle == nullptr; }
+    virtual bool isNull() const override { return createHandle().isNull(); }
 
 private:
-    git_index *_handle;
+    IndexHandle createHandle() const;
     IndexEntry::List _entries;
 };
 

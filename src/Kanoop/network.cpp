@@ -11,7 +11,7 @@ Network::Network(Repository* repo) :
 {
     _remotes = new RemoteCollection(repo);
     git_strarray list;
-    if(git_remote_list(&list, repo->handle()) == 0) {
+    if(git_remote_list(&list, repo->handle().value()) == 0) {
         for(int i = 0;i < list.count;i++) {
             Remote* remote = new Remote(repo, list.strings[i]);
             _remotes->append(remote);

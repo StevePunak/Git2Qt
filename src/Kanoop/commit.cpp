@@ -14,7 +14,7 @@ Commit Commit::lookup(Repository* repo, const ObjectId& objectId)
 {
     Commit result(repo);
     git_commit *commit;
-    if(git_commit_lookup(&commit, repo->handle(), objectId.toNative()) == 0) {
+    if(git_commit_lookup(&commit, repo->handle().value(), objectId.toNative()) == 0) {
         result = createFromNative(repo, commit);
         git_commit_free(commit);
     }
@@ -25,7 +25,7 @@ ObjectId Commit::treeId() const
 {
     ObjectId result;
     git_commit *thisCommit = nullptr;
-    if(git_commit_lookup(&thisCommit, _repo->handle(), _objectId.toNative()) == 0) {
+    if(git_commit_lookup(&thisCommit, _repo->handle().value(), _objectId.toNative()) == 0) {
         const git_oid* oid = git_commit_tree_id(thisCommit);
         result = ObjectId(oid);
     }
@@ -38,7 +38,7 @@ Commit::List Commit::parents() const
 
     if(result.count() == 0) {
         git_commit *thisCommit;
-        if(git_commit_lookup(&thisCommit, _repo->handle(), _objectId.toNative()) == 0) {
+        if(git_commit_lookup(&thisCommit, _repo->handle().value(), _objectId.toNative()) == 0) {
             int count = git_commit_parentcount(thisCommit);
             for (int i = 0;i < count;i++) {
                 git_commit *parent;

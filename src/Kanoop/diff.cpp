@@ -17,7 +17,9 @@ TreeChanges Diff::compare(DiffModifiers diffOptions, const QStringList& paths, c
     try
     {
         git_diff_options options = GIT_DIFF_OPTIONS_INIT;
-        throwOnError(git_diff_index_to_workdir(&diff, repository()->handle(), repository()->index()->handle(), &options));
+        IndexHandle indexHandle = repository()->index()->handle();
+        throwIfTrue(indexHandle.isNull());
+        throwOnError(git_diff_index_to_workdir(&diff, repository()->handle().value(), indexHandle.value(), &options));
         git_diff_free(diff);
         diff = nullptr;
 
@@ -63,7 +65,7 @@ TreeChanges Diff::compare(DiffModifiers diffOptions, const QStringList& paths, c
         options.pathspec.strings = pathPtrs;
         options.pathspec.count = paths.count();
 
-        throwOnError(git_diff_index_to_workdir(&diff, repository()->handle(), repository()->index()->handle(), &options));
+        throwOnError(git_diff_index_to_workdir(&diff, repository()->handle().value(), indexHandle.value(), &options));
         int count = git_diff_num_deltas(diff);
         for(int i = 0;i < count;i++) {
             const git_diff_delta* delta = git_diff_get_delta(diff, i);

@@ -2,6 +2,7 @@
 #define CONFIGURATION_H
 #include <Kanoop/git/gittypes.h>
 #include <Kanoop/git/gitentity.h>
+#include <Kanoop/git/handle.h>
 #include <QDateTime>
 
 namespace GIT {
@@ -22,15 +23,16 @@ public:
     Signature buildSignature(const QDateTime& timestamp = QDateTime::currentDateTimeUtc());
     ConfigurationEntry get(const QString& keyP1, const QString& keyP2 = QString(), const QString& keyP3 = QString());
 
-    virtual bool isNull() const { return _handle == nullptr; }
+    virtual bool isNull() const { return createHandle().isNull(); }
+
 private:
+    ConfigurationHandle createHandle() const;
+
     QString _repoConfigPath;
     QString _globalConfigPath;
     QString _xdgConfigPath;
     QString _systemConfigPath;
     QString _programDataConfigPath;
-
-    git_config* _handle;
 };
 
 } // namespace GIT
