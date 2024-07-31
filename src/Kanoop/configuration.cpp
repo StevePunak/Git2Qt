@@ -79,12 +79,20 @@ Signature Configuration::buildSignature(const QDateTime& timestamp)
     return result;
 }
 
-ConfigurationEntry Configuration::get(const QString& key)
+ConfigurationEntry Configuration::get(const QString& keyP1, const QString& keyP2, const QString& keyP3)
 {
     ConfigurationEntry result;
 
     git_config* snapshot = nullptr;
     git_config_entry* entry = nullptr;
+    QString key = keyP1;
+    if(keyP2.isEmpty() == false) {
+        key += QString(".%1").arg(keyP2);
+    }
+    if(keyP3.isEmpty() == false) {
+        key += QString(".%1").arg(keyP3);
+    }
+
     try
     {
         throwOnError(git_config_snapshot(&snapshot, _handle));

@@ -26,6 +26,11 @@ public:
     virtual ~Branch();
 
     QString name() const;
+    QString canonicalName() const;
+    QString friendlyName() const;
+    QString upstreamBranchCanonicalName();
+    QString upstreamBranchCanonicalNameFromLocalBranch();
+    QString remoteName();
     BranchType branchType() const { return _branchType; }
 
     Reference* reference() const { return _reference; }
@@ -33,6 +38,7 @@ public:
     Commit tip();
 
     bool isHead() const;
+    bool isRemote() const;
     virtual bool isNull() const override { return _reference == nullptr; }
 
     class Map : public QMap<QString, Branch*>
@@ -67,6 +73,9 @@ public:
     };
 
 private:
+    QString remoteNameFromRemoteTrackingBranch();
+    QString remoteNameFromLocalBranch();
+
     Reference* _reference = nullptr;
     BranchType _branchType = LocalBranch;
 };

@@ -25,39 +25,5 @@ void RepositoryStatus::addStatusEntryForDelta(FileStatus fileStatus, git_diff_de
                            : deltaHeadToIndex->new_file.path;
 
     StatusEntry statusEntry(filePath, fileStatus, headToIndexRenameDetails, indexToWorkDirRenameDetails);
-
-    if (fileStatus == FileStatus::Unaltered) {
-        _unaltered.append(statusEntry);
-    }
-    else {
-        if(fileStatus & FileStatus::NewInWorkdir) {
-            _untracked.append(statusEntry);
-        }
-        if(fileStatus & FileStatus::ModifiedInWorkdir) {
-            _modified.append(statusEntry);
-        }
-        if(fileStatus & FileStatus::DeletedFromWorkdir) {
-            _missing.append(statusEntry);
-        }
-        if(fileStatus & FileStatus::NewInIndex) {
-            _added.append(statusEntry);
-        }
-        if(fileStatus & FileStatus::ModifiedInIndex) {
-            _staged.append(statusEntry);
-        }
-        if(fileStatus & FileStatus::DeletedFromIndex) {
-            _removed.append(statusEntry);
-        }
-        if(fileStatus & FileStatus::RenamedInIndex) {
-            _renamedInIndex.append(statusEntry);
-        }
-        if(fileStatus & FileStatus::Ignored) {
-            _ignored.append(statusEntry);
-        }
-        if(fileStatus & FileStatus::RenamedInWorkdir) {
-            _renamedInWorkDir.append(statusEntry);
-        }
-    }
-
     _statusEntries.append(statusEntry);
 }

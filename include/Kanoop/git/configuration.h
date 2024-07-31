@@ -20,7 +20,7 @@ public:
     QString programDataConfigPath() const { return _programDataConfigPath; }
 
     Signature buildSignature(const QDateTime& timestamp = QDateTime::currentDateTimeUtc());
-    ConfigurationEntry get(const QString& key);
+    ConfigurationEntry get(const QString& keyP1, const QString& keyP2 = QString(), const QString& keyP3 = QString());
 
     virtual bool isNull() const { return _handle == nullptr; }
 private:

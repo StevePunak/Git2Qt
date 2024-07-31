@@ -24,10 +24,14 @@
 #include <configuration.h>
 #include <objectdatabase.h>
 #include <referencecollection.h>
+#include <network.h>
+#include <remote.h>
+#include <stringarray.h>
 
 using namespace GIT;
 
 Repository::Repository(const QString& localPath, bool bare) :
+    QObject(),
     GitEntity(RepositoryEntity, this),
     _localPath(localPath), _bare(bare)
 {
@@ -35,6 +39,7 @@ Repository::Repository(const QString& localPath, bool bare) :
 }
 
 Repository::Repository(const QString& localPath) :
+    QObject(),
     GitEntity(GitEntity::RepositoryEntity, this),
     _localPath(localPath)
 {
@@ -74,6 +79,7 @@ void Repository::postInitializationLookups()
     _config = new Configuration(this);
     _objectDatabase = new ObjectDatabase(this);
     _references = new ReferenceCollection(this);
+    _network = new Network(this);
 
     loadBranches();
     loadReferences();
@@ -113,6 +119,10 @@ void Repository::commonDestroy()
     if(_references != nullptr) {
         delete _references;
         _references = nullptr;
+    }
+    if(_network != nullptr) {
+        delete _network;
+        _network = nullptr;
     }
 }
 
@@ -168,6 +178,70 @@ bool Repository::fetch()
             throwOnError(git_remote_lookup(&_remote, _handle, "origin"));
         }
         throwOnError(git_remote_fetch(_remote, nullptr, nullptr, nullptr));
+
+        result = true;
+    }
+    catch(const CommonException&)
+    {
+        result = false;
+    }
+    return result;
+}
+
+bool Repository::push(Branch* branch)
+{
+    QList<Branch*> branches;
+    branches.append(branch);
+    return push(branches);
+}
+
+bool Repository::push(const QList<Branch*> branches)
+{
+    bool result = false;
+    try
+    {
+        throwIfNull(_handle, "Repository is not initialized");
+        for(Branch* branch : branches) {
+            throwIfEmpty(branch->upstreamBranchCanonicalName());
+        }
+
+        for(Branch* branch : branches) {
+            Remote* remote = _network->remoteForName(branch->remoteName());
+            throwIfNull(remote, "remote not found for branch");
+            throwIfFalse(push(remote, QString("%1:%2").arg(branch->canonicalName()).arg(branch->upstreamBranchCanonicalName())));
+        }
+
+        result = true;
+    }
+    catch(const CommonException&)
+    {
+        result = false;
+    }
+    return result;
+}
+
+bool Repository::push(Remote* remote, const QString& pushRefSpec)
+{
+    QStringList pushRefSpecs;
+    pushRefSpecs.append(pushRefSpec);
+    return push(remote, pushRefSpecs);
+}
+
+bool Repository::push(Remote* remote, const QStringList& pushRefSpecs)
+{
+    bool result = false;
+    try
+    {
+        git_remote_callbacks callbacks = GIT_REMOTE_CALLBACKS_INIT;
+        callbacks.credentials = credentialsCallback;
+        callbacks.payload = this;
+
+        git_push_options opts;
+        throwOnError(git_push_options_init(&opts, GIT_PUSH_OPTIONS_VERSION));
+        opts.callbacks = callbacks;
+
+        StringArray strs(pushRefSpecs);
+        throwOnError(git_remote_push(remote->handle(), strs.native(), &opts));
 
         result = true;
     }
@@ -663,6 +737,10 @@ void Repository::updateHeadAndTerminalReference(const Commit& commit, const QStr
 int Repository::credentialsCallback(git_cred** cred, const char* url, const char* username, unsigned int allowed_types, void* payload)
 {
     Repository* repo = static_cast<Repository*>(payload);
+    if(repo->_credentialResolver == nullptr) {
+        return GIT_PASSTHROUGH;
+    }
+
     Q_UNUSED(url)
     try
     {

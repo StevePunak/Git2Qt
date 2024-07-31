@@ -23,7 +23,7 @@ void GitEntity::throwOnError(int result)
     }
 }
 
-void GitEntity::throwIfNull(void* ptr, const QString& message)
+void GitEntity::throwIfNull(const void* ptr, const QString& message)
 {
     if(ptr == nullptr) {
         setErrorText(message.isEmpty() ? git_error_last()->message : message);
@@ -34,6 +34,14 @@ void GitEntity::throwIfNull(void* ptr, const QString& message)
 void GitEntity::throwIfFalse(bool result, const QString& message)
 {
     if(result == false) {
+        setErrorText(message.isEmpty() ? git_error_last()->message : message);
+        throw CommonException(message);
+    }
+}
+
+void GitEntity::throwIfEmpty(const QString& value, const QString& message)
+{
+    if(value.isEmpty()) {
         setErrorText(message.isEmpty() ? git_error_last()->message : message);
         throw CommonException(message);
     }

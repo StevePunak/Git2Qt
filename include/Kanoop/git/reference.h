@@ -28,13 +28,25 @@ public:
 
     QString canonicalName() const { return _canonicalName; }
     QString targetIdentifier() const { return _targetIdentifier; }
-    ObjectId objectId() const { return objectIdFromHandle(_reference); }
+    ObjectId objectId() const;
 
     git_reference* handle() const { return _reference; }
 
     virtual bool isDirect() const { return type() == DirectReferenceType; }
     virtual bool isSymbolic() const { return type() == SymbolicReferenceType; }
     virtual bool isNull() const override { return _reference == nullptr; }
+
+    bool looksLikeLocalBranch() const { return looksLikeLocalBranch(_canonicalName); }
+    bool looksLikeRemoteTrackingBranch() const { return looksLikeRemoteTrackingBranch(_canonicalName); }
+    bool looksLikeTag() const { return looksLikeTag(_canonicalName); }
+    bool looksLikeNote() const { return looksLikeNote(_canonicalName); }
+    bool isPrefixedBy(const QString& prefix) const { return isPrefixedBy(_canonicalName, prefix); }
+
+    static bool looksLikeLocalBranch(const QString& canonicalName) { return isPrefixedBy(canonicalName, LocalBranchPrefix); }
+    static bool looksLikeRemoteTrackingBranch(const QString& canonicalName) { return isPrefixedBy(canonicalName, RemoteTrackingBranchPrefix); }
+    static bool looksLikeTag(const QString& canonicalName) { return isPrefixedBy(canonicalName, TagPrefix); }
+    static bool looksLikeNote(const QString& canonicalName) { return isPrefixedBy(canonicalName, NotePrefix); }
+    static bool isPrefixedBy(const QString& value, const QString& prefix) { return value.startsWith(prefix); }
 
     class Map : public QMap<QString, Reference*>
     {
@@ -65,6 +77,12 @@ private:
     git_reference* _reference = nullptr;
     QString _canonicalName;
     QString _targetIdentifier;
+
+public:
+    static const QString LocalBranchPrefix;
+    static const QString RemoteTrackingBranchPrefix;
+    static const QString TagPrefix;
+    static const QString NotePrefix;
 };
 
 class SymbolicReference : public Reference

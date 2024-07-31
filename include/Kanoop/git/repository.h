@@ -24,7 +24,10 @@ class CredentialResolver;
 class AnnotatedCommitHandle;
 class Diff;
 class Index;
-class Repository : public GitEntity
+class Network;
+class Remote;
+class Repository : public QObject,
+                   public GitEntity
 {
     Q_OBJECT
 public:
@@ -37,6 +40,12 @@ public:
 
     // Fetch
     bool fetch();
+
+    // Push
+    bool push(Branch* branch);
+    bool push(const QList<Branch*> branches);
+    bool push(Remote* remote, const QString& pushRefSpec);
+    bool push(Remote* remote, const QStringList& pushRefSpecs);
 
     // Checkout
     bool checkoutRemoteBranch(const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
@@ -65,6 +74,9 @@ public:
     Tree* lookupTree(const ObjectId& objectId);
     Commit lookupCommit(const ObjectId& objectId);
 
+    // Credentials Callback
+    void setCredentialResolver(CredentialResolver* value) { _credentialResolver = value; }
+
     Branch* head() const;
     bool setHead(const QString& referenceName);
 
@@ -78,6 +90,7 @@ public:
     Index* index() const { return _index; }
     RepositoryInformation* info() const { return _info; }
     Configuration* config() const { return _config; }
+    Network* network() const { return _network; }
 
     virtual bool isNull() const override { return _handle == nullptr; }
 
@@ -105,15 +118,20 @@ private:
     Diff* _diff = nullptr;
     RepositoryInformation* _info = nullptr;
     Configuration* _config = nullptr;
-    ObjectDatabase* _objectDatabase;
-    ReferenceCollection* _references;
+    ObjectDatabase* _objectDatabase = nullptr;
+    ReferenceCollection* _references = nullptr;
+    Network* _network = nullptr;
+
     CredentialResolver* _credentialResolver = nullptr;
 
     Branch::Map _branches;
     Commit::List _mergeHeads;
 
     // callbacks
+public:
     static int credentialsCallback(git_cred **cred, const char *url, const char *username, unsigned int allowed_types, void *payload);
+
+private:
     static int progressCallback(const git_transfer_progress *stats, void *payload);
     static int mergeHeadForeachCallback(const git_oid *oid, void *payload);
 

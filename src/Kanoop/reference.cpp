@@ -8,6 +8,11 @@
 
 using namespace GIT;
 
+const QString Reference::LocalBranchPrefix          = "refs/heads/";
+const QString Reference::RemoteTrackingBranchPrefix = "refs/remotes/";
+const QString Reference::TagPrefix                  = "refs/tags/";
+const QString Reference::NotePrefix                 = "refs/notes/";
+
 Reference::Reference(Repository* repo, const QString& canonicalName, const QString& targetIdentifier) :
     GitEntity(ReferenceEntity, repo),
     _canonicalName(canonicalName), _targetIdentifier(targetIdentifier)
@@ -87,6 +92,11 @@ QString Reference::name() const
 Reference::ReferenceType Reference::type() const
 {
     return typeFromHandle(_reference);
+}
+
+ObjectId Reference::objectId() const
+{
+    return objectIdFromHandle(_reference);
 }
 
 Reference::ReferenceType Reference::typeFromHandle(git_reference* handle)

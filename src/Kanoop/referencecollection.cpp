@@ -84,6 +84,13 @@ void ReferenceCollection::append(Reference* reference)
     _references.insert(reference->name(), reference);
 }
 
+void ReferenceCollection::append(QList<Reference*> references)
+{
+    for(Reference* reference : references) {
+        append(reference);
+    }
+}
+
 Reference* ReferenceCollection::updateTarget(DirectReference* directRef, const ObjectId& targetId, const QString& logMessage)
 {
     Reference* result = nullptr;

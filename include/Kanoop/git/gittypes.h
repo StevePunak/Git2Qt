@@ -82,6 +82,12 @@ enum FileStatus
     Conflicted = (1 << 15), /* GIT_STATUS_CONFLICTED */
 };
 
+enum Direction
+{
+    DirectionFetch = 0,
+    DirectionPush  = 1,
+};
+
 QString getFileStatusString(FileStatus value);
 FileStatus getFileStatus(const QString& value);
 QList<FileStatus> getFileStatusValues();

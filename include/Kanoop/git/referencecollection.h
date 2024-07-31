@@ -20,6 +20,7 @@ public:
     void clear();
 
     void append(Reference* reference);
+    void append(QList<Reference*> references);
     DirectReference* append(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite = false);
 
     Reference* updateTarget(DirectReference* directRef, const ObjectId& targetId, const QString& logMessage);

@@ -2,7 +2,7 @@
 #define STRINGARRAY_H
 
 #include <QStringList>
-
+#include <git2.h>
 
 namespace GIT {
 
@@ -13,10 +13,10 @@ public:
     virtual ~StringArray();
 
     char* at(int index) const;
+    const git_strarray* native() const { return &_native; }
 
 private:
-    char** _values;
-    int _count;
+    git_strarray _native;
 };
 
 } // namespace
