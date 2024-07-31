@@ -47,8 +47,10 @@ Commit ObjectDatabase::createCommit(const Signature& author, const Signature& co
 
         throwOnError(git_commit_create(&commitOid,
                                        repoHandle,
-                                       nullptr, authorSig.toNative(),
-                                       committerSig.toNative(), "utf8",
+                                       nullptr,
+                                       authorSig.toNative(),
+                                       committerSig.toNative(),
+                                       "utf8",
                                        msg.toUtf8().constData(),
                                        tree,
                                        parents.count(),

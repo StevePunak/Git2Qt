@@ -26,6 +26,7 @@ public:
         NetworkEntity,
         RemoteEntity,
         RemoteCollectionEntity,
+        SignatureEntity,
     };
 
     virtual ~GitEntity() {}

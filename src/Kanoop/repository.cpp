@@ -566,6 +566,7 @@ Tree Repository::lookupTree(const ObjectId& objectId)
         git_object* obj = nullptr;
         throwOnError(git_object_lookup(&obj, _handle.value(), objectId.toNative(), GIT_OBJECT_TREE));
         result = Tree(this, obj);
+        git_object_free(obj);
     }
     catch(CommonException&)
     {
@@ -622,6 +623,10 @@ bool Repository::loadBranches()
     catch(const CommonException&)
     {
         result = false;
+    }
+
+    if(it != nullptr) {
+        git_branch_iterator_free(it);
     }
 
     return result;

@@ -23,16 +23,18 @@ public:
     Signature buildSignature(const QDateTime& timestamp = QDateTime::currentDateTimeUtc());
     ConfigurationEntry get(const QString& keyP1, const QString& keyP2 = QString(), const QString& keyP3 = QString());
 
-    virtual bool isNull() const { return createHandle().isNull(); }
+    virtual bool isNull() const { return _handle.isNull(); }
 
 private:
-    ConfigurationHandle createHandle() const;
+    void dumpToLog(git_config* config);
 
     QString _repoConfigPath;
     QString _globalConfigPath;
     QString _xdgConfigPath;
     QString _systemConfigPath;
     QString _programDataConfigPath;
+
+    ConfigurationHandle _handle;
 };
 
 } // namespace GIT

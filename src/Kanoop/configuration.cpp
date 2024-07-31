@@ -1,6 +1,7 @@
 #include "configuration.h"
 
 #include <Kanoop/commonexception.h>
+#include <Kanoop/klog.h>
 #include <Kanoop/pathutil.h>
 
 #include <configurationentry.h>
@@ -16,10 +17,10 @@ Configuration::Configuration(Repository* repo) :
 {
     git_config* config = nullptr;
     if(git_config_new(&config) == 0) {
-        ConfigurationHandle handle = createHandle();
+        _handle = ConfigurationHandle(config);
         try
         {
-            if(handle.isNull()) {
+            if(_handle.isNull()) {
                 throw CommonException("Failed to create handle for config");
             }
 
@@ -43,26 +44,26 @@ Configuration::Configuration(Repository* repo) :
             }
 
             QString path = PathUtil::combine(repo->info()->path(), "config");
-            git_config_add_file_ondisk(handle.value(), path.toUtf8().constData(), (git_config_level_t)Local, repoHandle.value(), true);
+            git_config_add_file_ondisk(_handle.value(), path.toUtf8().constData(), (git_config_level_t)Local, repoHandle.value(), true);
             _repoConfigPath = path;
 
             // deprecated?
             // git_repository_set_config(repository()->handle(), _handle);
 
             if (_globalConfigPath.isEmpty() == false) {
-                git_config_add_file_ondisk(handle.value(), _globalConfigPath.toUtf8().constData(), (git_config_level_t)Global, repository()->handle().value(), true);
+                git_config_add_file_ondisk(_handle.value(), _globalConfigPath.toUtf8().constData(), (git_config_level_t)Global, repository()->handle().value(), true);
             }
 
             if (_xdgConfigPath.isEmpty() == false) {
-                git_config_add_file_ondisk(handle.value(), _xdgConfigPath.toUtf8().constData(), (git_config_level_t)Xdg, repository()->handle().value(), true);
+                git_config_add_file_ondisk(_handle.value(), _xdgConfigPath.toUtf8().constData(), (git_config_level_t)Xdg, repository()->handle().value(), true);
             }
 
             if (_systemConfigPath.isEmpty() == false) {
-                git_config_add_file_ondisk(handle.value(), _systemConfigPath.toUtf8().constData(), (git_config_level_t)System, repository()->handle().value(), true);
+                git_config_add_file_ondisk(_handle.value(), _systemConfigPath.toUtf8().constData(), (git_config_level_t)System, repository()->handle().value(), true);
             }
 
             if (_programDataConfigPath.isEmpty() == false) {
-                git_config_add_file_ondisk(handle.value(), _programDataConfigPath.toUtf8().constData(), (git_config_level_t)ProgramData, repository()->handle().value(), true);
+                git_config_add_file_ondisk(_handle.value(), _programDataConfigPath.toUtf8().constData(), (git_config_level_t)ProgramData, repository()->handle().value(), true);
             }
 
         }
@@ -100,9 +101,8 @@ ConfigurationEntry Configuration::get(const QString& keyP1, const QString& keyP2
 
     try
     {
-        ConfigurationHandle handle = createHandle();
-        throwIfTrue(handle.isNull());
-        throwOnError(git_config_snapshot(&snapshot, handle.value()));
+        throwIfTrue(_handle.isNull());
+        throwOnError(git_config_snapshot(&snapshot, _handle.value()));
         throwOnError(git_config_get_entry(&entry, snapshot, key.toUtf8().constData()));
         result = ConfigurationEntry(entry->name, entry->value, (ConfigurationLevel)entry->level);
     }
@@ -120,12 +120,12 @@ ConfigurationEntry Configuration::get(const QString& keyP1, const QString& keyP2
     return result;
 }
 
-ConfigurationHandle Configuration::createHandle() const
+void Configuration::dumpToLog(git_config* config)
 {
-    ConfigurationHandle result;
-    git_config* config = nullptr;
-    if(git_config_new(&config) == 0) {
-        result = ConfigurationHandle(config);
+    git_config_iterator* it;
+    git_config_entry* entry;
+    int error = git_config_iterator_new(&it, config);
+    while(error == false && git_config_next(&entry, it) == 0) {
+        KLog::sysLogText(KLOG_DEBUG, QString("%1 = %2").arg(entry->name).arg(entry->value));
     }
-    return result;
 }
