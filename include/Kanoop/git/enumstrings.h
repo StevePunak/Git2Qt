@@ -12,6 +12,10 @@ public:
     static FileStatus getFileStatus(const QString& value) { return _FileStatusToStringMap.getType(value, FileStatus::Nonexistent); }
     static QList<FileStatus> getFileStatusValues() { return _FileStatusToStringMap.getTypes(); }
 
+    static QString getConfigurationLevelString(ConfigurationLevel value) { return _ConfigurationLevelToStringMap.getString(value); }
+    static ConfigurationLevel getConfigurationLevel(const QString& value) { return _ConfigurationLevelToStringMap.getType(value, ConfigurationLevel::Local); }
+    static QList<ConfigurationLevel> getConfigurationLevelValues() { return _ConfigurationLevelToStringMap.getTypes(); }
+
 private:
     class FileStatusToStringMap : public KANOOP::EnumToStringMap<FileStatus>
     {
@@ -36,7 +40,21 @@ private:
         }
     };
 
-    static FileStatusToStringMap _FileStatusToStringMap;
+    class ConfigurationLevelToStringMap : public KANOOP::EnumToStringMap<ConfigurationLevel>
+    {
+    public:
+        ConfigurationLevelToStringMap()
+        {
+            insert(Local,       "Local");
+            insert(Global,  "Global");
+            insert(Xdg, "Xdg");
+            insert(System,  "System");
+            insert(ProgramData, "ProgramData");
+        }
+    };
+
+    static const FileStatusToStringMap _FileStatusToStringMap;
+    static const ConfigurationLevelToStringMap _ConfigurationLevelToStringMap;
 };
 
 } // namespace GIT

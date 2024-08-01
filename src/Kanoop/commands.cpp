@@ -3,6 +3,3 @@
 
 using namespace GIT;
 
-Repository* Commands::clone(const QString& remoteUrl, const QString& localPath)
-{
-}

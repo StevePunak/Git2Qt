@@ -2,6 +2,7 @@
 #define TREE_H
 #include <Kanoop/git/gitentity.h>
 #include <Kanoop/git/objectid.h>
+#include <Kanoop/git/handle.h>
 
 #include <QMap>
 
@@ -11,23 +12,24 @@ class Repository;
 
 class Tree : public GitEntity
 {
+private:
+    Tree() : GitEntity(TreeEntity) {}
+
 public:
-    explicit Tree(Repository* repo, git_object* treeish);
+    Tree(Repository* repo, git_object* treeish);
     virtual ~Tree();
 
-    static Tree* createFromBranchName(Repository* repo, const QString& branchName);
+    static Tree createFromBranchName(Repository* repo, const QString& branchName);
 
     ObjectId objectId() const { return _objectId; }
 
-    git_object *objectHandle() const { return _handle; }
-    git_tree *treeHandle() const { return _tree; }
+    ObjectHandle createObjectHandle() const;
+    TreeHandle createTreeHandle() const;
 
-    virtual bool isNull() const override { return _handle == nullptr; }
+    virtual bool isNull() const override { return _objectId.isValid() == false; }
 
 private:
     ObjectId _objectId;
-    git_object *_handle = nullptr;
-    git_tree *_tree = nullptr;
 };
 
 } // namespace GIT

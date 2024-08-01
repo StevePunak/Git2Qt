@@ -132,7 +132,7 @@ QString Branch::remoteNameFromRemoteTrackingBranch()
 {
     QString result;
     git_buf buf = GIT_BUF_INIT;
-    if(git_branch_remote_name(&buf, repository()->handle(), _reference->canonicalName().toUtf8().constData()) == 0) {
+    if(git_branch_remote_name(&buf, repository()->handle().value(), _reference->canonicalName().toUtf8().constData()) == 0) {
         result = buf.ptr;
     }
     return result;

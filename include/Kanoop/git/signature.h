@@ -8,11 +8,13 @@
 namespace GIT {
 
 class Repository;
-class Signature
+class Signature : public GitEntity
 {
 public:
-    Signature() {}
+    Signature() :
+        GitEntity(SignatureEntity) {}
     Signature(const QString& name, const QString& email, const QDateTime& timestamp = QDateTime::currentDateTimeUtc()) :
+        GitEntity(SignatureEntity),
         _name(name), _email(email), _timestamp(timestamp) {}
     Signature(const git_signature* nativeSignature);
     virtual ~Signature();
@@ -20,6 +22,8 @@ public:
     QString name() const { return _name; }
     QString email() const { return _email; }
     QDateTime timestamp() const { return _timestamp; }
+
+    virtual bool isNull() const { return _native == nullptr; }
 
     const git_signature* toNative();
 

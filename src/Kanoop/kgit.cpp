@@ -182,7 +182,6 @@ bool KGit::walkRefs(const QString& localPath)
     {
         throwOnError(git_repository_init(&repo, localPath.toUtf8().constData(), false));
         throwOnError(git_reference_iterator_new(&it, repo));
-        git_reference* ref;
         const char* name;
         while(!git_reference_next_name(&name, it)) {
             KLog::sysLogText(KLOG_DEBUG, name);

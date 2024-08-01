@@ -26,6 +26,7 @@ public:
         NetworkEntity,
         RemoteEntity,
         RemoteCollectionEntity,
+        SignatureEntity,
     };
 
     virtual ~GitEntity() {}
@@ -47,6 +48,7 @@ protected:
     void throwOnError(int result);
     void throwIfNull(const void* ptr, const QString& message = QString());
     void throwIfFalse(bool result, const QString& message = QString());
+    void throwIfTrue(bool result, const QString& message = QString()) { return throwIfFalse(!result, message); }
     void throwIfEmpty(const QString& value, const QString& message = QString());
     void setRepository(Repository* value) { _repository = value; }
 

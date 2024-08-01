@@ -17,8 +17,12 @@ public:
 
     const git_oid* toNative() const { return &_id; }
 
+    bool isEmtpy() const;
+
 private:
     git_oid _id;
+
+    static const git_oid Empty;
 
 public:
     static const int Size = 20;

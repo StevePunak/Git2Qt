@@ -88,10 +88,6 @@ enum Direction
     DirectionPush  = 1,
 };
 
-QString getFileStatusString(FileStatus value);
-FileStatus getFileStatus(const QString& value);
-QList<FileStatus> getFileStatusValues();
-
 enum GitStatusOptionFlags
 {
     IncludeUntracked = (1 << 0),
@@ -377,6 +373,15 @@ enum ConfigurationLevel
     /// </summary>
     ProgramData = 1,
 };
+
+
+QString getFileStatusString(FileStatus value);
+FileStatus getFileStatus(const QString& value);
+QList<FileStatus> getFileStatusValues();
+
+QString getConfigurationLevelString(ConfigurationLevel value);
+ConfigurationLevel getConfigurationLevel(const QString& value);
+QList<ConfigurationLevel> getConfigurationLevelValues();
 
 } // namespace GIT
 

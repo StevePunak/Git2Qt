@@ -50,11 +50,11 @@ public:
     // Checkout
     bool checkoutRemoteBranch(const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
     bool checkoutLocalBranch(const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
-    bool checkoutTree(const Tree* tree, const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
+    bool checkoutTree(const Tree& tree, const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
 
     // Branch creation
     Branch* createBranch(const QString& branchName, bool switchToNewBranch = false);
-    Branch* createBranchFromAnnotatedCommit(AnnotatedCommitHandle* annotatedCommit, const QString& branchName);
+    Branch* createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& annotatedCommit, const QString& branchName);
 
     // Commits
     Commit commit(const QString& message, const Signature& author, const Signature& committer, const CommitOptions& options = CommitOptions());
@@ -71,7 +71,7 @@ public:
     void add(const GIT::StatusEntry::List& items);
 
     // Lookup
-    Tree* lookupTree(const ObjectId& objectId);
+    Tree lookupTree(const ObjectId& objectId);
     Commit lookupCommit(const ObjectId& objectId);
 
     // Credentials Callback
@@ -86,13 +86,13 @@ public:
     Branch::Map branches() const { return _branches; }
     ReferenceCollection* references() const { return _references; }
 
-    git_repository* handle() const { return _handle; }
+    const RepositoryHandle handle() const { return _handle; }
     Index* index() const { return _index; }
     RepositoryInformation* info() const { return _info; }
     Configuration* config() const { return _config; }
     Network* network() const { return _network; }
 
-    virtual bool isNull() const override { return _handle == nullptr; }
+    virtual bool isNull() const override { return _handle.isNull(); }
 
 private:
     void commonInit();
@@ -112,7 +112,7 @@ private:
     QString _localPath;
     bool _bare = false;
 
-    git_repository* _handle = nullptr;
+    RepositoryHandle _handle;
     git_remote *_remote = nullptr;
     Index* _index = nullptr;
     Diff* _diff = nullptr;

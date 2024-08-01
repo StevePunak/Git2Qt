@@ -9,7 +9,7 @@ class Repository;
 class Commands
 {
 public:
-    static Repository* clone(const QString& remoteUrl, const QString& localPath);
+    // static Repository* clone(const QString& remoteUrl, const QString& localPath);
 };
 
 } // namespace GIT

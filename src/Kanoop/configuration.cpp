@@ -1,6 +1,7 @@
 #include "configuration.h"
 
 #include <Kanoop/commonexception.h>
+#include <Kanoop/klog.h>
 #include <Kanoop/pathutil.h>
 
 #include <configurationentry.h>
@@ -14,12 +15,17 @@ using namespace GIT;
 Configuration::Configuration(Repository* repo) :
     GitEntity(ConfigurationEntity, repo)
 {
-    if(git_config_new(&_handle) != 0) {
-        _handle = nullptr;
-    }
-    else {
+    git_config* config = nullptr;
+    if(git_config_new(&config) == 0) {
+        _handle = ConfigurationHandle(config);
         try
         {
+            if(_handle.isNull()) {
+                throw CommonException("Failed to create handle for config");
+            }
+
+            RepositoryHandle repoHandle = repository()->handle();
+
             git_buf buf = GIT_BUF_INIT;
             if(git_config_find_global(&buf) == 0) {
                 _globalConfigPath = buf.ptr;
@@ -38,26 +44,26 @@ Configuration::Configuration(Repository* repo) :
             }
 
             QString path = PathUtil::combine(repo->info()->path(), "config");
-            git_config_add_file_ondisk(_handle, path.toUtf8().constData(), (git_config_level_t)Local, repository()->handle(), true);
+            git_config_add_file_ondisk(_handle.value(), path.toUtf8().constData(), (git_config_level_t)Local, repoHandle.value(), true);
             _repoConfigPath = path;
 
             // deprecated?
             // git_repository_set_config(repository()->handle(), _handle);
 
             if (_globalConfigPath.isEmpty() == false) {
-                git_config_add_file_ondisk(_handle, _globalConfigPath.toUtf8().constData(), (git_config_level_t)Global, repository()->handle(), true);
+                git_config_add_file_ondisk(_handle.value(), _globalConfigPath.toUtf8().constData(), (git_config_level_t)Global, repository()->handle().value(), true);
             }
 
             if (_xdgConfigPath.isEmpty() == false) {
-                git_config_add_file_ondisk(_handle, _xdgConfigPath.toUtf8().constData(), (git_config_level_t)Xdg, repository()->handle(), true);
+                git_config_add_file_ondisk(_handle.value(), _xdgConfigPath.toUtf8().constData(), (git_config_level_t)Xdg, repository()->handle().value(), true);
             }
 
             if (_systemConfigPath.isEmpty() == false) {
-                git_config_add_file_ondisk(_handle, _systemConfigPath.toUtf8().constData(), (git_config_level_t)System, repository()->handle(), true);
+                git_config_add_file_ondisk(_handle.value(), _systemConfigPath.toUtf8().constData(), (git_config_level_t)System, repository()->handle().value(), true);
             }
 
             if (_programDataConfigPath.isEmpty() == false) {
-                git_config_add_file_ondisk(_handle, _programDataConfigPath.toUtf8().constData(), (git_config_level_t)ProgramData, repository()->handle(), true);
+                git_config_add_file_ondisk(_handle.value(), _programDataConfigPath.toUtf8().constData(), (git_config_level_t)ProgramData, repository()->handle().value(), true);
             }
 
         }
@@ -79,6 +85,16 @@ Signature Configuration::buildSignature(const QDateTime& timestamp)
     return result;
 }
 
+ConfigurationHandle Configuration::createHandle(ConfigurationLevel level) const
+{
+    ConfigurationHandle newHandle;
+    git_config* config = nullptr;
+    if(git_config_open_level(&config, _handle.value(), (git_config_level_t)level) == 0) {
+        newHandle = ConfigurationHandle(config);
+    }
+    return newHandle;
+}
+
 ConfigurationEntry Configuration::get(const QString& keyP1, const QString& keyP2, const QString& keyP3)
 {
     ConfigurationEntry result;
@@ -95,7 +111,8 @@ ConfigurationEntry Configuration::get(const QString& keyP1, const QString& keyP2
 
     try
     {
-        throwOnError(git_config_snapshot(&snapshot, _handle));
+        throwIfTrue(_handle.isNull());
+        throwOnError(git_config_snapshot(&snapshot, _handle.value()));
         throwOnError(git_config_get_entry(&entry, snapshot, key.toUtf8().constData()));
         result = ConfigurationEntry(entry->name, entry->value, (ConfigurationLevel)entry->level);
     }
@@ -111,4 +128,46 @@ ConfigurationEntry Configuration::get(const QString& keyP1, const QString& keyP2
         git_config_entry_free(entry);
     }
     return result;
+}
+
+ConfigurationEntry::List Configuration::getAll()
+{
+    ConfigurationEntry::List result;
+    git_config_iterator* it;
+    git_config_entry* entry;
+    int error = git_config_iterator_new(&it, _handle.value());
+    while(error == false && git_config_next(&entry, it) == 0) {
+        ConfigurationEntry configEntry(entry->name, entry->value, (ConfigurationLevel)entry->level);
+        result.append(configEntry);
+    }
+    git_config_iterator_free(it);
+    return result;
+}
+
+bool Configuration::set(const QString& key, const QString& value, ConfigurationLevel level)
+{
+    bool result = false;
+    try
+    {
+        ConfigurationHandle levelHandle = createHandle(level);
+        throwIfTrue(levelHandle.isNull());
+        throwOnError(git_config_set_string(levelHandle.value(), key.toUtf8().constData(), value.toUtf8().constData()));
+        result = true;
+    }
+    catch(const CommonException&)
+    {
+        result = false;
+    }
+    return result;
+}
+
+void Configuration::dumpToLog(git_config* config)
+{
+    git_config_iterator* it;
+    git_config_entry* entry;
+    int error = git_config_iterator_new(&it, config);
+    while(error == false && git_config_next(&entry, it) == 0) {
+        KLog::sysLogText(KLOG_DEBUG, QString("%1 = %2").arg(entry->name).arg(entry->value));
+    }
+    git_config_iterator_free(it);
 }

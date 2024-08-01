@@ -10,7 +10,7 @@ class ObjectDatabase : public GitEntity
 public:
     explicit ObjectDatabase(Repository* repo);
 
-    Commit createCommit(const Signature& author, const Signature& committer, const QString& message, Tree* tree, const Commit::List& parents, bool prettifyMessage, const QChar& commentChar = QChar('#'));
+    Commit createCommit(const Signature& author, const Signature& committer, const QString& message, const Tree& tree, const Commit::List& parents, bool prettifyMessage, const QChar& commentChar = QChar('#'));
 
     virtual bool isNull() const { return false; }
 };

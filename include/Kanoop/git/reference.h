@@ -2,6 +2,7 @@
 #define REFERENCE_H
 #include <Kanoop/git/gitentity.h>
 #include <Kanoop/git/objectid.h>
+#include <Kanoop/git/handle.h>
 
 #include <QMap>
 
@@ -30,11 +31,11 @@ public:
     QString targetIdentifier() const { return _targetIdentifier; }
     ObjectId objectId() const;
 
-    git_reference* handle() const { return _reference; }
+    git_reference* handle() const { return _reference.value(); }
 
     virtual bool isDirect() const { return type() == DirectReferenceType; }
     virtual bool isSymbolic() const { return type() == SymbolicReferenceType; }
-    virtual bool isNull() const override { return _reference == nullptr; }
+    virtual bool isNull() const override { return _reference.isNull(); }
 
     bool looksLikeLocalBranch() const { return looksLikeLocalBranch(_canonicalName); }
     bool looksLikeRemoteTrackingBranch() const { return looksLikeRemoteTrackingBranch(_canonicalName); }
@@ -69,12 +70,12 @@ public:
     virtual ~Reference();
 
 private:
-    static ReferenceType typeFromHandle(git_reference* handle);
-    static QString nameFromHandle(git_reference* handle);
-    static QString symbolicTargetNameFromHandle(git_reference* handle);
-    static ObjectId objectIdFromHandle(git_reference* handle);
+    static ReferenceType typeFromHandle(const ReferenceHandle& handle);
+    static QString nameFromHandle(const ReferenceHandle& handle);
+    static QString symbolicTargetNameFromHandle(const ReferenceHandle& handle);
+    static ObjectId objectIdFromHandle(const ReferenceHandle& handle);
 
-    git_reference* _reference = nullptr;
+    ReferenceHandle _reference;
     QString _canonicalName;
     QString _targetIdentifier;
 
