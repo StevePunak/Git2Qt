@@ -18,6 +18,8 @@ qt_add_library(
     ${PROJ} ${KANOOP_GIT_SOURCES} ${KANOOP_GIT_HEADERS}
 )
 
+target_compile_options(${PROJ} PRIVATE -Wextra -Wall -Werror)
+
 set_target_properties(${PROJ} PROPERTIES VERSION "${KANOOP_GIT_VERSION}")
 set_target_properties(${PROJ} PROPERTIES SOVERSION 1)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/libKanoopGit.pc.in" "libKanoopGit.pc" @ONLY)

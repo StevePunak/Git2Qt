@@ -64,7 +64,7 @@ void Remote::reloadReferences()
         callbacks.credentials = repository()->credentialsCallback;
         throwOnError(git_remote_connect(handle.value(), GIT_DIRECTION_FETCH, &callbacks, nullptr, nullptr));
         throwOnError(git_remote_ls(&heads, &count, handle.value()));
-        for(int i = 0;i < count;i++) {
+        for(int i = 0;i < (int)count;i++) {
             const git_remote_head* head = heads[i];
             QString name = head->name;
             QString symRefTargetName = head->symref_target;
