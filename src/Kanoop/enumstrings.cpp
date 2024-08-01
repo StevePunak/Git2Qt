@@ -2,5 +2,6 @@
 
 using namespace GIT;
 
-EnumStrings::FileStatusToStringMap EnumStrings::_FileStatusToStringMap;
+const EnumStrings::FileStatusToStringMap EnumStrings::_FileStatusToStringMap;
+const EnumStrings::ConfigurationLevelToStringMap EnumStrings::_ConfigurationLevelToStringMap;
 

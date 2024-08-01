@@ -3,16 +3,25 @@
 #include <Kanoop/git/gittypes.h>
 #include <Kanoop/git/gitentity.h>
 #include <Kanoop/git/handle.h>
+#include <Kanoop/git/configurationentry.h>
 #include <QDateTime>
 
 namespace GIT {
 
-class ConfigurationEntry;
 class Signature;
 class Configuration : public GitEntity
 {
 public:
     Configuration(Repository* repo);
+
+    // Getters
+    ConfigurationEntry get(const QString& keyP1, const QString& keyP2 = QString(), const QString& keyP3 = QString());
+    ConfigurationEntry::List getAll();
+
+    // Setters
+    bool set(const QString& key, const QString& value, ConfigurationLevel level);
+
+    Signature buildSignature(const QDateTime& timestamp = QDateTime::currentDateTimeUtc());
 
     QString repoConfigPath() const { return _repoConfigPath; }
     QString globalConfigPath() const { return _globalConfigPath; }
@@ -20,12 +29,10 @@ public:
     QString systemConfigPath() const { return _systemConfigPath; }
     QString programDataConfigPath() const { return _programDataConfigPath; }
 
-    Signature buildSignature(const QDateTime& timestamp = QDateTime::currentDateTimeUtc());
-    ConfigurationEntry get(const QString& keyP1, const QString& keyP2 = QString(), const QString& keyP3 = QString());
-
     virtual bool isNull() const { return _handle.isNull(); }
 
 private:
+    ConfigurationHandle createHandle(ConfigurationLevel level) const;
     void dumpToLog(git_config* config);
 
     QString _repoConfigPath;

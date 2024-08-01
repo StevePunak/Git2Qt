@@ -85,6 +85,16 @@ Signature Configuration::buildSignature(const QDateTime& timestamp)
     return result;
 }
 
+ConfigurationHandle Configuration::createHandle(ConfigurationLevel level) const
+{
+    ConfigurationHandle newHandle;
+    git_config* config = nullptr;
+    if(git_config_open_level(&config, _handle.value(), (git_config_level_t)level) == 0) {
+        newHandle = ConfigurationHandle(config);
+    }
+    return newHandle;
+}
+
 ConfigurationEntry Configuration::get(const QString& keyP1, const QString& keyP2, const QString& keyP3)
 {
     ConfigurationEntry result;
@@ -120,6 +130,37 @@ ConfigurationEntry Configuration::get(const QString& keyP1, const QString& keyP2
     return result;
 }
 
+ConfigurationEntry::List Configuration::getAll()
+{
+    ConfigurationEntry::List result;
+    git_config_iterator* it;
+    git_config_entry* entry;
+    int error = git_config_iterator_new(&it, _handle.value());
+    while(error == false && git_config_next(&entry, it) == 0) {
+        ConfigurationEntry configEntry(entry->name, entry->value, (ConfigurationLevel)entry->level);
+        result.append(configEntry);
+    }
+    git_config_iterator_free(it);
+    return result;
+}
+
+bool Configuration::set(const QString& key, const QString& value, ConfigurationLevel level)
+{
+    bool result = false;
+    try
+    {
+        ConfigurationHandle levelHandle = createHandle(level);
+        throwIfTrue(levelHandle.isNull());
+        throwOnError(git_config_set_string(levelHandle.value(), key.toUtf8().constData(), value.toUtf8().constData()));
+        result = true;
+    }
+    catch(const CommonException&)
+    {
+        result = false;
+    }
+    return result;
+}
+
 void Configuration::dumpToLog(git_config* config)
 {
     git_config_iterator* it;
@@ -128,4 +169,5 @@ void Configuration::dumpToLog(git_config* config)
     while(error == false && git_config_next(&entry, it) == 0) {
         KLog::sysLogText(KLOG_DEBUG, QString("%1 = %2").arg(entry->name).arg(entry->value));
     }
+    git_config_iterator_free(it);
 }

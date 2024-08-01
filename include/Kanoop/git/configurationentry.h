@@ -20,6 +20,8 @@ public:
 
     bool isValid() const { return _value.isValid(); }
 
+    class List : public QList<ConfigurationEntry> {};
+
 private:
     QString _key;
     QVariant _value;
