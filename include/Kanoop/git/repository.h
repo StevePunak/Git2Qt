@@ -13,6 +13,8 @@
 
 namespace GIT {
 
+class BranchCollection;
+
 class TagCollection;
 
 class SubmoduleCollection;
@@ -47,8 +49,8 @@ public:
     bool fetch();
 
     // Push
-    bool push(Branch* branch);
-    bool push(const QList<Branch*> branches);
+    bool push(const Branch& branch);
+    bool push(const Branch::List& branches);
     bool push(Remote* remote, const QString& pushRefSpec);
     bool push(Remote* remote, const QStringList& pushRefSpecs);
 
@@ -58,8 +60,8 @@ public:
     bool checkoutTree(const Tree& tree, const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
 
     // Branch creation
-    Branch* createBranch(const QString& branchName, bool switchToNewBranch = false);
-    Branch* createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& annotatedCommit, const QString& branchName);
+    Branch createBranch(const QString& branchName, bool switchToNewBranch = false);
+    Branch createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& annotatedCommit, const QString& branchName);
 
     // Commits
     Commit commit(const QString& message, const Signature& author, const Signature& committer, const CommitOptions& options = CommitOptions());
@@ -82,13 +84,13 @@ public:
     // Credentials Callback
     void setCredentialResolver(CredentialResolver* value) { _credentialResolver = value; }
 
-    Branch* head() const;
+    Branch head() const;
     bool setHead(const QString& referenceName);
 
     QString localPath() const { return _localPath; }
     bool isBare() const { return _bare; }
 
-    Branch::Map branches() const { return _branches; }
+    BranchCollection* branches() const { return _branches; }
     ReferenceCollection* references() const { return _references; }
     const RepositoryHandle handle() const { return _handle; }
     Index* index() const { return _index; }
@@ -107,7 +109,6 @@ private:
     void commonDestroy();
     void emitProgress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects);
 
-    bool loadBranches();
     bool loadReferences();
     Commit::List retrieveParentsOfTheCommitBeingCreated(bool amendPreviousCommit);
     Commit::List mergeHeads();
@@ -131,8 +132,8 @@ private:
     SubmoduleCollection* _submodules = nullptr;
     TagCollection* _tags = nullptr;
     CredentialResolver* _credentialResolver = nullptr;
+    BranchCollection* _branches = nullptr;
 
-    Branch::Map _branches;
     Commit::List _mergeHeads;
 
     // callbacks

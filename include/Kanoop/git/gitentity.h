@@ -14,6 +14,7 @@ public:
         UnknownGitObjectType = 0,
 
         BranchEntity,
+        BranchCollectionEntity,
         RepositoryEntity,
         ReferenceEntity,
         ReferenceCollectionEntity,

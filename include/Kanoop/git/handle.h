@@ -52,7 +52,7 @@ public:
         git_annotated_commit_free(_handle);
     }
 
-    static AnnotatedCommitHandle fromRef(Repository* repo, Branch* branch);
+    static AnnotatedCommitHandle fromRef(Repository* repo, const Branch& branch);
 };
 
 class ConfigurationHandle : public Handle<git_config*>

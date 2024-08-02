@@ -60,7 +60,7 @@ QString Branch::friendlyName() const
     return result;
 }
 
-QString Branch::upstreamBranchCanonicalName()
+QString Branch::upstreamBranchCanonicalName() const
 {
     QString name;
     if(isRemote()) {
@@ -73,7 +73,7 @@ QString Branch::upstreamBranchCanonicalName()
     return name;
 }
 
-QString Branch::upstreamBranchCanonicalNameFromLocalBranch()
+QString Branch::upstreamBranchCanonicalNameFromLocalBranch() const
 {
     QString result;
     ConfigurationEntry entry = repository()->config()->get("branch", friendlyName(), "merge");
@@ -83,7 +83,7 @@ QString Branch::upstreamBranchCanonicalNameFromLocalBranch()
     return result;
 }
 
-QString Branch::remoteName()
+QString Branch::remoteName() const
 {
     QString result;
     if(isRemote()) {
@@ -125,7 +125,7 @@ bool Branch::isRemote() const
     return _reference.looksLikeRemoteTrackingBranch();
 }
 
-QString Branch::remoteNameFromRemoteTrackingBranch()
+QString Branch::remoteNameFromRemoteTrackingBranch() const
 {
     QString result;
     git_buf buf = GIT_BUF_INIT;
@@ -135,7 +135,7 @@ QString Branch::remoteNameFromRemoteTrackingBranch()
     return result;
 }
 
-QString Branch::remoteNameFromLocalBranch()
+QString Branch::remoteNameFromLocalBranch() const
 {
     QString result;
     ConfigurationEntry entry = repository()->config()->get("branch", friendlyName(), "remote");

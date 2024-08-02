@@ -8,7 +8,7 @@
 #include <Kanoop/git/kanoopgit.h>
 #include <QObject>
 #include <git2.h>
-#include <Kanoop/git/branch.h>
+#include <Kanoop/git/branchcollection.h>
 #include <Kanoop/git/compareoptions.h>
 #include <Kanoop/git/configuration.h>
 #include <Kanoop/git/diff.h>

@@ -101,14 +101,15 @@ void Repository::postInitializationLookups()
     _network = new Network(this);
     _submodules = new SubmoduleCollection(this);
     _tags = new TagCollection(this);
+    _branches = new BranchCollection(this);
 
-    loadBranches();
+    _branches->reloadBranches();
+
     loadReferences();
 }
 
 void Repository::commonDestroy()
 {
-    qDeleteAll(_branches);
     if(_remote != nullptr) {
         git_remote_free(_remote);
         _remote = nullptr;
@@ -148,6 +149,10 @@ void Repository::commonDestroy()
     if(_tags != nullptr) {
         delete _tags;
         _tags = nullptr;
+    }
+    if(_branches != nullptr) {
+        delete _branches;
+        _branches = nullptr;
     }
 }
 
@@ -215,27 +220,27 @@ bool Repository::fetch()
     return result;
 }
 
-bool Repository::push(Branch* branch)
+bool Repository::push(const Branch& branch)
 {
-    QList<Branch*> branches;
+    Branch::List branches;
     branches.append(branch);
     return push(branches);
 }
 
-bool Repository::push(const QList<Branch*> branches)
+bool Repository::push(const Branch::List& branches)
 {
     bool result = false;
     try
     {
         throwIfTrue(_handle.isNull(), "Repository is not initialized");
-        for(Branch* branch : branches) {
-            throwIfEmpty(branch->upstreamBranchCanonicalName());
+        for(const Branch& branch : branches) {
+            throwIfEmpty(branch.upstreamBranchCanonicalName());
         }
 
-        for(Branch* branch : branches) {
-            Remote* remote = _network->remoteForName(branch->remoteName());
+        for(const Branch& branch : branches) {
+            Remote* remote = _network->remoteForName(branch.remoteName());
             throwIfNull(remote, "remote not found for branch");
-            throwIfFalse(push(remote, QString("%1:%2").arg(branch->canonicalName()).arg(branch->upstreamBranchCanonicalName())));
+            throwIfFalse(push(remote, QString("%1:%2").arg(branch.canonicalName()).arg(branch.upstreamBranchCanonicalName())));
         }
 
         result = true;
@@ -285,16 +290,16 @@ bool Repository::checkoutRemoteBranch(const QString& branchName, const CheckoutO
     try
     {
         throwIfTrue(_handle.isNull(), "Repository is not initialized");
-        throwIfNull(head(), "No HEAD found");
-        throwIfNull(_branches.findRemoteBranch(branchName), "Failed to find remote branch");
+        throwIfTrue(head().isNull(), "No HEAD found");
+        throwIfTrue(_branches->findRemoteBranch(branchName).isNull(), "Failed to find remote branch");
 
         // create new branch from head
         AnnotatedCommitHandle headAnnotatedCommit = AnnotatedCommitHandle::fromRef(this, head());
         throwIfTrue(headAnnotatedCommit.isNull(), "Failed to find annotated commit for HEAD");
 
-        if(_branches.findLocalBranch(branchName) == nullptr) {
-            Branch* newBranch = createBranchFromAnnotatedCommit(headAnnotatedCommit, branchName);
-            throwIfNull(newBranch);
+        if(_branches->findLocalBranch(branchName).isNull()) {
+            Branch newBranch = createBranchFromAnnotatedCommit(headAnnotatedCommit, branchName);
+            throwIfTrue(newBranch.isNull());
         }
 
         // Create and checkout tree
@@ -316,8 +321,8 @@ bool Repository::checkoutLocalBranch(const QString& branchName, const CheckoutOp
     try
     {
         throwIfTrue(_handle.isNull(), "Repository is not initialized");
-        throwIfNull(head(), "No HEAD found");
-        throwIfNull(_branches.findLocalBranch(branchName), "Failed to find local branch");
+        throwIfTrue(head().isNull(), "No HEAD found");
+        throwIfTrue(_branches->findLocalBranch(branchName).isNull(), "Failed to find local branch");
 
         // Create and checkout tree
         Tree tree = Tree::createFromBranchName(this, branchName);
@@ -355,20 +360,20 @@ bool Repository::checkoutTree(const Tree& tree, const QString& branchName, const
     return result;
 }
 
-Branch* Repository::createBranch(const QString& branchName, bool switchToNewBranch)
+Branch Repository::createBranch(const QString& branchName, bool switchToNewBranch)
 {
-    Branch* result = nullptr;
+    Branch result;
     try
     {
         throwIfTrue(_handle.isNull(), "Repository is not initialized");
-        throwIfNull(head(), "No HEAD found");
+        throwIfTrue(head().isNull(), "No HEAD found");
 
         // create new branch from head
         AnnotatedCommitHandle headAnnotatedCommit = AnnotatedCommitHandle::fromRef(this, head());
         throwIfTrue(headAnnotatedCommit.isNull(), "Failed to find annotated commit for HEAD");
 
-        Branch* newBranch = createBranchFromAnnotatedCommit(headAnnotatedCommit, branchName);
-        throwIfNull(newBranch);
+        Branch newBranch = createBranchFromAnnotatedCommit(headAnnotatedCommit, branchName);
+        throwIfTrue(newBranch.isNull());
 
         if(switchToNewBranch) {
             // Create and checkout tree
@@ -384,15 +389,15 @@ Branch* Repository::createBranch(const QString& branchName, bool switchToNewBran
     return result;
 }
 
-Branch* Repository::createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& annotatedCommit, const QString& branchName)
+Branch Repository::createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& annotatedCommit, const QString& branchName)
 {
-    Branch* result = nullptr;
+    Branch result;
     git_reference* newBranch = nullptr;
     int rc = git_branch_create_from_annotated(&newBranch, _handle.value(), branchName.toUtf8().constData(), annotatedCommit.value(), false);
     if(rc == 0) {
         Reference reference = Reference::create(this, newBranch);
-        result = new Branch(this, reference, GIT_BRANCH_LOCAL);
-        _branches.insert(result->name(), result);
+        result = Branch(this, reference, GIT_BRANCH_LOCAL);
+        _branches->append(result);
     }
     return result;
 }
@@ -417,7 +422,7 @@ Commit Repository::commit(const QString& message, const Signature& author, const
         Commit::List parents = retrieveParentsOfTheCommitBeingCreated(options.amendPreviousCommit());
         if(parents.count() == 1 && !options.allowEmptyCommit()) {
             bool treeSame = parents.at(0).treeId() == treeId;
-            bool amendMergeCommit = options.amendPreviousCommit() && !orphaned && head()->tip().parents().count() > 1;
+            bool amendMergeCommit = options.amendPreviousCommit() && !orphaned && head().tip().parents().count() > 1;
             if(treeSame && !amendMergeCommit) {
                 throw options.amendPreviousCommit()
                     ? CommonException("Amending this commit would produce a commit that is identical to its parent")
@@ -608,14 +613,9 @@ Commit Repository::lookupCommit(const ObjectId& objectId)
     return result;
 }
 
-Branch* Repository::head() const
+Branch Repository::head() const
 {
-    for(Branch* branch : _branches) {
-        if(branch->isHead()) {
-            return branch;
-        }
-    }
-    return nullptr;
+    return _branches->head();
 }
 
 bool Repository::setHead(const QString& referenceName)
@@ -626,38 +626,6 @@ bool Repository::setHead(const QString& referenceName)
 void Repository::emitProgress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects)
 {
     emit progress(receivedBytes, receivedObjects, totalObjects);
-}
-
-bool Repository::loadBranches()
-{
-    bool result = false;
-    git_branch_iterator* it = nullptr;
-
-    qDeleteAll(_branches);
-    _branches.clear();
-
-    try
-    {
-        throwOnError(git_branch_iterator_new(&it, _handle.value(), GIT_BRANCH_ALL));
-        git_reference* reference;
-        git_branch_t type;
-        while(!git_branch_next(&reference, &type, it)) {
-            Branch* branch = new Branch(this, Reference::create(this, reference), type);
-            _branches.insert(branch->name(), branch);
-        }
-
-        result = true;
-    }
-    catch(const CommonException&)
-    {
-        result = false;
-    }
-
-    if(it != nullptr) {
-        git_branch_iterator_free(it);
-    }
-
-    return result;
 }
 
 bool Repository::loadReferences()
@@ -699,11 +667,11 @@ Commit::List Repository::retrieveParentsOfTheCommitBeingCreated(bool amendPrevio
 {
     Commit::List result;
     if(amendPreviousCommit) {
-        result = head()->tip().parents();
+        result = head().tip().parents();
     }
     else {
         if(_info->isHeadUnborn() == false) {
-            result.append(head()->tip());
+            result.append(head().tip());
         }
 
         if(_info->currentOperation() == CurrentOperation::Merge) {
