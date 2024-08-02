@@ -51,7 +51,7 @@ void Remote::reloadReferences()
     size_t count;
     try
     {
-        QMap<QString, Reference*> references;
+        QMap<QString, Reference> references;
         QMap<QString, QString> symRefs;
 
         RemoteHandle handle = createHandle();
@@ -76,7 +76,7 @@ void Remote::reloadReferences()
                 symRefs.insert(name, symRefTargetName);
             }
             else {
-                references.insert(name, new DirectReference(repository(), name, ObjectId(head->oid)));
+                references.insert(name, Reference::createDirectReference(repository(), name, ObjectId(head->oid)));
             }
         }
 
@@ -86,7 +86,7 @@ void Remote::reloadReferences()
             if(references.contains(value) == false) {
                 throw CommonException("Symbolic reference target not found in direct reference results.");
             }
-            references.insert(key, new SymbolicReference(repository(), key, value, references.value(value)));
+            references.insert(key, Reference::createSymbolicReference(repository(), key, value));
         }
 
         _references->append(references.values());

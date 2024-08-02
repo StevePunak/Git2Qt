@@ -33,7 +33,7 @@ ObjectId ObjectId::createFromHandle(git_reference* handle)
     return result;
 }
 
-ObjectId ObjectId::createFromReference(Reference* reference)
+ObjectId ObjectId::createFromReference(const Reference& reference)
 {
-    return createFromHandle(reference->handle());
+    return createFromHandle(reference.handle().value());
 }

@@ -20,11 +20,50 @@ Reference::Reference(Repository* repo, const QString& canonicalName, const QStri
 
 Reference::~Reference()
 {
+    if(_target == nullptr) {
+        delete _target;
+    }
 }
 
-Reference* Reference::create(Repository* repo, git_reference* handle)
+Reference Reference::createSymbolicReference(Repository* repo, const QString& canonicalName, const QString& targetIdentifier, git_reference* handle)
 {
-    Reference* result = nullptr;
+    Reference reference(repo, canonicalName, targetIdentifier);
+    reference._target = new Reference(repo, canonicalName, targetIdentifier);
+    reference._handle = ReferenceHandle(handle);
+    return reference;
+}
+
+Reference Reference::createSymbolicReference(Repository* repo, const QString& canonicalName, const QString& targetIdentifier)
+{
+    Reference reference;
+    git_reference* ref = nullptr;
+    if(git_reference_lookup(&ref, repo->handle().value(), canonicalName.toUtf8().constData()) == 0) {
+        reference = createSymbolicReference(repo, canonicalName, targetIdentifier, ref);
+    }
+    return reference;
+}
+
+Reference Reference::createDirectReference(Repository* repo, const QString& canonicalName, const ObjectId& targetoid, git_reference* handle)
+{
+    Reference reference(repo, canonicalName, targetoid.sha());
+    reference._targetOid = targetoid;
+    reference._handle = ReferenceHandle(handle);
+    return reference;
+}
+
+Reference Reference::createDirectReference(Repository* repo, const QString& canonicalName, const ObjectId& targetoid)
+{
+    Reference reference;
+    git_reference* ref = nullptr;
+    if(git_reference_lookup(&ref, repo->handle().value(), canonicalName.toUtf8().constData()) == 0) {
+        reference = createDirectReference(repo, canonicalName, targetoid, ref);
+    }
+    return reference;
+}
+
+Reference Reference::create(Repository* repo, git_reference* handle)
+{
+    Reference result;
 
     try
     {
@@ -35,17 +74,14 @@ Reference* Reference::create(Repository* repo, git_reference* handle)
         case SymbolicReferenceType:
         {
             QString targetIdentifier = symbolicTargetNameFromHandle(handle);
-            Reference* targetRef = repo->references()->findReference(targetIdentifier);
-            result = new SymbolicReference(repo, name, targetIdentifier, targetRef);
-            result->_handle = handle;
+            result = createSymbolicReference(repo, name, targetIdentifier, handle);
             break;
         }
 
         case DirectReferenceType:
         {
             ObjectId oid = objectIdFromHandle(handle);
-            result = new DirectReference(repo, name, oid);
-            result->_handle = handle;
+            result = createDirectReference(repo, name, oid, handle);
             break;
         }
 
@@ -61,24 +97,24 @@ Reference* Reference::create(Repository* repo, git_reference* handle)
     return result;
 }
 
-Reference* Reference::create(Repository* repo, const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite)
+Reference Reference::create(Repository* repo, const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite)
 {
-    Reference* result = nullptr;
+    Reference reference;
     git_reference* ref = nullptr;
     if(git_reference_create(&ref, repo->handle().value(), name.toUtf8().constData(), targetId.toNative(), allowOverwrite, logMessage.toUtf8().constData()) == 0) {
-        result = create(repo, ref);
+        reference = create(repo, ref);
     }
-    return result;
+    return reference;
 }
 
-Reference* Reference::lookup(Repository* repo, const QString& name)
+Reference Reference::lookup(Repository* repo, const QString& name)
 {
-    Reference* result = nullptr;
+    Reference reference;
     git_reference* ref = nullptr;
     if(git_reference_lookup(&ref, repo->handle().value(), name.toUtf8()) == 0) {
-        result = create(repo, ref);
+        reference = create(repo, ref);
     }
-    return result;
+    return reference;
 }
 
 QString Reference::name() const
@@ -94,6 +130,15 @@ ReferenceType Reference::type() const
 ObjectId Reference::objectId() const
 {
     return objectIdFromHandle(_handle);
+}
+
+void Reference::resolveTarget()
+{
+    if(_target != nullptr) {
+        delete _target;
+        _target = nullptr;
+    }
+    _target = new Reference(repository(), _canonicalName, _targetIdentifier);
 }
 
 ReferenceType Reference::typeFromHandle(const ReferenceHandle& handle)
@@ -132,21 +177,4 @@ ObjectId Reference::objectIdFromHandle(const ReferenceHandle& handle)
     }
     return result;
 }
-
-// --------------------- SymbolicReference ----------------------
-
-SymbolicReference::SymbolicReference(Repository* repo, const QString& canonicalName, const QString& targetIdentifier, Reference* target) :
-    Reference(repo, canonicalName, targetIdentifier),
-    _target(target)
-{
-}
-
-// --------------------- DirectReference ----------------------
-
-DirectReference::DirectReference(Repository* repo, const QString& canonicalName, const ObjectId& targetOid) :
-    Reference(repo, canonicalName, targetOid.sha()),
-    _targetOid(targetOid)
-{
-}
-
 

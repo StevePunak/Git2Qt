@@ -9,7 +9,7 @@ AnnotatedCommitHandle AnnotatedCommitHandle::fromRef(Repository* repo, Branch* b
 {
     AnnotatedCommitHandle result;
     git_annotated_commit* handle = nullptr;
-    if(git_annotated_commit_from_ref(&handle, repo->handle().value(), branch->reference()->handle()) == 0) {
+    if(git_annotated_commit_from_ref(&handle, repo->handle().value(), branch->reference().handle().value()) == 0) {
         result = AnnotatedCommitHandle(handle);
     }
     return result;

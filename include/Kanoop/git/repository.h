@@ -63,7 +63,7 @@ public:
 
     // Commits
     Commit commit(const QString& message, const Signature& author, const Signature& committer, const CommitOptions& options = CommitOptions());
-    Commit::List findCommits(Reference* from);
+    Commit::List findCommits(const Reference& from);
 
     // Status
     GIT::RepositoryStatus status();

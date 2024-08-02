@@ -1,6 +1,7 @@
 #ifndef BRANCH_H
 #define BRANCH_H
 #include <Kanoop/git/gitentity.h>
+#include <Kanoop/git/reference.h>
 
 #include <QMap>
 
@@ -22,7 +23,7 @@ public:
         RemoteBranch
     };
 
-    explicit Branch(Repository* repo, Reference* reference, git_branch_t type);
+    explicit Branch(Repository* repo, const Reference& reference, git_branch_t type);
     virtual ~Branch();
 
     QString name() const;
@@ -33,13 +34,13 @@ public:
     QString remoteName();
     BranchType branchType() const { return _branchType; }
 
-    Reference* reference() const { return _reference; }
+    Reference reference() const { return _reference; }
 
     Commit tip();
 
     bool isHead() const;
     bool isRemote() const;
-    virtual bool isNull() const override { return _reference == nullptr; }
+    virtual bool isNull() const override { return _reference.isNull(); }
 
     class Map : public QMap<QString, Branch*>
     {
@@ -76,7 +77,7 @@ private:
     QString remoteNameFromRemoteTrackingBranch();
     QString remoteNameFromLocalBranch();
 
-    Reference* _reference = nullptr;
+    Reference _reference;
     BranchType _branchType = LocalBranch;
 };
 

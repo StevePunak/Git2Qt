@@ -390,7 +390,7 @@ Branch* Repository::createBranchFromAnnotatedCommit(const AnnotatedCommitHandle&
     git_reference* newBranch = nullptr;
     int rc = git_branch_create_from_annotated(&newBranch, _handle.value(), branchName.toUtf8().constData(), annotatedCommit.value(), false);
     if(rc == 0) {
-        Reference* reference = Reference::create(this, newBranch);
+        Reference reference = Reference::create(this, newBranch);
         result = new Branch(this, reference, GIT_BRANCH_LOCAL);
         _branches.insert(result->name(), result);
     }
@@ -443,7 +443,7 @@ Commit Repository::commit(const QString& message, const Signature& author, const
     return result;
 }
 
-Commit::List Repository::findCommits(Reference* from)
+Commit::List Repository::findCommits(const Reference& from)
 {
     Commit::List result;
 
@@ -673,13 +673,13 @@ bool Repository::loadReferences()
         throwOnError(git_reference_iterator_new(&it, _handle.value()));
         git_reference* ref;
         while(!git_reference_next(&ref, it)) {
-            Reference* reference = Reference::create(this, ref);
-            if(reference != nullptr) {
+            Reference reference = Reference::create(this, ref);
+            if(reference.isNull() == false) {
                 _references->append(reference);
             }
         }
 
-        _references->resolveSymbolicTargets(this);
+        _references->resolveSymbolicTargets();
 
         result = true;
     }
@@ -743,22 +743,22 @@ QString Repository::buildCommitLogMessage(const Commit& commit, bool amendPrevio
 
 void Repository::updateHeadAndTerminalReference(const Commit& commit, const QString& reflogMessage)
 {
-    Reference* reference = _references->head();
-    if(reference == nullptr) {
+    Reference reference = _references->head();
+    if(reference.isNull()) {
         KLog::sysLogText(KLOG_ERROR, "Failed to find HEAD reference!");
         return;
     }
 
     while(true) {
-        if(reference->isDirect()) {
-            _references->updateTarget(static_cast<DirectReference*>(reference), commit.objectId(), reflogMessage);
+        if(reference.isDirect()) {
+            _references->updateTarget(reference, commit.objectId(), reflogMessage);
             break;
         }
         else {
-            SymbolicReference* symRef = static_cast<SymbolicReference*>(reference);
-            reference = symRef->target();
-            if(reference == nullptr) {
-                _references->append(symRef->targetIdentifier(), commit.objectId(), reflogMessage);
+            Reference symRef = reference;;
+            reference = *symRef.target();
+            if(reference.isNull()) {
+                _references->append(symRef.targetIdentifier(), commit.objectId(), reflogMessage);
                 break;
             }
         }

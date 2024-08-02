@@ -21,7 +21,7 @@ public:
     bool operator !=(const ObjectId& other) const { return !(*this == other); }
 
     static ObjectId createFromHandle(git_reference* handle);
-    static ObjectId createFromReference(Reference* reference);
+    static ObjectId createFromReference(const Reference& reference);
 
     QString sha() const { return _sha; }
     GitOid oid() const { return _oid; }

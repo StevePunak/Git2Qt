@@ -13,27 +13,27 @@ public:
     ReferenceCollection(Repository* repo);
     virtual ~ReferenceCollection();
 
-    void resolveSymbolicTargets(Repository* repo);
-    Reference* head();
-    Reference* findReference(const QString& name) const;
-    Reference* findReference(const ObjectId& objectId) const;
+    void resolveSymbolicTargets();
+    Reference head();
+    Reference findReference(const QString& name) const;
+    Reference findReference(const ObjectId& objectId) const;
     void clear();
+
+    void append(const Reference& reference);
+    void append(const QList<Reference>& references);
+    Reference append(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite = false);
 
     Reference::Map references() const { return _references; }
 
-    void append(Reference* reference);
-    void append(QList<Reference*> references);
-    DirectReference* append(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite = false);
-
-    Reference* updateTarget(DirectReference* directRef, const ObjectId& targetId, const QString& logMessage);
-    Reference* updateHeadTarget(const ObjectId& targetId, const QString& logMessage);
-    Reference* updateDirectReferenceTarget(DirectReference* directRef, const ObjectId& targetId, const QString& logMessage);
+    Reference updateTarget(const Reference& directRef, const ObjectId& targetId, const QString& logMessage);
+    Reference updateHeadTarget(const ObjectId& targetId, const QString& logMessage);
+    Reference updateDirectReferenceTarget(const Reference& directRef, const ObjectId& targetId, const QString& logMessage);
 
     virtual bool isNull() const { return false; }
 
 private:
+    Reference _head;
     Reference::Map _references;
-    Reference* _head = nullptr;
 };
 
 } // namespace GIT

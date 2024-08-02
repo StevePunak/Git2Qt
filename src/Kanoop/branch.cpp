@@ -13,7 +13,7 @@
 
 using namespace GIT;
 
-Branch::Branch(Repository* repo, Reference* reference, git_branch_t type) :
+Branch::Branch(Repository* repo, const Reference& reference, git_branch_t type) :
     GitEntity(GitEntity::BranchEntity, repo),
     _reference(reference)
 {
@@ -31,34 +31,31 @@ Branch::Branch(Repository* repo, Reference* reference, git_branch_t type) :
 
 Branch::~Branch()
 {
-    if(_reference != nullptr) {
-        delete _reference;
-    }
 }
 
 QString Branch::name() const
 {
     const char* name;
-    git_branch_name(&name, _reference->handle());
+    git_branch_name(&name, _reference.handle().value());
     return name;
 }
 
 QString Branch::canonicalName() const
 {
-    return _reference->canonicalName();
+    return _reference.canonicalName();
 }
 
 QString Branch::friendlyName() const
 {
     QString result;
-    if(_reference->looksLikeLocalBranch()) {
-        result = _reference->canonicalName().mid(Reference::LocalBranchPrefix.length());
+    if(_reference.looksLikeLocalBranch()) {
+        result = _reference.canonicalName().mid(Reference::LocalBranchPrefix.length());
     }
-    else if(_reference->looksLikeRemoteTrackingBranch()) {
-        result = _reference->canonicalName().mid(Reference::RemoteTrackingBranchPrefix.length());
+    else if(_reference.looksLikeRemoteTrackingBranch()) {
+        result = _reference.canonicalName().mid(Reference::RemoteTrackingBranchPrefix.length());
     }
     else {
-        KLog::sysLogText(KLOG_ERROR, QString("%1 does not look like a valid branch name").arg(_reference->canonicalName()));
+        KLog::sysLogText(KLOG_ERROR, QString("%1 does not look like a valid branch name").arg(_reference.canonicalName()));
     }
     return result;
 }
@@ -68,7 +65,7 @@ QString Branch::upstreamBranchCanonicalName()
     QString name;
     if(isRemote()) {
         Remote* remote = repository()->network()->remoteForName(remoteName());
-        name = remote->fetchSpecTransformToSource(_reference->canonicalName());
+        name = remote->fetchSpecTransformToSource(_reference.canonicalName());
     }
     else {
         name = upstreamBranchCanonicalNameFromLocalBranch();
@@ -120,19 +117,19 @@ Commit Branch::tip()
 
 bool Branch::isHead() const
 {
-    return git_branch_is_head(_reference->handle()) == 1 ? true : false;
+    return git_branch_is_head(_reference.handle().value()) == 1 ? true : false;
 }
 
 bool Branch::isRemote() const
 {
-    return _reference->looksLikeRemoteTrackingBranch();
+    return _reference.looksLikeRemoteTrackingBranch();
 }
 
 QString Branch::remoteNameFromRemoteTrackingBranch()
 {
     QString result;
     git_buf buf = GIT_BUF_INIT;
-    if(git_branch_remote_name(&buf, repository()->handle().value(), _reference->canonicalName().toUtf8().constData()) == 0) {
+    if(git_branch_remote_name(&buf, repository()->handle().value(), _reference.canonicalName().toUtf8().constData()) == 0) {
         result = buf.ptr;
     }
     return result;
