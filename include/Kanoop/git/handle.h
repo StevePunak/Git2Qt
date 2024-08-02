@@ -127,6 +127,18 @@ public:
     }
 };
 
+class SubmoudleHandle : public Handle<git_submodule*>
+{
+public:
+    SubmoudleHandle() : Handle() {}
+    SubmoudleHandle(git_submodule* handle) :
+        Handle(handle) {}
+    virtual void dispose() override
+    {
+        git_submodule_free(_handle);
+    }
+};
+
 } // namespace GIT
 
 #endif // HANDLE_H

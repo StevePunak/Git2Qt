@@ -13,6 +13,10 @@
 
 namespace GIT {
 
+class TagCollection;
+
+class SubmoduleCollection;
+
 class ReferenceCollection;
 
 class ObjectDatabase;
@@ -33,6 +37,7 @@ class Repository : public QObject,
 public:
     explicit Repository(const QString& localPath, bool bare);
     explicit Repository(const QString& localPath);
+    explicit Repository(git_repository* nativeRepo);
     virtual ~Repository();
 
     // Clone
@@ -91,6 +96,9 @@ public:
     RepositoryInformation* info() const { return _info; }
     Configuration* config() const { return _config; }
     Network* network() const { return _network; }
+    Diff* diff() const { return _diff; }
+    SubmoduleCollection* submodules() const { return _submodules; }
+    TagCollection* tags() const { return _tags; }
 
     virtual bool isNull() const override { return _handle.isNull(); }
 
@@ -121,7 +129,8 @@ private:
     ObjectDatabase* _objectDatabase = nullptr;
     ReferenceCollection* _references = nullptr;
     Network* _network = nullptr;
-
+    SubmoduleCollection* _submodules = nullptr;
+    TagCollection* _tags = nullptr;
     CredentialResolver* _credentialResolver = nullptr;
 
     Branch::Map _branches;

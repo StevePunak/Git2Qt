@@ -18,6 +18,13 @@ GitOid::GitOid(const git_oid& oid)
     _id = oid;
 }
 
+GitOid::GitOid(const git_oid* oid)
+{
+    if(oid != nullptr) {
+        _id = *oid;
+    }
+}
+
 bool GitOid::isEmtpy() const
 {
     return memcmp(Empty.id, _id.id, GIT_OID_MAX_SIZE) == 0;

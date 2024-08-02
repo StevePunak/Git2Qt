@@ -10,12 +10,17 @@ class StringArray
 {
 public:
     StringArray(const QStringList& values);
+    StringArray(const QString& value);
     virtual ~StringArray();
 
     char* at(int index) const;
+    int count() const { return _native.count; }
+
     const git_strarray* native() const { return &_native; }
 
 private:
+    void commonInit(const QStringList& values);
+
     git_strarray _native;
 };
 

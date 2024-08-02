@@ -2,12 +2,10 @@
 #define DIFF_H
 #include <Kanoop/git/gitentity.h>
 #include <Kanoop/git/gittypes.h>
-#include <Qt>
+#include <Kanoop/git/diffdelta.h>
 
 namespace GIT {
-
 class TreeChanges;
-
 class CompareOptions;
 class StageOptions;
 class Repository;
@@ -51,9 +49,18 @@ public:
     virtual ~Diff() {}
 
     TreeChanges compare(GIT::Diff::DiffModifiers diffModifiers, const QStringList& paths, const CompareOptions& compareOptions);
+    GIT::DiffDelta::List listDiffs(const CompareOptions& compareOptions, DiffModifiers diffFlags = DiffModifier::None);
 
     virtual bool isNull() const override { return false; }
 
+private:
+    void buildDiffOptions(DiffModifiers diffOptions, const CompareOptions& compareOptions, git_diff_options& options);
+
+    // Callbacks
+    static int fileCallback(const git_diff_delta *delta, float progress, void *payload);
+    static int binaryCallback(const git_diff_delta *d, const git_diff_binary *binary, void *payload);
+    static int hunkCallback(const git_diff_delta *d, const git_diff_hunk *h, void *payload);
+    static int lineCallback(const git_diff_delta *d, const git_diff_hunk *h, const git_diff_line *l, void *payload);
 };
 
 } // namespace GIT

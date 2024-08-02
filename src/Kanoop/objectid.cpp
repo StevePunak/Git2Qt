@@ -17,7 +17,7 @@ ObjectId::ObjectId(const git_oid& oid) :
 }
 
 ObjectId::ObjectId(const git_oid* oid) :
-    _oid(*oid)
+    _oid(oid)
 {
     _sha = _oid.id().toHex().toLower();
 }

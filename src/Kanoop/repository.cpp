@@ -26,6 +26,8 @@
 #include <network.h>
 #include <remote.h>
 #include <stringarray.h>
+#include <submodulecollection.h>
+#include <tagcollection.h>
 
 using namespace GIT;
 
@@ -43,6 +45,22 @@ Repository::Repository(const QString& localPath) :
     _localPath(localPath)
 {
     commonInit();
+}
+
+Repository::Repository(git_repository* nativeRepo) :
+    QObject(),
+    GitEntity(GitEntity::RepositoryEntity, this)
+{
+    KGit::ensureInitialized();
+    try
+    {
+        _handle = RepositoryHandle(nativeRepo);
+        _localPath = git_repository_path(_handle.value());
+        postInitializationLookups();
+    }
+    catch(const CommonException&)
+    {
+    }
 }
 
 Repository::~Repository()
@@ -81,6 +99,8 @@ void Repository::postInitializationLookups()
     _objectDatabase = new ObjectDatabase(this);
     _references = new ReferenceCollection(this);
     _network = new Network(this);
+    _submodules = new SubmoduleCollection(this);
+    _tags = new TagCollection(this);
 
     loadBranches();
     loadReferences();
@@ -120,6 +140,14 @@ void Repository::commonDestroy()
     if(_network != nullptr) {
         delete _network;
         _network = nullptr;
+    }
+    if(_submodules != nullptr) {
+        delete _submodules;
+        _submodules = nullptr;
+    }
+    if(_tags != nullptr) {
+        delete _tags;
+        _tags = nullptr;
     }
 }
 

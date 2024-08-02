@@ -12,6 +12,7 @@ public:
     GitOid();
     GitOid(const unsigned char* data, int size);
     GitOid(const git_oid& oid);
+    GitOid(const git_oid* oid);
 
     QByteArray id() const { return QByteArray((const char*)_id.id, GIT_OID_MAX_SIZE); }
 
@@ -20,7 +21,7 @@ public:
     bool isEmtpy() const;
 
 private:
-    git_oid _id;
+    git_oid _id = { 0 };
 
     static const git_oid Empty;
 

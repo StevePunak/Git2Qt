@@ -34,4 +34,34 @@ QList<ConfigurationLevel> getConfigurationLevelValues()
     return EnumStrings::getConfigurationLevelValues();
 }
 
+QString getDeltaTypeString(DeltaType value)
+{
+    return EnumStrings::getDeltaTypeString(value);
+}
+
+DeltaType getDeltaType(const QString& value)
+{
+    return EnumStrings::getDeltaType(value);
+}
+
+QList<DeltaType> getDeltaTypeValues()
+{
+    return EnumStrings::getDeltaTypeValues();
+}
+
+QString getDiffDeltaFlagString(DiffDeltaFlag value)
+{
+    return EnumStrings::getDiffDeltaFlagString(value);
+}
+
+DiffDeltaFlag getDiffDeltaFlag(const QString& value)
+{
+    return EnumStrings::getDiffDeltaFlag(value);
+}
+
+QList<DiffDeltaFlag> getDiffDeltaFlagValues()
+{
+    return EnumStrings::getDiffDeltaFlagValues();
+}
+
 }   // namespace

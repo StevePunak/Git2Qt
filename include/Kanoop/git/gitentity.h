@@ -27,6 +27,11 @@ public:
         RemoteEntity,
         RemoteCollectionEntity,
         SignatureEntity,
+        SubmoduleEntity,
+        SubmoduleCollectionEntity,
+        TagEntity,
+        TagAnnotationEntity,
+        TagCollectionEntity,
     };
 
     virtual ~GitEntity() {}

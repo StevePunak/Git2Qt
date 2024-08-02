@@ -4,6 +4,24 @@ using namespace GIT;
 
 StringArray::StringArray(const QStringList& values)
 {
+    commonInit(values);
+}
+
+StringArray::StringArray(const QString& value)
+{
+    commonInit(QStringList() << value);
+}
+
+StringArray::~StringArray()
+{
+    for(int i = 0;i < (int)_native.count;i++) {
+        delete _native.strings[i];
+    }
+    delete _native.strings;
+}
+
+void StringArray::commonInit(const QStringList& values)
+{
     _native.count = values.count();
     _native.strings = new char*[_native.count];
     for(int i = 0;i < (int)_native.count;i++) {
@@ -15,14 +33,6 @@ StringArray::StringArray(const QStringList& values)
     }
 }
 
-StringArray::~StringArray()
-{
-    for(int i = 0;i < (int)_native.count;i++) {
-        delete _native.strings[i];
-    }
-    delete _native.strings;
-}
-
 char* StringArray::at(int index) const
 {
     char* result = nullptr;
@@ -31,3 +41,4 @@ char* StringArray::at(int index) const
     }
     return result;
 }
+
