@@ -30,7 +30,12 @@ Submodule SubmoduleCollection::lookup(const QString& name)
     return result;
 }
 
-Submodule::Map SubmoduleCollection::submodules()
+Submodule SubmoduleCollection::value(const QString& name)
+{
+    return lookup(name);
+}
+
+Submodule::Map SubmoduleCollection::values()
 {
     _loadingSubmodules.clear();
     try

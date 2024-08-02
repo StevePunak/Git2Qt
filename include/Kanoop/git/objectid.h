@@ -28,6 +28,7 @@ public:
 
     const git_oid* toNative() const { return _oid.toNative(); }
 
+    QString toString() const { return _sha; }
     bool isValid() const { return _oid.isEmtpy() == false; }
 
     class List : public QList<ObjectId> {};

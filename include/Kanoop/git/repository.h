@@ -90,7 +90,6 @@ public:
 
     Branch::Map branches() const { return _branches; }
     ReferenceCollection* references() const { return _references; }
-
     const RepositoryHandle handle() const { return _handle; }
     Index* index() const { return _index; }
     RepositoryInformation* info() const { return _info; }

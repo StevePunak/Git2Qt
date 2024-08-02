@@ -64,4 +64,19 @@ QList<DiffDeltaFlag> getDiffDeltaFlagValues()
     return EnumStrings::getDiffDeltaFlagValues();
 }
 
+QString getReferenceTypeString(ReferenceType value)
+{
+    return EnumStrings::getReferenceTypeString(value);
+}
+
+ReferenceType getReferenceType(const QString& value)
+{
+    return EnumStrings::getReferenceType(value);
+}
+
+QList<ReferenceType> getReferenceTypeValues()
+{
+    return EnumStrings::getReferenceTypeValues();
+}
+
 }   // namespace

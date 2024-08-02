@@ -19,6 +19,8 @@ public:
     Reference* findReference(const ObjectId& objectId) const;
     void clear();
 
+    Reference::Map references() const { return _references; }
+
     void append(Reference* reference);
     void append(QList<Reference*> references);
     DirectReference* append(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite = false);

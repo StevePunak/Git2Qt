@@ -122,7 +122,7 @@ Reference* ReferenceCollection::updateDirectReferenceTarget(DirectReference* dir
 DirectReference* ReferenceCollection::append(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite)
 {
     Reference* reference = Reference::create(repository(), name, targetId, logMessage, allowOverwrite);
-    if(reference == nullptr || reference->type() != Reference::DirectReferenceType) {
+    if(reference == nullptr || reference->type() != DirectReferenceType) {
         KLog::sysLogText(KLOG_ERROR, "Failed to create DIRECT reference");
     }
     return static_cast<DirectReference*>(reference);

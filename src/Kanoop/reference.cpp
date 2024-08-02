@@ -37,7 +37,7 @@ Reference* Reference::create(Repository* repo, git_reference* handle)
             QString targetIdentifier = symbolicTargetNameFromHandle(handle);
             Reference* targetRef = repo->references()->findReference(targetIdentifier);
             result = new SymbolicReference(repo, name, targetIdentifier, targetRef);
-            result->_reference = handle;
+            result->_handle = handle;
             break;
         }
 
@@ -45,7 +45,7 @@ Reference* Reference::create(Repository* repo, git_reference* handle)
         {
             ObjectId oid = objectIdFromHandle(handle);
             result = new DirectReference(repo, name, oid);
-            result->_reference = handle;
+            result->_handle = handle;
             break;
         }
 
@@ -83,20 +83,20 @@ Reference* Reference::lookup(Repository* repo, const QString& name)
 
 QString Reference::name() const
 {
-    return nameFromHandle(_reference);
+    return nameFromHandle(_handle);
 }
 
-Reference::ReferenceType Reference::type() const
+ReferenceType Reference::type() const
 {
-    return typeFromHandle(_reference);
+    return typeFromHandle(_handle);
 }
 
 ObjectId Reference::objectId() const
 {
-    return objectIdFromHandle(_reference);
+    return objectIdFromHandle(_handle);
 }
 
-Reference::ReferenceType Reference::typeFromHandle(const ReferenceHandle& handle)
+ReferenceType Reference::typeFromHandle(const ReferenceHandle& handle)
 {
     ReferenceType result = UnknownReferenceType;
 

@@ -394,19 +394,24 @@ Q_DECLARE_FLAGS(DiffDeltaFlags, DiffDeltaFlag)
 
 enum DeltaType
 {
-    GIT_DELTA_UNMODIFIED = 0,  /**< no changes */
-    GIT_DELTA_ADDED = 1,	   /**< entry does not exist in old version */
-    GIT_DELTA_DELETED = 2,	   /**< entry does not exist in new version */
-    GIT_DELTA_MODIFIED = 3,    /**< entry content changed between old and new */
-    GIT_DELTA_RENAMED = 4,     /**< entry was renamed between old and new */
-    GIT_DELTA_COPIED = 5,      /**< entry was copied from another old entry */
-    GIT_DELTA_IGNORED = 6,     /**< entry is ignored item in workdir */
-    GIT_DELTA_UNTRACKED = 7,   /**< entry is untracked item in workdir */
-    GIT_DELTA_TYPECHANGE = 8,  /**< type of entry changed between old and new */
-    GIT_DELTA_UNREADABLE = 9,  /**< entry is unreadable */
-    GIT_DELTA_CONFLICTED = 10  /**< entry in the index is conflicted */
+    DeltaUnmodified = 0,    /**< no changes */
+    DeltaAdded = 1,         /**< entry does not exist in old version */
+    DeltaDeleted = 2,       /**< entry does not exist in new version */
+    DeltaModified = 3,      /**< entry content changed between old and new */
+    DeltaRenamed = 4,       /**< entry was renamed between old and new */
+    DeltaCopied = 5,        /**< entry was copied from another old entry */
+    DeltaIgnored = 6,       /**< entry is ignored item in workdir */
+    DeltaUntracked = 7,     /**< entry is untracked item in workdir */
+    DeltaTypeCange = 8,     /**< type of entry changed between old and new */
+    DeltaUnreadable = 9,    /**< entry is unreadable */
+    DeltaConflicted = 10    /**< entry in the index is conflicted */
 };
 
+enum ReferenceType {
+    UnknownReferenceType,
+    SymbolicReferenceType,
+    DirectReferenceType,
+};
 
 QString getFileStatusString(FileStatus value);
 FileStatus getFileStatus(const QString& value);
@@ -423,6 +428,10 @@ QList<DeltaType> getDeltaTypeValues();
 QString getDiffDeltaFlagString(DiffDeltaFlag value);
 DiffDeltaFlag getDiffDeltaFlag(const QString& value);
 QList<DiffDeltaFlag> getDiffDeltaFlagValues();
+
+QString getReferenceTypeString(ReferenceType value);
+ReferenceType getReferenceType(const QString& value);
+QList<ReferenceType> getReferenceTypeValues();
 
 } // namespace GIT
 

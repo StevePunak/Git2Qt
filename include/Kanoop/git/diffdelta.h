@@ -49,7 +49,7 @@ public:
 
 
 private:
-    DeltaType _status = GIT_DELTA_UNMODIFIED;
+    DeltaType _status = DeltaUnmodified;
     DiffDeltaFlags _flags = (DiffDeltaFlag)0;
     int _similarity = 0;
     int _fileCount = 0;

@@ -1,6 +1,7 @@
 #ifndef REFERENCE_H
 #define REFERENCE_H
 #include <Kanoop/git/gitentity.h>
+#include <Kanoop/git/gittypes.h>
 #include <Kanoop/git/objectid.h>
 #include <Kanoop/git/handle.h>
 
@@ -14,12 +15,6 @@ class SymbolicReference;
 class Reference : public GitEntity
 {
 public:
-    enum ReferenceType {
-        UnknownReferenceType,
-        SymbolicReferenceType,
-        DirectReferenceType,
-    };
-
     static Reference* create(Repository* repo, git_reference* handle);
     static Reference* create(Repository* repo, const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite);
     static Reference* lookup(Repository* repo, const QString& name);
@@ -31,11 +26,11 @@ public:
     QString targetIdentifier() const { return _targetIdentifier; }
     ObjectId objectId() const;
 
-    git_reference* handle() const { return _reference.value(); }
+    git_reference* handle() const { return _handle.value(); }
 
     virtual bool isDirect() const { return type() == DirectReferenceType; }
     virtual bool isSymbolic() const { return type() == SymbolicReferenceType; }
-    virtual bool isNull() const override { return _reference.isNull(); }
+    virtual bool isNull() const override { return _handle.isNull(); }
 
     bool looksLikeLocalBranch() const { return looksLikeLocalBranch(_canonicalName); }
     bool looksLikeRemoteTrackingBranch() const { return looksLikeRemoteTrackingBranch(_canonicalName); }
@@ -75,7 +70,7 @@ private:
     static QString symbolicTargetNameFromHandle(const ReferenceHandle& handle);
     static ObjectId objectIdFromHandle(const ReferenceHandle& handle);
 
-    ReferenceHandle _reference;
+    ReferenceHandle _handle;
     QString _canonicalName;
     QString _targetIdentifier;
 

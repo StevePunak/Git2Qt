@@ -14,11 +14,13 @@ public:
 
     Submodule lookup(const QString& name);
 
-    Submodule::Map submodules();
+    Submodule value(const QString& name);
+    Submodule::Map values();
 
     virtual bool isNull() const override;
 
 private:
+
     // Callbacks
     static int submoduleCallback(git_submodule *sm, const char *name, void *payload);
 

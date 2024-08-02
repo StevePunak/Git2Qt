@@ -13,6 +13,9 @@ class Tag : public GitEntity
 public:
     Tag(Repository* repo, const QString& name, const ObjectId& objectId);
 
+    QString name() const { return _name; }
+    ObjectId objectId() const { return _objectId; }
+
     virtual bool isNull() const override { return _name.isEmpty(); }
 
     class List : public QList<Tag> {};

@@ -17,12 +17,16 @@ public:
     static QList<ConfigurationLevel> getConfigurationLevelValues() { return _ConfigurationLevelToStringMap.getTypes(); }
 
     static QString getDeltaTypeString(DeltaType value) { return _DeltaTypeToStringMap.getString(value); }
-    static DeltaType getDeltaType(const QString& value) { return _DeltaTypeToStringMap.getType(value, GIT_DELTA_UNMODIFIED); }
+    static DeltaType getDeltaType(const QString& value) { return _DeltaTypeToStringMap.getType(value, DeltaUnmodified); }
     static QList<DeltaType> getDeltaTypeValues() { return _DeltaTypeToStringMap.getTypes(); }
 
     static QString getDiffDeltaFlagString(DiffDeltaFlag value) { return _DiffDeltaFlagToStringMap.getString(value); }
     static DiffDeltaFlag getDiffDeltaFlag(const QString& value) { return _DiffDeltaFlagToStringMap.getType(value, (DiffDeltaFlag)0); }
     static QList<DiffDeltaFlag> getDiffDeltaFlagValues() { return _DiffDeltaFlagToStringMap.getTypes(); }
+
+    static QString getReferenceTypeString(ReferenceType value) { return _ReferenceTypeToStringMap.getString(value); }
+    static ReferenceType getReferenceType(const QString& value) { return _ReferenceTypeToStringMap.getType(value, UnknownReferenceType); }
+    static QList<ReferenceType> getReferenceTypeValues() { return _ReferenceTypeToStringMap.getTypes(); }
 
 private:
     class FileStatusToStringMap : public KANOOP::EnumToStringMap<FileStatus>
@@ -66,17 +70,17 @@ private:
     public:
         DeltaTypeToStringMap()
         {
-            insert(GIT_DELTA_UNMODIFIED,        "Unmodified");
-            insert(GIT_DELTA_ADDED,             "Added");
-            insert(GIT_DELTA_DELETED,           "Deleted");
-            insert(GIT_DELTA_MODIFIED,          "Modified");
-            insert(GIT_DELTA_RENAMED,           "Renamed");
-            insert(GIT_DELTA_COPIED,            "Copied");
-            insert(GIT_DELTA_IGNORED,           "Ignored");
-            insert(GIT_DELTA_UNTRACKED,         "Untracked");
-            insert(GIT_DELTA_TYPECHANGE,        "Typechange");
-            insert(GIT_DELTA_UNREADABLE,        "Unreadable");
-            insert(GIT_DELTA_CONFLICTED,        "Conflicted");
+            insert(DeltaUnmodified,        "Unmodified");
+            insert(DeltaAdded,             "Added");
+            insert(DeltaDeleted,           "Deleted");
+            insert(DeltaModified,          "Modified");
+            insert(DeltaRenamed,           "Renamed");
+            insert(DeltaCopied,            "Copied");
+            insert(DeltaIgnored,           "Ignored");
+            insert(DeltaUntracked,         "Untracked");
+            insert(DeltaTypeCange,        "Typechange");
+            insert(DeltaUnreadable,        "Unreadable");
+            insert(DeltaConflicted,        "Conflicted");
         }
     };
 
@@ -93,10 +97,22 @@ private:
         }
     };
 
+    class ReferenceTypeToStringMap : public KANOOP::EnumToStringMap<ReferenceType>
+    {
+    public:
+        ReferenceTypeToStringMap()
+        {
+            insert(UnknownReferenceType,    "UnknownReferenceType");
+            insert(SymbolicReferenceType,   "SymbolicReferenceType");
+            insert(DirectReferenceType,     "DirectReferenceType");
+        }
+    };
+
     static const FileStatusToStringMap _FileStatusToStringMap;
     static const ConfigurationLevelToStringMap _ConfigurationLevelToStringMap;
     static const DeltaTypeToStringMap _DeltaTypeToStringMap;
     static const DiffDeltaFlagToStringMap _DiffDeltaFlagToStringMap;
+    static const ReferenceTypeToStringMap _ReferenceTypeToStringMap;
 };
 
 } // namespace GIT
