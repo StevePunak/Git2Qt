@@ -76,7 +76,7 @@ void Remote::reloadReferences()
                 symRefs.insert(name, symRefTargetName);
             }
             else {
-                references.insert(name, Reference::createDirectReference(repository(), name, ObjectId(head->oid)));
+                references.insert(name, Reference::createDirectReferenceObject(repository(), name, ObjectId(head->oid)));
             }
         }
 
@@ -86,10 +86,10 @@ void Remote::reloadReferences()
             if(references.contains(value) == false) {
                 throw CommonException("Symbolic reference target not found in direct reference results.");
             }
-            references.insert(key, Reference::createSymbolicReference(repository(), key, value));
+            references.insert(key, Reference::createSymbolicReferenceObject(repository(), key, value));
         }
 
-        _references->append(references.values());
+        _references->appendDirectReference(references.values());
     }
     catch(const CommonException& e)
     {

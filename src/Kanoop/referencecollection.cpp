@@ -47,6 +47,7 @@ Reference ReferenceCollection::head()
         else {
             _head = tmpRef;
         }
+        _head.resolveTarget();
     }
     catch(const CommonException&)
     {
@@ -69,15 +70,15 @@ void ReferenceCollection::clear()
     _references.clear();
 }
 
-void ReferenceCollection::append(const Reference& reference)
+void ReferenceCollection::appendDirectReference(const Reference& reference)
 {
     _references.insert(reference.name(), reference);
 }
 
-void ReferenceCollection::append(const QList<Reference>& references)
+void ReferenceCollection::appendDirectReference(const QList<Reference>& references)
 {
     for(const Reference& reference : references) {
-        append(reference);
+        appendDirectReference(reference);
     }
 }
 
@@ -95,21 +96,26 @@ Reference ReferenceCollection::updateTarget(const Reference& directRef, const Ob
 
 Reference ReferenceCollection::updateHeadTarget(const ObjectId& targetId, const QString& logMessage)
 {
-    return append("HEAD", targetId, logMessage, true);
+    return appendDirectReference("HEAD", targetId, logMessage, true);
 }
 
 Reference ReferenceCollection::updateDirectReferenceTarget(const Reference& directRef, const ObjectId& targetId, const QString& logMessage)
 {
     Reference reference;
     git_reference* ref = nullptr;
-    if(git_reference_set_target(&ref, directRef.handle().value(), targetId.toNative(), logMessage.toUtf8().constData()) == 0) {
-        reference = Reference::create(repository(), ref);
-        append(reference);
+
+    ReferenceHandle referenceHandle = directRef.createHandle();
+    if(referenceHandle.isNull() == false) {
+        if(git_reference_set_target(&ref, referenceHandle.value(), targetId.toNative(), logMessage.toUtf8().constData()) == 0) {
+            reference = Reference::create(repository(), ref);
+            appendDirectReference(reference);
+        }
+        referenceHandle.dispose();
     }
     return reference;
 }
 
-Reference ReferenceCollection::append(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite)
+Reference ReferenceCollection::appendDirectReference(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite)
 {
     Reference reference = Reference::create(repository(), name, targetId, logMessage, allowOverwrite);
     if(reference.isNull() || reference.type() != DirectReferenceType) {

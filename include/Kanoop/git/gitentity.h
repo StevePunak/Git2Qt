@@ -49,6 +49,9 @@ public:
 protected:
     GitEntity(GitEntityType type, Repository* repo = nullptr) :
         _type(type), _repository(repo) {}
+    GitEntity(const GitEntity& other) { *this = other; }
+
+    GitEntity& operator=(const GitEntity& other);
 
     bool handleError(int value);
     void throwOnError(int result);
@@ -56,6 +59,9 @@ protected:
     void throwIfFalse(bool result, const QString& message = QString());
     void throwIfTrue(bool result, const QString& message = QString()) { return throwIfFalse(!result, message); }
     void throwIfEmpty(const QString& value, const QString& message = QString());
+
+    static void throwOnError(Repository* repo, int result);
+
     void setRepository(Repository* value) { _repository = value; }
 
 private:

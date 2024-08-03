@@ -35,5 +35,11 @@ ObjectId ObjectId::createFromHandle(git_reference* handle)
 
 ObjectId ObjectId::createFromReference(const Reference& reference)
 {
-    return createFromHandle(reference.handle().value());
+    ObjectId result;
+    ReferenceHandle referenceHandle = reference.createHandle();
+    if(referenceHandle.isNull() == false) {
+        result = createFromHandle(referenceHandle.value());
+        referenceHandle.dispose();
+    }
+    return result;
 }

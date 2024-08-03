@@ -35,8 +35,15 @@ Branch::~Branch()
 
 QString Branch::name() const
 {
-    const char* name;
-    git_branch_name(&name, _reference.handle().value());
+    QString name;
+    const char* namePtr;
+    ReferenceHandle handle = _reference.createHandle();
+    if(handle.isNull() == false) {
+        if(git_branch_name(&namePtr, handle.value()) == 0) {
+            name = namePtr;
+        }
+    }
+    handle.dispose();
     return name;
 }
 
@@ -117,7 +124,13 @@ Commit Branch::tip()
 
 bool Branch::isHead() const
 {
-    return git_branch_is_head(_reference.handle().value()) == 1 ? true : false;
+    bool result = false;
+    ReferenceHandle handle = _reference.createHandle();
+    if(handle.isNull() == false) {
+        result = git_branch_is_head(handle.value()) == 1 ? true : false;
+    }
+    handle.dispose();
+    return result;
 }
 
 bool Branch::isRemote() const

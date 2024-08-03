@@ -643,7 +643,7 @@ bool Repository::loadReferences()
         while(!git_reference_next(&ref, it)) {
             Reference reference = Reference::create(this, ref);
             if(reference.isNull() == false) {
-                _references->append(reference);
+                _references->appendDirectReference(reference);
             }
         }
 
@@ -723,11 +723,13 @@ void Repository::updateHeadAndTerminalReference(const Commit& commit, const QStr
             break;
         }
         else {
-            Reference symRef = reference;;
-            reference = *symRef.target();
-            if(reference.isNull()) {
-                _references->append(symRef.targetIdentifier(), commit.objectId(), reflogMessage);
+            Reference symRef = reference;
+            if(symRef.target() == nullptr) {
+                _references->appendDirectReference(symRef.targetIdentifier(), commit.objectId(), reflogMessage);
                 break;
+            }
+            else {
+                reference = *symRef.target();
             }
         }
     }

@@ -16,10 +16,15 @@ public:
     Reference() :
         GitEntity(ReferenceEntity) {}
 
+    Reference(const Reference& other);
+    Reference& operator=(const Reference& other);
+
+    ReferenceHandle createHandle() const;
+
     static Reference create(Repository* repo, git_reference* handle);
     static Reference create(Repository* repo, const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite);
-    static Reference createDirectReference(Repository* repo, const QString& canonicalName, const ObjectId& targetoid);
-    static Reference createSymbolicReference(Repository* repo, const QString& canonicalName, const QString& targetIdentifier);
+    static Reference createDirectReferenceObject(Repository* repo, const QString& canonicalName, const ObjectId& targetoid);
+    static Reference createSymbolicReferenceObject(Repository* repo, const QString& canonicalName, const QString& targetIdentifier);
     static Reference lookup(Repository* repo, const QString& name);
 
     QString name() const;
@@ -32,13 +37,11 @@ public:
     Reference* target() const { return _target; }
     ObjectId targetOid() const { return _targetOid; }
 
-    ReferenceHandle handle() const { return _handle; }
-
     void resolveTarget();
 
     virtual bool isDirect() const { return type() == DirectReferenceType; }
     virtual bool isSymbolic() const { return type() == SymbolicReferenceType; }
-    virtual bool isNull() const override { return _handle.isNull(); }
+    virtual bool isNull() const override;
 
     bool looksLikeLocalBranch() const { return looksLikeLocalBranch(_canonicalName); }
     bool looksLikeRemoteTrackingBranch() const { return looksLikeRemoteTrackingBranch(_canonicalName); }
@@ -67,22 +70,21 @@ public:
     };
 
 protected:
-    explicit Reference(Repository* repo, const QString& canonicalName, const QString& targetIdentifier);
+    explicit Reference(Repository* repo, const QString& canonicalName, const QString& targetIdentifier, ReferenceType referenceType);
 
 public:
     virtual ~Reference();
 
 private:
-    static Reference createSymbolicReference(Repository* repo, const QString& canonicalName, const QString& targetIdentifier, git_reference* handle);
-    static Reference createDirectReference(Repository* repo, const QString& canonicalName, const ObjectId& targetoid, git_reference* handle);
     static ReferenceType typeFromHandle(const ReferenceHandle& handle);
     static QString nameFromHandle(const ReferenceHandle& handle);
     static QString symbolicTargetNameFromHandle(const ReferenceHandle& handle);
     static ObjectId objectIdFromHandle(const ReferenceHandle& handle);
 
-    ReferenceHandle _handle;
+
     QString _canonicalName;
     QString _targetIdentifier;
+    ReferenceType _type;
 
     Reference* _target = nullptr;
     ObjectId _targetOid;

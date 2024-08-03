@@ -47,11 +47,24 @@ void GitEntity::throwIfEmpty(const QString& value, const QString& message)
     }
 }
 
+void GitEntity::throwOnError(Repository* repo, int result)
+{
+    repo->throwOnError(result);
+}
+
 void GitEntity::setErrorText(const QString& errorText)
 {
     _errorText = errorText;
     if(_type != RepositoryEntity && _repository != nullptr) {
         _repository->setErrorText(errorText);
     }
+}
+
+GitEntity& GitEntity::operator=(const GitEntity& other)
+{
+    _type = other._type;
+    _repository = other._repository;
+    _errorText = other._errorText;
+    return *this;
 }
 
