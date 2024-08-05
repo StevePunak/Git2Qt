@@ -19,6 +19,8 @@ public:
     Reference(const Reference& other);
     Reference& operator=(const Reference& other);
 
+    void dispose();
+
     ReferenceHandle createHandle() const;
 
     static Reference create(Repository* repo, git_reference* handle);
@@ -28,7 +30,7 @@ public:
     static Reference lookup(Repository* repo, const QString& name);
 
     QString name() const;
-    ReferenceType type() const;
+    ReferenceType type() const { return _type; }
 
     QString canonicalName() const { return _canonicalName; }
     QString targetIdentifier() const { return _targetIdentifier; }

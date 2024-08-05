@@ -407,10 +407,23 @@ enum DeltaType
     DeltaConflicted = 10    /**< entry in the index is conflicted */
 };
 
-enum ReferenceType {
+enum ReferenceType
+{
     UnknownReferenceType,
     SymbolicReferenceType,
     DirectReferenceType,
+};
+
+enum ObjectType
+{
+    ObjectTypeAny =         -2, /**< Object can be any of the following */
+    ObjectTypeInvalid =     -1, /**< Object is invalid. */
+    ObjectTypeCommit =      1, /**< A commit object. */
+    ObjectTypeTree =        2, /**< A tree (directory listing) object. */
+    ObjectTypeBlob =        3, /**< A file revision object. */
+    ObjectTypeTag =         4, /**< An annotated tag object. */
+    ObjectTypeDelta =       6, /**< A delta, base is given by an offset. */
+    ObjectTypeRefDelta =    7  /**< A delta, base is given by object id. */
 };
 
 QString getFileStatusString(FileStatus value);
@@ -432,6 +445,10 @@ QList<DiffDeltaFlag> getDiffDeltaFlagValues();
 QString getReferenceTypeString(ReferenceType value);
 ReferenceType getReferenceType(const QString& value);
 QList<ReferenceType> getReferenceTypeValues();
+
+QString getObjectTypeString(ObjectType value);
+ObjectType getObjectType(const QString& value);
+QList<ObjectType> getObjectTypeValues();
 
 } // namespace GIT
 

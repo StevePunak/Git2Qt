@@ -14,13 +14,10 @@
 namespace GIT {
 
 class BranchCollection;
-
 class TagCollection;
-
+class Tag;
 class SubmoduleCollection;
-
 class ReferenceCollection;
-
 class ObjectDatabase;
 class Configuration;
 class RepositoryInformation;
@@ -65,6 +62,8 @@ public:
 
     // Commits
     Commit commit(const QString& message, const Signature& author, const Signature& committer, const CommitOptions& options = CommitOptions());
+    Commit::List findCommits(const QString& messageRegex);
+    Commit::List findCommits(const QRegularExpression& messageRegex);
     Commit::List findCommits(const Reference& from);
 
     // Status
@@ -76,6 +75,11 @@ public:
 
     // Add
     void add(const GIT::StatusEntry::List& items);
+
+    // Tags
+    Tag findTag(const QString& name) const;
+    Tag createLightweightTag(const QString& name, const GitObject& targetObject);
+    Tag createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject);
 
     // Lookup
     Tree lookupTree(const ObjectId& objectId);

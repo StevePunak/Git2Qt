@@ -11,10 +11,12 @@ class GitEntity
 {
 public:
     enum GitEntityType {
-        UnknownGitObjectType = 0,
+        UnknownGitEntityType = 0,
 
+        BlobEntity,
         BranchEntity,
         BranchCollectionEntity,
+        CommitEntity,
         RepositoryEntity,
         ReferenceEntity,
         ReferenceCollectionEntity,
@@ -37,18 +39,23 @@ public:
 
     virtual ~GitEntity() {}
 
-    GitEntityType type() const { return _type; }
+    GitEntityType entityType() const { return _objectType; }
 
     Repository* repository() const { return _repository; }
 
     QString errorText() const { return _errorText; }
     void setErrorText(const QString& errorText);
 
+    bool isBlob() const { return entityType() == BlobEntity; }
+    bool isCommit() const { return entityType() == CommitEntity; }
+    bool isTag() const { return entityType() == TagEntity; }
+    bool isTree() const { return entityType() == TreeEntity; }
+
     virtual bool isNull() const = 0;
 
 protected:
     GitEntity(GitEntityType type, Repository* repo = nullptr) :
-        _type(type), _repository(repo) {}
+        _objectType(type), _repository(repo) {}
     GitEntity(const GitEntity& other) { *this = other; }
 
     GitEntity& operator=(const GitEntity& other);
@@ -65,7 +72,7 @@ protected:
     void setRepository(Repository* value) { _repository = value; }
 
 private:
-    GitEntityType _type = UnknownGitObjectType;
+    GitEntityType _objectType = UnknownGitEntityType;
     Repository* _repository = nullptr;
 
     QString _errorText;

@@ -7,4 +7,5 @@ const EnumStrings::ConfigurationLevelToStringMap EnumStrings::_ConfigurationLeve
 const EnumStrings::DeltaTypeToStringMap EnumStrings::_DeltaTypeToStringMap;
 const EnumStrings::DiffDeltaFlagToStringMap EnumStrings::_DiffDeltaFlagToStringMap;
 const EnumStrings::ReferenceTypeToStringMap EnumStrings::_ReferenceTypeToStringMap;
+const EnumStrings::ObjectTypeToStringMap EnumStrings::_ObjectTypeToStringMap;
 

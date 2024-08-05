@@ -13,6 +13,7 @@ class Remote : public GitEntity
 public:
     Remote(Repository* repo, const QString& name);
     virtual ~Remote();
+    void dispose();
 
     QString name() const { return _name; }
     QString url() const { return _url; }

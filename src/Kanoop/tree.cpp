@@ -4,13 +4,14 @@
 
 using namespace GIT;
 
-Tree::Tree(Repository* repo, git_object* treeish) :
-    GitEntity(TreeEntity, repo)
+Tree::Tree(Repository* repo, const git_object* treeish) :
+    GitObject(TreeEntity, repo, treeish)
 {
-    const git_oid* oid = git_object_id(treeish);
-    if(oid != nullptr) {
-        _objectId = ObjectId(oid);
-    }
+}
+
+Tree::Tree(Repository* repo, const ObjectId& objectId) :
+    GitObject(TreeEntity, repo, objectId)
+{
 }
 
 Tree::~Tree()
@@ -32,7 +33,7 @@ ObjectHandle Tree::createObjectHandle() const
 {
     ObjectHandle result;
     git_object* obj = nullptr;
-    if(git_object_lookup(&obj, repository()->handle().value(), _objectId.toNative(), GIT_OBJECT_TREE) == 0) {
+    if(git_object_lookup(&obj, repository()->handle().value(), objectId().toNative(), GIT_OBJECT_TREE) == 0) {
         result = ObjectHandle(obj);
     }
     return result;
@@ -42,7 +43,7 @@ TreeHandle Tree::createTreeHandle() const
 {
     TreeHandle result;
     git_tree* tree = nullptr;
-    if(git_tree_lookup(&tree, repository()->handle().value(), _objectId.toNative()) == 0) {
+    if(git_tree_lookup(&tree, repository()->handle().value(), objectId().toNative()) == 0) {
         result = TreeHandle(tree);
     }
     return result;

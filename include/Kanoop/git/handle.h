@@ -37,7 +37,9 @@ public:
         Handle(handle) {}
     virtual void dispose() override
     {
-        git_reference_free(_handle);
+        if(_handle != nullptr) {
+            git_reference_free(_handle);
+        }
     }
 };
 
@@ -49,7 +51,25 @@ public:
         Handle(handle) {}
     virtual void dispose() override
     {
-        git_annotated_commit_free(_handle);
+        if(_handle != nullptr) {
+            git_annotated_commit_free(_handle);
+        }
+    }
+
+    static AnnotatedCommitHandle fromRef(Repository* repo, const Branch& branch);
+};
+
+class CommitHandle : public Handle<git_commit*>
+{
+public:
+    CommitHandle() : Handle() {}
+    CommitHandle(git_commit* handle) :
+        Handle(handle) {}
+    virtual void dispose() override
+    {
+        if(_handle != nullptr) {
+            git_commit_free(_handle);
+        }
     }
 
     static AnnotatedCommitHandle fromRef(Repository* repo, const Branch& branch);
@@ -63,7 +83,9 @@ public:
         Handle(handle) {}
     virtual void dispose() override
     {
-        git_config_free(_handle);
+        if(_handle != nullptr) {
+            git_config_free(_handle);
+        }
     }
 };
 
@@ -75,7 +97,9 @@ public:
         Handle(handle) {}
     virtual void dispose() override
     {
-        git_index_free(_handle);
+        if(_handle != nullptr) {
+            git_index_free(_handle);
+        }
     }
 };
 
@@ -87,7 +111,9 @@ public:
         Handle(handle) {}
     virtual void dispose() override
     {
-        git_remote_free(_handle);
+        if(_handle != nullptr) {
+            git_remote_free(_handle);
+        }
     }
 };
 
@@ -99,7 +125,9 @@ public:
         Handle(handle) {}
     virtual void dispose() override
     {
-        git_repository_free(_handle);
+        if(_handle != nullptr) {
+            git_repository_free(_handle);
+        }
     }
 };
 
@@ -111,7 +139,9 @@ public:
         Handle(handle) {}
     virtual void dispose() override
     {
-        git_tree_free(_handle);
+        if(_handle != nullptr) {
+            git_tree_free(_handle);
+        }
     }
 };
 
@@ -123,7 +153,9 @@ public:
         Handle(handle) {}
     virtual void dispose() override
     {
-        git_object_free(_handle);
+        if(_handle != nullptr) {
+            git_object_free(_handle);
+        }
     }
 };
 
@@ -135,7 +167,23 @@ public:
         Handle(handle) {}
     virtual void dispose() override
     {
-        git_submodule_free(_handle);
+        if(_handle != nullptr) {
+            git_submodule_free(_handle);
+        }
+    }
+};
+
+class TagHandle : public Handle<git_tag*>
+{
+public:
+    TagHandle() : Handle() {}
+    TagHandle(git_tag* handle) :
+        Handle(handle) {}
+    virtual void dispose() override
+    {
+        if(_handle != nullptr) {
+            git_tag_free(_handle);
+        }
     }
 };
 

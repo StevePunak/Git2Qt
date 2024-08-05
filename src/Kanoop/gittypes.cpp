@@ -79,4 +79,19 @@ QList<ReferenceType> getReferenceTypeValues()
     return EnumStrings::getReferenceTypeValues();
 }
 
+QString getObjectTypeString(ObjectType value)
+{
+    return EnumStrings::getObjectTypeString(value);
+}
+
+ObjectType getObjectType(const QString& value)
+{
+    return EnumStrings::getObjectType(value);
+}
+
+QList<ObjectType> getObjectTypeValues()
+{
+    return EnumStrings::getObjectTypeValues();
+}
+
 }   // namespace

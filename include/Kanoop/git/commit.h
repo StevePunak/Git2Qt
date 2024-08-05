@@ -1,22 +1,19 @@
 #ifndef COMMIT_H
 #define COMMIT_H
-#include <Kanoop/git/gitentity.h>
+#include <Kanoop/git/gitobject.h>
 #include <Kanoop/git/signature.h>
 #include <Kanoop/git/objectid.h>
-
+#include <Kanoop/git/handle.h>
 
 namespace GIT {
 
 class Tree;
-class ObjectId;
-
 class Repository;
-
-class Commit
+class Commit : public GitObject
 {
 public:
-    Commit(Repository* repo) :
-        _repo(repo) {}
+    Commit(Repository* repo);
+    Commit(Repository* repo, const ObjectId& objectId);
     virtual ~Commit();
 
     static Commit lookup(Repository* repo, const ObjectId& objectId);
@@ -27,7 +24,6 @@ public:
     QString shortMessage() const { return _shortMessage; }
     QString encoding() const { return _encoding; }
     QDateTime timestamp() const { return _timestamp; }
-    ObjectId objectId() const { return _objectId; }
 
     ObjectId treeId() const;
 
@@ -49,6 +45,8 @@ public:
     Commit::List parents() const;
 
 private:
+    CommitHandle createHandle() const;
+
     static Commit createFromNative(Repository* repo, git_commit* commit);
 
     Signature _author;
@@ -57,10 +55,7 @@ private:
     QString _shortMessage;
     QString _encoding;
     QDateTime _timestamp;
-    ObjectId _objectId;
     Commit::List _parents;
-
-    Repository* _repo = nullptr;
 };
 
 } // namespace GIT

@@ -5,6 +5,7 @@
 #include <referencecollection.h>
 
 #include <Kanoop/commonexception.h>
+#include <Kanoop/klog.h>
 
 using namespace GIT;
 
@@ -22,12 +23,18 @@ Remote::~Remote()
     }
 }
 
+void Remote::dispose()
+{
+    createHandle().dispose();
+}
+
 void Remote::commonInit()
 {
     RemoteHandle handle = createHandle();
     if(handle.isNull() == false) {
         _url = git_remote_url(handle.value());
         _name = git_remote_name(handle.value());
+        handle.dispose();
     }
     _references = new ReferenceCollection(repository());
 }

@@ -28,6 +28,7 @@
 #include <stringarray.h>
 #include <submodulecollection.h>
 #include <tagcollection.h>
+#include <QRegularExpression>
 
 using namespace GIT;
 
@@ -448,6 +449,24 @@ Commit Repository::commit(const QString& message, const Signature& author, const
     return result;
 }
 
+Commit::List Repository::findCommits(const QString& messageRegex)
+{
+    return findCommits(QRegularExpression(messageRegex));
+}
+
+Commit::List Repository::findCommits(const QRegularExpression& messageRegex)
+{
+    Commit::List result;
+    Commit::List allCommits = findCommits(head().reference());
+    for(const Commit& commit : allCommits) {
+        QRegularExpressionMatch match = messageRegex.match(commit.message());
+        if(match.hasMatch()) {
+            result.append(commit);
+        }
+    }
+    return result;
+}
+
 Commit::List Repository::findCommits(const Reference& from)
 {
     Commit::List result;
@@ -589,6 +608,21 @@ void Repository::stage(const QStringList& paths, const StageOptions& stageOption
     catch(CommonException&)
     {
     }
+}
+
+Tag Repository::findTag(const QString& name) const
+{
+    return _tags->findTag(name);
+}
+
+Tag Repository::createLightweightTag(const QString& name, const GitObject& targetObject)
+{
+    return _tags->createLightweightTag(name, targetObject);
+}
+
+Tag Repository::createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject)
+{
+    return _tags->createAnnotatedTag(name, message, signature, targetObject);
 }
 
 Tree Repository::lookupTree(const ObjectId& objectId)

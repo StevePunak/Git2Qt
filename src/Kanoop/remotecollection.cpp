@@ -9,6 +9,9 @@ RemoteCollection::RemoteCollection(Repository* repo) :
 
 RemoteCollection::~RemoteCollection()
 {
+    for(Remote* remote : _remotes) {
+        remote->dispose();
+    }
     qDeleteAll(_remotes);
 }
 

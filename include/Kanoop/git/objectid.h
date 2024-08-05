@@ -16,6 +16,7 @@ public:
     ObjectId(const GitOid& oid);
     ObjectId(const git_oid& oid);
     ObjectId(const git_oid* oid);
+    ObjectId(const git_object* obj);
 
     bool operator ==(const ObjectId& other) const { return _sha == other._sha; }
     bool operator !=(const ObjectId& other) const { return !(*this == other); }
@@ -30,6 +31,7 @@ public:
 
     QString toString() const { return _sha; }
     bool isValid() const { return _oid.isEmtpy() == false; }
+    bool isNull() const { return !isValid(); }
 
     class List : public QList<ObjectId> {};
 

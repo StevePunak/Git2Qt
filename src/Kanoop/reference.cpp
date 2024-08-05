@@ -27,7 +27,8 @@ Reference::Reference(const Reference& other) :
 
 Reference::~Reference()
 {
-    if(_target == nullptr) {
+    if(_target != nullptr) {
+        _target->dispose();
         delete _target;
     }
 }
@@ -43,6 +44,11 @@ Reference& Reference::operator=(const Reference& other)
         resolveTarget();
     }
     return *this;
+}
+
+void Reference::dispose()
+{
+    createHandle().dispose();
 }
 
 ReferenceHandle Reference::createHandle() const
@@ -158,6 +164,7 @@ QString Reference::name() const
     return result;
 }
 
+#if 0
 ReferenceType Reference::type() const
 {
     ReferenceType result = UnknownReferenceType;
@@ -168,6 +175,7 @@ ReferenceType Reference::type() const
     }
     return result;
 }
+#endif
 
 ObjectId Reference::objectId() const
 {
@@ -186,16 +194,21 @@ void Reference::resolveTarget()
         delete _target;
         _target = nullptr;
     }
-    _target = new Reference(repository(), _canonicalName, _targetIdentifier, DirectReferenceType);
-    ReferenceHandle handle = _target->createHandle();
-    if(handle.isNull() == false) {
+
+    try
+    {
         git_reference* targetRef = nullptr;
-        if(git_reference_resolve(&targetRef, handle.value()) == 0) {
-            ReferenceHandle resolvedHandle(targetRef);
-            _target->_targetOid = objectIdFromHandle(resolvedHandle);
-            resolvedHandle.dispose();
+        ReferenceHandle handle = createHandle();
+        throwOnError(git_reference_resolve(&targetRef, handle.value()));
+        const git_oid* oid = git_reference_target(targetRef);
+        if(oid != nullptr) {
+            ObjectId targetObjectId(oid);
+            _target = new Reference(repository(), _targetIdentifier, targetObjectId.toString(), DirectReferenceType);
+            handle.dispose();
         }
-        handle.dispose();
+    }
+    catch(const CommonException&)
+    {
     }
 }
 

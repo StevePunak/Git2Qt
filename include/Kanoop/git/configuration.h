@@ -13,6 +13,7 @@ class Configuration : public GitEntity
 {
 public:
     Configuration(Repository* repo);
+    virtual ~Configuration();
 
     // Getters
     ConfigurationEntry get(const QString& keyP1, const QString& keyP2 = QString(), const QString& keyP3 = QString());

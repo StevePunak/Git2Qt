@@ -28,6 +28,10 @@ public:
     static ReferenceType getReferenceType(const QString& value) { return _ReferenceTypeToStringMap.getType(value, UnknownReferenceType); }
     static QList<ReferenceType> getReferenceTypeValues() { return _ReferenceTypeToStringMap.getTypes(); }
 
+    static QString getObjectTypeString(ObjectType value) { return _ObjectTypeToStringMap.getString(value); }
+    static ObjectType getObjectType(const QString& value) { return _ObjectTypeToStringMap.getType(value, ObjectTypeInvalid); }
+    static QList<ObjectType> getObjectTypeValues() { return _ObjectTypeToStringMap.getTypes(); }
+
 private:
     class FileStatusToStringMap : public KANOOP::EnumToStringMap<FileStatus>
     {
@@ -108,11 +112,28 @@ private:
         }
     };
 
+    class ObjectTypeToStringMap : public KANOOP::EnumToStringMap<ObjectType>
+    {
+    public:
+        ObjectTypeToStringMap()
+        {
+            insert(ObjectTypeAny,           "Any");
+            insert(ObjectTypeInvalid,       "Invalid");
+            insert(ObjectTypeCommit,        "Commit");
+            insert(ObjectTypeTree,          "Tree");
+            insert(ObjectTypeBlob,          "Blob");
+            insert(ObjectTypeTag,           "Tag");
+            insert(ObjectTypeDelta,         "Delta");
+            insert(ObjectTypeRefDelta,      "RefDelta");
+        }
+    };
+
     static const FileStatusToStringMap _FileStatusToStringMap;
     static const ConfigurationLevelToStringMap _ConfigurationLevelToStringMap;
     static const DeltaTypeToStringMap _DeltaTypeToStringMap;
     static const DiffDeltaFlagToStringMap _DiffDeltaFlagToStringMap;
     static const ReferenceTypeToStringMap _ReferenceTypeToStringMap;
+    static const ObjectTypeToStringMap _ObjectTypeToStringMap;
 };
 
 } // namespace GIT

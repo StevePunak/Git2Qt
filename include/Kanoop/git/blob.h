@@ -1,0 +1,17 @@
+#ifndef BLOB_H
+#define BLOB_H
+
+#include <Kanoop/git/gitobject.h>
+
+namespace GIT {
+class Repository;
+
+class Blob : public GitObject
+{
+public:
+    Blob(Repository* repo, const ObjectId& objectId);
+};
+
+} // namespace GIT
+
+#endif // BLOB_H

@@ -14,6 +14,9 @@ ReferenceCollection::ReferenceCollection(Repository* repo) :
 
 ReferenceCollection::~ReferenceCollection()
 {
+    for(Reference& reference : _references) {
+        reference.dispose();
+    }
 }
 
 void ReferenceCollection::resolveSymbolicTargets()

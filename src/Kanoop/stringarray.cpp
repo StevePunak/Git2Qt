@@ -1,5 +1,7 @@
 #include "stringarray.h"
 
+#include <Kanoop/klog.h>
+
 using namespace GIT;
 
 StringArray::StringArray(const QStringList& values)

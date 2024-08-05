@@ -22,6 +22,15 @@ ObjectId::ObjectId(const git_oid* oid) :
     _sha = _oid.id().toHex().toLower();
 }
 
+ObjectId::ObjectId(const git_object* obj)
+{
+    const git_oid* oid = git_object_id(obj);
+    if(oid != nullptr) {
+        _oid = GitOid(oid);
+        _sha = _oid.id().toHex().toLower();
+    }
+}
+
 ObjectId ObjectId::createFromHandle(git_reference* handle)
 {
     ObjectId result;
