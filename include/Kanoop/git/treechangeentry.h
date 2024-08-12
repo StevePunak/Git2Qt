@@ -10,10 +10,10 @@
 
 namespace GIT {
 
-class TreeEntryChanges
+class TreeChangeEntry
 {
 public:
-    TreeEntryChanges(const git_diff_delta* delta);
+    TreeChangeEntry(const git_diff_delta* delta);
 
     QString path() const { return _path; }
     QString oldPath() const { return _oldPath; }
@@ -23,27 +23,27 @@ public:
     ObjectId oldOid() const { return _oldOid; }
     bool exists() const { return _exists; }
     bool oldExists() const { return _oldExists; }
-    ChangeKind::Kind status() const { return _status; }
+    ChangeKind changeKind() const { return _changeKind; }
 
-    class List : public QList<TreeEntryChanges>
+    class List : public QList<TreeChangeEntry>
     {
     public:
-        List getChangesOfKind(ChangeKind::Kind kind) const
+        List getChangesOfKind(ChangeKind kind) const
         {
             List result;
-            for(const TreeEntryChanges& change : *this) {
-                if(change.status() == kind) {
+            for(const TreeChangeEntry& change : *this) {
+                if(change.changeKind() == kind) {
                     result.append(change);
                 }
             }
             return result;
         }
 
-        List getChangesNotOfKinds(QList<ChangeKind::Kind> kinds) const
+        List getChangesNotOfKinds(QList<ChangeKind> kinds) const
         {
             List result;
-            for(const TreeEntryChanges& change : *this) {
-                if(kinds.contains(change.status()) == false) {
+            for(const TreeChangeEntry& change : *this) {
+                if(kinds.contains(change.changeKind()) == false) {
                     result.append(change);
                 }
             }
@@ -52,7 +52,7 @@ public:
     };
 
 private:
-    static ChangeKind::Kind getStatusFromChangeKind(ChangeKind::Kind changeKind);
+    static ChangeKind getStatusFromChangeKind(ChangeKind changeKind);
 
     QString _path;
     QString _oldPath;
@@ -62,7 +62,7 @@ private:
     ObjectId _oldOid;
     bool _exists;
     bool _oldExists;
-    ChangeKind::Kind _status;
+    ChangeKind _changeKind;
 };
 
 } // namespace GIT

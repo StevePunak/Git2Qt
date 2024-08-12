@@ -7,31 +7,39 @@
 
 namespace GIT {
 
+class LightweightTag;
+
+class AnnotatedTag;
+
 class Commit;
 class Repository;
 class Signature;
-class TagCollection : public GitEntity
+class TagCollection : public QObject,
+                      public GitEntity
 {
+    Q_OBJECT
 public:
     TagCollection(Repository* repo);
 
-    Tag createLightweightTag(const QString& name, const GitObject& targetObject);
-    Tag createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject);
-    Tag findTag(const QString& name) const;
+    const LightweightTag* createLightweightTag(const QString& name, const GitObject& targetObject);
+    const AnnotatedTag* createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject);
+    const Tag* findTag(const QString& name) const;
     bool deleteLocalTag(const QString& name);
 
-    Tag::List tags() const { return _lightweightTags; }
+    Tag::ConstPtrList tags() const { return _tags; }
 
     virtual bool isNull() const override;
 
+public slots:
+    void reload();
+
 private:
-    Tag::List retrieveTags();
+    void retrieveTags();
 
     // Callbacks
     static int gitTagForeachCallback(const char *name, git_oid *oid, void *payload);
 
-    Tag::List _lightweightTags;
-    TagAnnotation::List _annotatedTags;
+    Tag::PtrList _tags;
 };
 
 } // namespace GIT

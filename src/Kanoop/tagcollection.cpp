@@ -1,8 +1,10 @@
 #include "tagcollection.h"
 
-#include <Kanoop/commonexception.h>
 #include <Kanoop/klog.h>
 
+#include <annotatedtag.h>
+#include <gitexception.h>
+#include <lightweighttag.h>
 #include <repository.h>
 
 using namespace GIT;
@@ -13,27 +15,27 @@ TagCollection::TagCollection(Repository* repo) :
     retrieveTags();
 }
 
-Tag TagCollection::createLightweightTag(const QString& name, const GitObject& targetObject)
+const LightweightTag* TagCollection::createLightweightTag(const QString& name, const GitObject& targetObject)
 {
-    Tag tag;
+    LightweightTag* tag = nullptr;
     ObjectHandle handle = targetObject.createObjectHandle();
     try
     {
         throwIfTrue(handle.isNull());
         git_oid oid;
         throwOnError(git_tag_create_lightweight(&oid, repository()->handle().value(), name.toUtf8().constData(), handle.value(), false));
-        tag = Tag(repository(), name, targetObject.objectId());
+        tag = new LightweightTag(repository(), name, targetObject.objectId());
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
     handle.dispose();
     return tag;
 }
 
-Tag TagCollection::createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject)
+const AnnotatedTag* TagCollection::createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject)
 {
-    Tag tag;
+    AnnotatedTag* tag = nullptr;
     ObjectHandle targetHandle = targetObject.createObjectHandle();
     try
     {
@@ -45,26 +47,26 @@ Tag TagCollection::createAnnotatedTag(const QString& name, const QString& messag
                                                targetHandle.value(),
                                                sig.toNative(),
                                                message.toUtf8().constData()));
-        tag = Tag(repository(), name, targetObject.objectId());
+        tag = new AnnotatedTag(repository(), name, targetObject.objectId());
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
     targetHandle.dispose();
     return tag;
 }
 
-Tag TagCollection::findTag(const QString& name) const
+const Tag* TagCollection::findTag(const QString& name) const
 {
-    return _lightweightTags.findByName(name);
+    return _tags.findByName(name);
 }
 
 bool TagCollection::deleteLocalTag(const QString& name)
 {
     // TODO
 
-    Tag tag = findTag(name);
-    if(tag.isNull()) {
+    Tag* tag = _tags.findByName(name);
+    if(tag->isNull()) {
 
     }
     return false;
@@ -75,17 +77,22 @@ bool TagCollection::isNull() const
     return repository()->isNull();
 }
 
-Tag::List TagCollection::retrieveTags()
+void TagCollection::reload()
 {
-    _lightweightTags.clear();
+    retrieveTags();
+}
+
+void TagCollection::retrieveTags()
+{
+    qDeleteAll(_tags);
+    _tags.clear();
     try
     {
         throwOnError(git_tag_foreach(repository()->handle().value(), gitTagForeachCallback, this));
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
-    return _lightweightTags;
 }
 
 int TagCollection::gitTagForeachCallback(const char* name, git_oid* oid, void* payload)
@@ -95,10 +102,10 @@ int TagCollection::gitTagForeachCallback(const char* name, git_oid* oid, void* p
 
     ObjectType type = GitObject::getObjectType(collection->repository(), oid);
     if(type == ObjectTypeTag) {
-        collection->_annotatedTags.append(TagAnnotation(collection->repository(), objectId));
+        collection->_tags.append(new AnnotatedTag(collection->repository(), name, objectId));
     }
     else {
-        collection->_lightweightTags.append(Tag(collection->repository(), name, objectId));
+        collection->_tags.append(new LightweightTag(collection->repository(), name, objectId));
     }
     return 0;
 }

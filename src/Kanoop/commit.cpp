@@ -6,6 +6,11 @@
 
 using namespace GIT;
 
+Commit::Commit() :
+    GitObject(CommitEntity, nullptr, ObjectId())
+{
+}
+
 Commit::Commit(Repository* repo) :
     GitObject(CommitEntity, repo, ObjectId())
 {
@@ -29,6 +34,12 @@ Commit::~Commit()
 {
 }
 
+bool Commit::operator ==(const Commit& other) const
+{
+    return objectId().isNull() == false &&
+           objectId() == other.objectId();
+}
+
 Commit Commit::lookup(Repository* repo, const ObjectId& objectId)
 {
     Commit result(repo, objectId);
@@ -49,6 +60,11 @@ ObjectId Commit::treeId() const
         result = ObjectId(oid);
     }
     return result;
+}
+
+Tree Commit::tree() const
+{
+    return repository()->lookupTree(treeId());
 }
 
 Commit::List Commit::parents() const

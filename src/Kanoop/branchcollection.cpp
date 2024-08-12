@@ -1,14 +1,14 @@
 #include "branchcollection.h"
 
+#include <gitexception.h>
 #include <repository.h>
-
-#include <Kanoop/commonexception.h>
 
 using namespace GIT;
 
 BranchCollection::BranchCollection(Repository* repo) :
     GitEntity(BranchCollectionEntity, repo)
 {
+    reloadBranches();
 }
 
 Branch::List BranchCollection::reloadBranches()
@@ -24,9 +24,10 @@ Branch::List BranchCollection::reloadBranches()
         while(!git_branch_next(&reference, &type, it)) {
             Branch branch(repository(), Reference::create(repository(), reference), type);
             _cachedBranches.append(branch);
+            git_reference_free(reference);
         }
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
 

@@ -3,8 +3,8 @@
 #include <credentialresolver.h>
 #include <repository.h>
 #include <referencecollection.h>
+#include <gitexception.h>
 
-#include <Kanoop/commonexception.h>
 #include <Kanoop/klog.h>
 
 using namespace GIT;
@@ -63,7 +63,7 @@ void Remote::reloadReferences()
 
         RemoteHandle handle = createHandle();
         if(handle.isNull()) {
-            throw CommonException("Failed to create handle for reference");
+            throw GitException("Failed to create handle for reference");
         }
 
         git_remote_callbacks callbacks = GIT_REMOTE_CALLBACKS_INIT;
@@ -76,7 +76,7 @@ void Remote::reloadReferences()
             QString name = head->name;
             QString symRefTargetName = head->symref_target;
             if(name.isEmpty()) {
-                throw CommonException("Not expecting null value for reference name.");
+                throw GitException("Not expecting null value for reference name.");
             }
 
             if(symRefTargetName.isEmpty() == false) {
@@ -91,14 +91,14 @@ void Remote::reloadReferences()
             QString key = it.key();
             QString value = it.value();
             if(references.contains(value) == false) {
-                throw CommonException("Symbolic reference target not found in direct reference results.");
+                throw GitException("Symbolic reference target not found in direct reference results.");
             }
             references.insert(key, Reference::createSymbolicReferenceObject(repository(), key, value));
         }
 
         _references->appendDirectReference(references.values());
     }
-    catch(const CommonException& e)
+    catch(const GitException& e)
     {
     }
 }
@@ -117,7 +117,7 @@ QString Remote::fetchSpecTransformToSource(const QString& value)
         throwOnError(git_refspec_rtransform(&buf, refspec, value.toUtf8().constData()));
         result = buf.ptr;
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
     if(remoteHandle != nullptr) {

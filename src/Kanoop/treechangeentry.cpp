@@ -1,8 +1,8 @@
-#include "treeentrychanges.h"
+#include "treechangeentry.h"
 
 using namespace GIT;
 
-TreeEntryChanges::TreeEntryChanges(const git_diff_delta* delta)
+TreeChangeEntry::TreeChangeEntry(const git_diff_delta* delta)
 {
     _path = delta->new_file.path;
     _oldPath = delta->old_file.path;
@@ -16,16 +16,16 @@ TreeEntryChanges::TreeEntryChanges(const git_diff_delta* delta)
     _exists = (delta->new_file.flags & GIT_DIFF_FLAG_EXISTS) != 0;
     _oldExists = (delta->old_file.flags & GIT_DIFF_FLAG_EXISTS) != 0;
 
-    _status = getStatusFromChangeKind((ChangeKind::Kind)delta->status);
+    _changeKind = getStatusFromChangeKind((ChangeKind)delta->status);
 }
 
-ChangeKind::Kind TreeEntryChanges::getStatusFromChangeKind(ChangeKind::Kind changeKind)
+ChangeKind TreeChangeEntry::getStatusFromChangeKind(ChangeKind changeKind)
 {
     switch (changeKind)
     {
-    case ChangeKind::Untracked:
-    case ChangeKind::Ignored:
-        return ChangeKind::Added;
+    case ChangeKind::ChangeKindUntracked:
+    case ChangeKind::ChangeKindIgnored:
+        return ChangeKind::ChangeKindAdded;
     default:
         return changeKind;
     }

@@ -13,14 +13,6 @@ class Repository;
 class Branch : public GitEntity
 {
 public:
-    enum BranchType
-    {
-        UnknownBranchType = 0,
-
-        LocalBranch,
-        RemoteBranch
-    };
-
     explicit Branch() : GitEntity(BranchEntity) {}
     explicit Branch(Repository* repo, const Reference& reference, git_branch_t type);
     virtual ~Branch();
@@ -39,7 +31,12 @@ public:
 
     bool isHead() const;
     bool isRemote() const;
+
+    bool isValid() const { return canonicalName().isEmpty() == false; }
     virtual bool isNull() const override { return _reference.isNull(); }
+
+    QVariant toVariant() const { return QVariant::fromValue<Branch>(*this); }
+    static Branch fromVariant(const QVariant& value) { return value.value<Branch>(); }
 
     class List : public QList<Branch>
     {
@@ -125,5 +122,7 @@ private:
 };
 
 } // namespace GIT
+
+Q_DECLARE_METATYPE(GIT::Branch)
 
 #endif // BRANCH_H

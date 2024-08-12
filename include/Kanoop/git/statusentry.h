@@ -15,12 +15,24 @@ public:
     StatusEntry(const QString& filePath, FileStatus status, RenameDetails headToIndexRenameDetails, RenameDetails indexToWorkDirRenameDetails) :
         _filePath(filePath), _status(status), _headToIndexRenameDetails(headToIndexRenameDetails), _indexToWorkDirRenameDetails(indexToWorkDirRenameDetails) {}
 
-    QString filePath() const { return _filePath; }
+    QString path() const { return _filePath; }
     FileStatus status() const { return _status; }
+
+    bool isValid() const { return _filePath.isEmpty() == false; }
 
     class List : public QList<StatusEntry>
     {
     public:
+        StatusEntry findByPath(const QString& path) const
+        {
+            StatusEntry result;
+            auto it = std::find_if(constBegin(), constEnd(), [path](const StatusEntry& e) { return e.path() == path; });
+            if(it != constEnd()) {
+                return *it;
+            }
+            return result;
+        }
+
         List findByStatus(FileStatus status) const
         {
             List result;
@@ -28,6 +40,15 @@ public:
                 if(entry.status() == status) {
                     result.append(entry);
                 }
+            }
+            return result;
+        }
+
+        QStringList paths() const
+        {
+            QStringList result;
+            for(const StatusEntry& entry : *this) {
+                result.append(entry.path());
             }
             return result;
         }

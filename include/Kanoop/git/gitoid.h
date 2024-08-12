@@ -13,6 +13,7 @@ public:
     GitOid(const unsigned char* data, int size);
     GitOid(const git_oid& oid);
     GitOid(const git_oid* oid);
+    GitOid(const QString& sha);
 
     QByteArray id() const { return QByteArray((const char*)_id.id, GIT_OID_MAX_SIZE); }
 

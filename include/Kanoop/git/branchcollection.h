@@ -12,6 +12,7 @@ class BranchCollection : public GitEntity
 public:
     BranchCollection(Repository* repo);
 
+    Branch::List branches() const { return _cachedBranches; }
     Branch::List reloadBranches();
     void append(const Branch& branch) { _cachedBranches.append(branch); }
 

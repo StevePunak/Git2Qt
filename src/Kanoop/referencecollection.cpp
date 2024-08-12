@@ -1,8 +1,8 @@
 #include "referencecollection.h"
 
+#include <gitexception.h>
 #include <repository.h>
 
-#include <Kanoop/commonexception.h>
 #include <Kanoop/klog.h>
 
 using namespace GIT;
@@ -26,7 +26,7 @@ void ReferenceCollection::resolveSymbolicTargets()
             continue;
         }
         if(reference.target() == nullptr) {
-            reference.resolveTarget();  // setTarget(repo->references()->findReference(symbolicReference->targetIdentifier()));
+            reference.resolveTarget();
         }
     }
 }
@@ -39,7 +39,7 @@ Reference ReferenceCollection::head()
         throwIfTrue((tmpRef = Reference::lookup(repository(), "HEAD")).isNull());
         if(_head.isNull() == false) {
             if(_head.isSymbolic() == false || tmpRef.isSymbolic() == false) {
-                throw CommonException("HEAD ref not symbolic");
+                throw GitException("HEAD ref not symbolic");
             }
             // If they are not the same, replace head with new
             // Otherwise, continue to use the old head ref
@@ -52,7 +52,7 @@ Reference ReferenceCollection::head()
         }
         _head.resolveTarget();
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
     return _head;

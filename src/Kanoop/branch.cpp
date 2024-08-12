@@ -2,11 +2,11 @@
 #include "reference.h"
 #include "commit.h"
 
-#include <Kanoop/commonexception.h>
 #include <Kanoop/klog.h>
 
 #include <configuration.h>
 #include <configurationentry.h>
+#include <gitexception.h>
 #include <network.h>
 #include <remote.h>
 #include <repository.h>
@@ -111,10 +111,10 @@ Commit Branch::tip()
         ObjectId objid = ObjectId::createFromReference(_reference);
         commit = Commit::lookup(repository(), objid);
         if(commit.isValid() == false) {
-            throw CommonException("Failed to find commit at starting reference");
+            throw GitException("Failed to find commit at starting reference");
         }
     }
-    catch(CommonException&)
+    catch(const GitException&)
     {
 
     }

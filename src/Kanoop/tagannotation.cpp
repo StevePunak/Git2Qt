@@ -1,24 +1,25 @@
 #include "tagannotation.h"
 #include "repository.h"
 
-#include <Kanoop/commonexception.h>
 #include <Kanoop/klog.h>
+
+#include <gitexception.h>
 
 using namespace GIT;
 
 TagAnnotation::TagAnnotation() :
-    GitObject(TagAnnotationEntity, nullptr, ObjectId())
+    GitObject(TagAnnotatedEntity, nullptr, ObjectId())
 {
 }
 
 TagAnnotation::TagAnnotation(Repository* repo, const ObjectId& objectId) :
-    GitObject(TagAnnotationEntity, repo, objectId)
+    GitObject(TagAnnotatedEntity, repo, objectId)
 {
     commonInit();
 }
 
 TagAnnotation::TagAnnotation(const TagAnnotation& other) :
-    GitObject(TagAnnotationEntity, repository(), other.objectId())
+    GitObject(TagAnnotatedEntity, repository(), other.objectId())
 {
     *this = other;
 }
@@ -44,6 +45,20 @@ void TagAnnotation::commonInit()
         _signature = Signature(git_tag_tagger(handle.value()));
         ObjectType targetType = (ObjectType)git_tag_target_type(handle.value());
         switch(targetType) {
+        case GIT::ObjectTypeAny:
+            break;
+        case GIT::ObjectTypeInvalid:
+            break;
+        case GIT::ObjectTypeTree:
+            break;
+        case GIT::ObjectTypeBlob:
+            break;
+        case GIT::ObjectTypeTag:
+            break;
+        case GIT::ObjectTypeDelta:
+            break;
+        case GIT::ObjectTypeRefDelta:
+            break;
         case ObjectTypeCommit:
         {
             const git_oid* targetOid = git_tag_target_id(handle.value());
@@ -52,11 +67,11 @@ void TagAnnotation::commonInit()
             break;
         }
         default:
-            throw CommonException(QString("Unhandled target type %1").arg(getObjectTypeString(targetType)));
+            throw GitException(QString("Unhandled target type %1").arg(getObjectTypeString(targetType)));
         }
 
     }
-    catch(const CommonException& e)
+    catch(const GitException& e)
     {
         KLog::sysLogText(KLOG_ERROR, QString("Annotated tag create failure: %1").arg(e.message()));
     }

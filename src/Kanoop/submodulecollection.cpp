@@ -1,9 +1,8 @@
 #include "submodulecollection.h"
 
+#include <gitexception.h>
 #include <repository.h>
 #include <submodule.h>
-
-#include <Kanoop/commonexception.h>
 
 using namespace GIT;
 
@@ -24,7 +23,7 @@ Submodule SubmoduleCollection::lookup(const QString& name)
         QString url = git_submodule_url(sub);
         result = Submodule(repository(), name, path, url);
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
     return result;
@@ -42,7 +41,7 @@ Submodule::Map SubmoduleCollection::values()
     {
         throwOnError(git_submodule_foreach(repository()->handle().value(), submoduleCallback, this));
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
     Submodule::Map result = _loadingSubmodules;

@@ -9,7 +9,14 @@ class Repository;
 class LightweightTag : public Tag
 {
 public:
+    LightweightTag();
     LightweightTag(Repository* repo, const QString& name, const ObjectId& objectId);
+    LightweightTag(const LightweightTag& other);
+    LightweightTag& operator=(const LightweightTag& other);
+    virtual ~LightweightTag();
+
+private:
+    void commonInit();
 };
 
 } // namespace GIT

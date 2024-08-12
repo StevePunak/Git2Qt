@@ -1,8 +1,7 @@
 #include "submodule.h"
 
+#include <gitexception.h>
 #include <repository.h>
-
-#include <Kanoop/commonexception.h>
 
 using namespace GIT;
 
@@ -22,7 +21,7 @@ Submodule::Submodule(Repository* repo, const QString& name, const QString& path,
         _updateRule = (SubmoduleUpdate)git_submodule_update_strategy(handle.value());
         handle.dispose();
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
 }
@@ -38,7 +37,7 @@ Repository* Submodule::open()
         throwOnError(git_submodule_open(&repoHandle, handle.value()));
         repo = new Repository(repoHandle);
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
     return repo;

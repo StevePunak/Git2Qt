@@ -9,7 +9,8 @@
 #include <diffbinary.h>
 #include <diffhunk.h>
 #include <diffline.h>
-#include <Kanoop/commonexception.h>
+#include <gitexception.h>
+#include <tree.h>
 #include <Kanoop/klog.h>
 
 using namespace GIT;
@@ -17,10 +18,10 @@ using namespace GIT;
 TreeChanges Diff::compare(DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions)
 {
     TreeChanges result;
-    git_diff* diff = nullptr;
 
     try
     {
+        git_diff* diff = nullptr;
         git_diff_options options = GIT_DIFF_OPTIONS_INIT;
         IndexHandle indexHandle = repository()->index()->handle();
         throwIfTrue(indexHandle.isNull());
@@ -35,22 +36,63 @@ TreeChanges Diff::compare(DiffModifiers diffOptions, const QStringList& paths, c
         options.pathspec = *pathArray.native();
 
         throwOnError(git_diff_index_to_workdir(&diff, repository()->handle().value(), indexHandle.value(), &options));
-        int count = git_diff_num_deltas(diff);
-        for(int i = 0;i < count;i++) {
-            const git_diff_delta* delta = git_diff_get_delta(diff, i);
-            TreeEntryChanges change(delta);
-            result.append(change);
-        }
-
+        DiffHandle handle(diff);
+        result = buildTreeChanges(handle);
+        handle.dispose();
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
 
-    if(diff != nullptr) {
-        git_diff_free(diff);
-    }
     return result;
+}
+
+TreeChanges Diff::compare(const Tree& fromTree, const Tree& toTree)
+{
+    return compare(fromTree, toTree, DiffModifier::DiffModNone, CompareOptions());
+}
+
+TreeChanges Diff::compare(const Tree& fromTree, const Tree& toTree, DiffModifiers diffOptions, const CompareOptions& compareOptions)
+{
+    TreeChanges result;
+
+    TreeHandle fromHandle = fromTree.createTreeHandle();
+    TreeHandle toHandle = toTree.createTreeHandle();
+
+    try
+    {
+        git_diff* diff = nullptr;
+        git_diff_options options = GIT_DIFF_OPTIONS_INIT;
+        buildDiffOptions(diffOptions, compareOptions, options);
+
+        throwIfTrue(fromHandle.isNull());
+        throwIfTrue(toHandle.isNull());
+        throwOnError(git_diff_tree_to_tree(&diff, repository()->handle().value(), fromHandle.value(), toHandle.value(), &options));
+
+        DiffHandle handle(diff);
+        result = buildTreeChanges(handle);
+        handle.dispose();
+    }
+    catch(const GitException&)
+    {
+    }
+
+    fromHandle.dispose();
+    toHandle.dispose();
+    return result;
+}
+
+TreeChanges Diff::compare(const Tree& oldTree, DiffTargets diffTargets, const QStringList& paths, const CompareOptions& compareOptions)
+{
+    TreeChanges changes;
+    ObjectId oldTreeId = oldTree.objectId();
+    DiffModifiers diffOptions = diffTargets == DiffTargetWorkingDirectory ? DiffModIncludeUntracked : DiffModNone;
+    DiffHandle handle = buildDiffList(oldTreeId, diffOptions, paths, compareOptions);
+    if(handle.isNull() == false) {
+        changes = buildTreeChanges(handle);
+        handle.dispose();
+    }
+    return changes;
 }
 
 DiffDelta::List Diff::listDiffs(const CompareOptions& compareOptions, DiffModifiers diffFlags)
@@ -74,7 +116,7 @@ DiffDelta::List Diff::listDiffs(const CompareOptions& compareOptions, DiffModifi
             git_diff_foreach(diff, fileCallback, binaryCallback, hunkCallback, lineCallback, &collection);
         }
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
 
@@ -92,14 +134,14 @@ void Diff::buildDiffOptions(DiffModifiers diffOptions, const CompareOptions& com
     options.flags |= GIT_DIFF_INCLUDE_TYPECHANGE;
     options.context_lines = compareOptions.contextLines();
     options.interhunk_lines = compareOptions.interhunkLines();
-    if(diffOptions & IncludeUntracked) {
+    if(diffOptions & DiffModIncludeUntracked) {
         options.flags |= (GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS | GIT_DIFF_SHOW_UNTRACKED_CONTENT);
     }
-    if(diffOptions & IncludeIgnored) {
+    if(diffOptions & DiffModIncludeIgnored) {
         options.flags |= (GIT_DIFF_INCLUDE_IGNORED | GIT_DIFF_RECURSE_IGNORED_DIRS);
     }
-    if((diffOptions & IncludeUnmodified || compareOptions.includeUnmodified()) ||
-        compareOptions.similarity().renameDetectionMode() == SimilarityOptions::CopiesHarder || compareOptions.similarity().renameDetectionMode() == SimilarityOptions::Exact) {
+    if((diffOptions & DiffModIncludeUnmodified || compareOptions.includeUnmodified()) ||
+        compareOptions.similarity().renameDetectionMode() == SimilarityOptions::RenameDetectionCopiesHarder || compareOptions.similarity().renameDetectionMode() == SimilarityOptions::RenameDetectionExact) {
         options.flags |= GIT_DIFF_INCLUDE_UNMODIFIED;
     }
 
@@ -110,13 +152,73 @@ void Diff::buildDiffOptions(DiffModifiers diffOptions, const CompareOptions& com
         options.flags |= GIT_DIFF_MINIMAL;
     }
 
-    if (diffOptions & DisablePathspecMatch) {
+    if (diffOptions & DiffModDisablePathspecMatch) {
         options.flags |= GIT_DIFF_DISABLE_PATHSPEC_MATCH;
     }
 
     if (compareOptions.identHeurisitc()) {
         options.flags |= GIT_DIFF_INDENT_HEURISTIC;
     }
+}
+
+DiffHandle Diff::buildDiffList(const ObjectId& oldTreeId, DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions)
+{
+    Q_UNUSED(paths) // TODO
+    git_diff* diff = nullptr;
+    TreeHandle treeHandle;
+    DiffHandle result;
+    try
+    {
+        git_diff_options options;
+        buildDiffOptions(diffOptions, compareOptions, options);
+        Tree oldTree = repository()->lookupTree(oldTreeId);
+        throwIfTrue(oldTree.isNull());
+        treeHandle = oldTree.createTreeHandle();
+        throwOnError(git_diff_tree_to_index(&diff, repository()->handle().value(), treeHandle.value(), repository()->index()->handle().value(), &options));
+        result = DiffHandle(diff);
+    }
+    catch(const GitException& e)
+    {
+    }
+
+    if(diff != nullptr) {
+        git_diff_free(diff);
+    }
+    treeHandle.dispose();
+
+    return result;
+}
+
+void Diff::detectRenames(const DiffHandle& handle, const CompareOptions& compareOptions)
+{
+    SimilarityOptions similarityOptions = compareOptions.similarity();
+    if(similarityOptions.renameDetectionMode() == SimilarityOptions::RenameDetectionDefault) {
+        git_diff_find_similar(handle.value(), nullptr);
+        return;
+    }
+
+    if(similarityOptions.renameDetectionMode() == SimilarityOptions::RenameDetectionNone) {
+        return;
+    }
+
+    git_diff_find_options opts = similarityOptions.toNativeDiffFindOptions();
+    if(compareOptions.includeUnmodified()) {
+        opts.flags |= DiffFindRemoveUnmodified;
+    }
+
+    git_diff_find_similar(handle.value(), &opts);
+}
+
+TreeChanges Diff::buildTreeChanges(const DiffHandle& handle)
+{
+    TreeChanges changes;
+    int count = git_diff_num_deltas(handle.value());
+    for(int i = 0;i < count;i++) {
+        const git_diff_delta* delta = git_diff_get_delta(handle.value(), i);
+        TreeChangeEntry change(delta);
+        changes.append(change);
+    }
+    return changes;
 }
 
 int Diff::fileCallback(const git_diff_delta* delta, float progress, void* payload)

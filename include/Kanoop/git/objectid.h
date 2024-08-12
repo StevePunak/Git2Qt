@@ -4,6 +4,7 @@
 #include <git2.h>
 #include <QString>
 #include <QList>
+#include <QVariant>
 
 namespace GIT {
 
@@ -17,6 +18,7 @@ public:
     ObjectId(const git_oid& oid);
     ObjectId(const git_oid* oid);
     ObjectId(const git_object* obj);
+    ObjectId(const QString& sha);
 
     bool operator ==(const ObjectId& other) const { return _sha == other._sha; }
     bool operator !=(const ObjectId& other) const { return !(*this == other); }
@@ -33,6 +35,9 @@ public:
     bool isValid() const { return _oid.isEmtpy() == false; }
     bool isNull() const { return !isValid(); }
 
+    QVariant toVariant() const { return QVariant::fromValue<ObjectId>(*this); }
+    static ObjectId fromVariant(const QVariant& value) { return value.value<ObjectId>(); }
+
     class List : public QList<ObjectId> {};
 
 private:
@@ -46,5 +51,7 @@ public:
 };
 
 } // namespace GIT
+
+Q_DECLARE_METATYPE(GIT::ObjectId)
 
 #endif // OBJECTID_H

@@ -12,9 +12,13 @@ class Repository;
 class Commit : public GitObject
 {
 public:
+    Commit();
     Commit(Repository* repo);
     Commit(Repository* repo, const ObjectId& objectId);
     virtual ~Commit();
+
+    bool operator ==(const Commit& other) const;
+    bool operator !=(const Commit& other) const { return !(*this == other); }
 
     static Commit lookup(Repository* repo, const ObjectId& objectId);
 
@@ -26,12 +30,26 @@ public:
     QDateTime timestamp() const { return _timestamp; }
 
     ObjectId treeId() const;
+    Tree tree() const;
+
+    QVariant toVariant() const { return QVariant::fromValue<Commit>(*this); }
+    static Commit fromVariant(const QVariant& value) { return value.value<Commit>(); }
 
     bool isValid() const { return _timestamp.isValid(); }
 
     class List : public QList<Commit>
     {
     public:
+        Commit findCommit(const ObjectId& objectId) const
+        {
+            Commit result;
+            auto it = std::find_if(constBegin(), constEnd(), [objectId](const Commit& c) { return c.objectId() == objectId; } );
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
+
         ObjectId::List objectIds() const
         {
             ObjectId::List result;
@@ -59,5 +77,7 @@ private:
 };
 
 } // namespace GIT
+
+Q_DECLARE_METATYPE(GIT::Commit)
 
 #endif // COMMIT_H

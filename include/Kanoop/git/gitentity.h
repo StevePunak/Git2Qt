@@ -32,9 +32,10 @@ public:
         SignatureEntity,
         SubmoduleEntity,
         SubmoduleCollectionEntity,
-        TagEntity,
-        TagAnnotationEntity,
+        TagLightweightEntity,
+        TagAnnotatedEntity,
         TagCollectionEntity,
+        TreeEntryEntity,
     };
 
     virtual ~GitEntity() {}
@@ -48,7 +49,7 @@ public:
 
     bool isBlob() const { return entityType() == BlobEntity; }
     bool isCommit() const { return entityType() == CommitEntity; }
-    bool isTag() const { return entityType() == TagEntity; }
+    bool isTag() const { return entityType() == TagLightweightEntity; }
     bool isTree() const { return entityType() == TreeEntity; }
 
     virtual bool isNull() const = 0;
@@ -61,7 +62,7 @@ protected:
     GitEntity& operator=(const GitEntity& other);
 
     bool handleError(int value);
-    void throwOnError(int result);
+    void throwOnError(int result, const QString& message = QString());
     void throwIfNull(const void* ptr, const QString& message = QString());
     void throwIfFalse(bool result, const QString& message = QString());
     void throwIfTrue(bool result, const QString& message = QString()) { return throwIfFalse(!result, message); }
@@ -72,6 +73,8 @@ protected:
     void setRepository(Repository* value) { _repository = value; }
 
 private:
+    void throwException(const QString& message);
+
     GitEntityType _objectType = UnknownGitEntityType;
     Repository* _repository = nullptr;
 

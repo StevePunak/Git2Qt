@@ -9,8 +9,10 @@
 namespace GIT {
 
 class Signature;
-class Configuration : public GitEntity
+class Configuration : public QObject,
+                      public GitEntity
 {
+    Q_OBJECT
 public:
     Configuration(Repository* repo);
     virtual ~Configuration();
@@ -31,6 +33,9 @@ public:
     QString programDataConfigPath() const { return _programDataConfigPath; }
 
     virtual bool isNull() const { return _handle.isNull(); }
+
+public slots:
+    void reload();
 
 private:
     ConfigurationHandle createHandle(ConfigurationLevel level) const;

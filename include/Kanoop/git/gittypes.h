@@ -81,6 +81,7 @@ enum FileStatus
     /// </summary>
     Conflicted = (1 << 15), /* GIT_STATUS_CONFLICTED */
 };
+Q_DECLARE_FLAGS(FileStatuses, FileStatus)
 
 enum Direction
 {
@@ -184,67 +185,95 @@ enum Mode
 /// <summary>
 /// The kind of changes that a Diff can report.
 /// </summary>
-class ChangeKind {
-public:
-    enum Kind
-    {
-        /// <summary>
-        /// No changes detected.
-        /// </summary>
-        Unmodified = 0,
+enum ChangeKind {
+    /// <summary>
+    /// No changes detected.
+    /// </summary>
+    ChangeKindUnmodified = 0,
 
-        /// <summary>
-        /// The file was added.
-        /// </summary>
-        Added = 1,
+    /// <summary>
+    /// The file was added.
+    /// </summary>
+    ChangeKindAdded = 1,
 
-        /// <summary>
-        /// The file was deleted.
-        /// </summary>
-        Deleted = 2,
+    /// <summary>
+    /// The file was deleted.
+    /// </summary>
+    ChangeKindDeleted = 2,
 
-        /// <summary>
-        /// The file content was modified.
-        /// </summary>
-        Modified = 3,
+    /// <summary>
+    /// The file content was modified.
+    /// </summary>
+    ChangeKindModified = 3,
 
-        /// <summary>
-        /// The file was renamed.
-        /// </summary>
-        Renamed = 4,
+    /// <summary>
+    /// The file was renamed.
+    /// </summary>
+    ChangeKindRenamed = 4,
 
-        /// <summary>
-        /// The file was copied.
-        /// </summary>
-        Copied = 5,
+    /// <summary>
+    /// The file was copied.
+    /// </summary>
+    ChangeKindCopied = 5,
 
-        /// <summary>
-        /// The file is ignored in the workdir.
-        /// </summary>
-        Ignored = 6,
+    /// <summary>
+    /// The file is ignored in the workdir.
+    /// </summary>
+    ChangeKindIgnored = 6,
 
-        /// <summary>
-        /// The file is untracked in the workdir.
-        /// </summary>
-        Untracked = 7,
+    /// <summary>
+    /// The file is untracked in the workdir.
+    /// </summary>
+    ChangeKindUntracked = 7,
 
-        /// <summary>
-        /// The type (i.e. regular file, symlink, submodule, ...)
-        /// of the file was changed.
-        /// </summary>
-        TypeChanged = 8,
+    /// <summary>
+    /// The type (i.e. regular file, symlink, submodule, ...)
+    /// of the file was changed.
+    /// </summary>
+    ChangeKindTypeChanged = 8,
 
-        /// <summary>
-        /// Entry is unreadable.
-        /// </summary>
-        Unreadable = 9,
+    /// <summary>
+    /// Entry is unreadable.
+    /// </summary>
+    ChangeKindUnreadable = 9,
 
-        /// <summary>
-        /// Entry is currently in conflict.
-        /// </summary>
-        Conflicted = 10,
-    };
+    /// <summary>
+    /// Entry is currently in conflict.
+    /// </summary>
+    ChangeKindConflicted = 10,
 };
+
+enum DiffModifier
+{
+    /// <summary>
+    /// No special behavior.
+    /// </summary>
+    DiffModNone = 0,
+
+    /// <summary>
+    /// Include untracked files among the files to be processed, when
+    /// diffing against the working directory.
+    /// </summary>
+    DiffModIncludeUntracked = (1 << 1),
+
+    /// <summary>
+    /// Include unmodified files among the files to be processed, when
+    /// diffing against the working directory.
+    /// </summary>
+    DiffModIncludeUnmodified = (1 << 2),
+
+    /// <summary>
+    /// Treats the passed pathspecs as explicit paths (no pathspec match).
+    /// </summary>
+    DiffModDisablePathspecMatch = (1 << 3),
+
+    /// <summary>
+    /// Include ignored files among the files to be processed, when
+    /// diffing against the working directory.
+    /// </summary>
+    DiffModIncludeIgnored = (1 << 4),
+};
+Q_DECLARE_FLAGS(DiffModifiers, DiffModifier)
 
 class CurrentOperation
 {
@@ -426,7 +455,92 @@ enum ObjectType
     ObjectTypeRefDelta =    7  /**< A delta, base is given by object id. */
 };
 
-QString getFileStatusString(FileStatus value);
+enum TreeEntryTargetType
+{
+    /// <summary>
+    /// A file revision object.
+    /// </summary>
+    TreeEntryTargetBlob,
+
+    /// <summary>
+    /// A tree object.
+    /// </summary>
+    TreeEntryTargetTree,
+
+    /// <summary>
+    /// A pointer to a commit object in another repository.
+    /// </summary>
+    TreeEntryTargetGitLink,
+};
+
+enum BranchType
+{
+    UnknownBranchType = 0,
+    LocalBranch,
+    RemoteBranch
+};
+
+enum DiffTargets
+{
+    /// <summary>
+    /// The repository index.
+    /// </summary>
+    DiffTargetIndex = 1,
+
+    /// <summary>
+    /// The working directory.
+    /// </summary>
+    DiffTargetWorkingDirectory = 2,
+};
+
+enum GitDiffFindFlag
+{
+    // Obey `diff.renames`. Overridden by any other GIT_DIFF_FIND_... flag.
+    DiffFindByConfig = 0,
+
+    // Look for renames? (`--find-renames`)
+    DiffFindRenames = (1 << 0),
+    // consider old side of modified for renames? (`--break-rewrites=N`)
+    DiffFindRenamesFromRewrites = (1 << 1),
+
+    // look for copies? (a la `--find-copies`)
+    DiffFindCopies = (1 << 2),
+    // consider unmodified as copy sources? (`--find-copies-harder`)
+    DiffFindCopiesFromUnmodified = (1 << 3),
+
+    // mark large rewrites for split (`--break-rewrites=/M`)
+    DiffFindRewrites = (1 << 4),
+    // actually split large rewrites into delete/add pairs
+    DiffFindBreakRewrites = (1 << 5),
+    // mark rewrites for split and break into delete/add pairs
+    DiffFindAndBreakRewrites =
+    (DiffFindRewrites | DiffFindBreakRewrites),
+
+    // find renames/copies for untracked items in working directory
+    DiffFindForUntracked = (1 << 6),
+
+    // turn on all finding features
+    DiffFindAll = (0x0ff),
+
+    // measure similarity ignoring leading whitespace (default)
+    DiffFindIgnoreLeadingWhitespace = 0,
+    // measure similarity ignoring all whitespace
+    DiffFindIgnoreWhitespace = (1 << 12),
+    // measure similarity including all data
+    DiffFindDontIgnoreWhitespace = (1 << 13),
+    // measure similarity only by comparing SHAs (fast and cheap)
+    DiffFindExactMatchOnly = (1 << 14),
+
+    // do not break rewrites unless they contribute to a rename
+    DiffBreakRewritesForRenamesOnly = (1 << 15),
+
+    // Remove any UNMODIFIED deltas after find_similar is done.
+    DiffFindRemoveUnmodified = (1 << 16),
+};
+Q_DECLARE_FLAGS(GitDiffFindFlags, GitDiffFindFlag)
+
+
+QString getFileStatusString(FileStatuses value);
 FileStatus getFileStatus(const QString& value);
 QList<FileStatus> getFileStatusValues();
 
@@ -450,8 +564,27 @@ QString getObjectTypeString(ObjectType value);
 ObjectType getObjectType(const QString& value);
 QList<ObjectType> getObjectTypeValues();
 
+QString getModeString(Mode value);
+Mode getMode(const QString& value);
+QList<Mode> getModeValues();
+
+QString getStageLevelString(StageLevel value);
+StageLevel getStageLevel(const QString& value);
+QList<StageLevel> getStageLevelValues();
+
+QString getTreeEntryTargetTypeString(TreeEntryTargetType value);
+TreeEntryTargetType getTreeEntryTargetType(const QString& value);
+QList<TreeEntryTargetType> getTreeEntryTargetTypeValues();
+
+QString getBranchTypeString(BranchType value);
+BranchType getBranchType(const QString& value);
+QList<BranchType> getBranchTypeValues();
+
 } // namespace GIT
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffDeltaFlags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::FileStatuses)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffModifiers)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::GitDiffFindFlags)
 
 #endif // GITTYPES_H

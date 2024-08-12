@@ -31,6 +31,11 @@ ObjectId::ObjectId(const git_object* obj)
     }
 }
 
+ObjectId::ObjectId(const QString& sha) :
+    _oid(sha), _sha(sha)
+{
+}
+
 ObjectId ObjectId::createFromHandle(git_reference* handle)
 {
     ObjectId result;

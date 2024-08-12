@@ -10,7 +10,21 @@ class Repository;
 class AnnotatedTag : public Tag
 {
 public:
+    AnnotatedTag();
     AnnotatedTag(Repository* repo, const QString& name, const ObjectId& objectId);
+    AnnotatedTag(const AnnotatedTag& other);
+    AnnotatedTag& operator=(const AnnotatedTag& other);
+    virtual ~AnnotatedTag();
+
+    QString message() const { return _message; }
+    Signature signature() const { return _signature; }
+
+private:
+    void commonInit();
+    TagHandle createHandle() const;
+
+    QString _message;
+    Signature _signature;
 };
 
 } // namespace GIT

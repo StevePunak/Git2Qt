@@ -1,4 +1,5 @@
 #include "gitoid.h"
+#include <QString>
 
 using namespace GIT;
 
@@ -23,6 +24,12 @@ GitOid::GitOid(const git_oid* oid)
     if(oid != nullptr) {
         _id = *oid;
     }
+}
+
+GitOid::GitOid(const QString& sha)
+{
+    QByteArray ary = QByteArray::fromHex(sha.toUtf8());
+    memcpy(_id.id, ary.constData(), qMin(ary.length(), GIT_OID_MAX_SIZE));
 }
 
 bool GitOid::isEmtpy() const

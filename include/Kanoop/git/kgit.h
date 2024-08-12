@@ -18,7 +18,13 @@
 #include <Kanoop/git/repository.h>
 #include <Kanoop/git/submodulecollection.h>
 #include <Kanoop/git/tagcollection.h>
+#include <Kanoop/git/annotatedtag.h>
+#include <Kanoop/git/lightweighttag.h>
 #include <Kanoop/git/referencecollection.h>
+#include <Kanoop/git/repositorystatus.h>
+#include <Kanoop/git/index.h>
+#include <Kanoop/git/tree.h>
+#include <Kanoop/git/treechanges.h>
 
 class CredentialResolver;
 class KANOOPGIT_EXPORT KGit : public QObject

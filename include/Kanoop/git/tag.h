@@ -8,12 +8,14 @@
 
 namespace GIT {
 
+class AnnotatedTag;
+class LightweightTag;
 class Repository;
 class Tag : public GitObject
 {
 public:
     Tag();
-    Tag(Repository* repo, const QString& name, const ObjectId& objectId);
+    Tag(GitEntityType entityType, Repository* repo, const QString& name, const ObjectId& objectId);
     Tag(const Tag& other);
     Tag& operator=(const Tag& other);
     virtual ~Tag();
@@ -23,17 +25,22 @@ public:
 
     GitObject* target() const { return _target; }
 
+    LightweightTag toLightweightTag() const;
+    AnnotatedTag toAnnotatedTag() const;
+
+    bool isLightweight() const { return entityType() == TagLightweightEntity; }
+    bool isAnnotated() const { return entityType() == TagAnnotatedEntity; }
     virtual bool isNull() const override { return _name.isEmpty(); }
 
-    class List : public QList<Tag>
+    class PtrList : public QList<Tag*>
     {
     public:
-        Tag findByName(const QString& name) const
+        Tag* findByName(const QString& name) const
         {
-            Tag result;
-            auto it = std::find_if(constBegin(), constEnd(), [name](const Tag& t)
+            Tag* result;
+            auto it = std::find_if(constBegin(), constEnd(), [name](const Tag* t)
             {
-                return t.name() == name || t.shortName() == name;
+                return t->name() == name || t->shortName() == name;
             });
             if(it != constEnd()) {
                 result = *it;
@@ -42,9 +49,36 @@ public:
         }
     };
 
-private:
-    void commonInit();
+    class ConstPtrList : public QList<const Tag*>
+    {
+    public:
+        ConstPtrList() {}
+        ConstPtrList(const PtrList& other)
+        {
+            for(Tag* tag : other) {
+                append(tag);
+            }
+        }
 
+        const Tag* findByName(const QString& name) const
+        {
+            const Tag* result;
+            auto it = std::find_if(constBegin(), constEnd(), [name](const Tag* t)
+                                   {
+                                       return t->name() == name || t->shortName() == name;
+                                   });
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
+    };
+
+protected:
+    void setName(const QString& value) { _name = value; }
+    void setTarget(GitObject* value) { _target = value; }
+
+private:
     QString _name;
     GitObject* _target = nullptr;
 };

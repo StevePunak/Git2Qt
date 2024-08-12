@@ -187,6 +187,20 @@ public:
     }
 };
 
+class DiffHandle : public Handle<git_diff*>
+{
+public:
+    DiffHandle() : Handle() {}
+    DiffHandle(git_diff* handle) :
+        Handle(handle) {}
+    virtual void dispose() override
+    {
+        if(_handle != nullptr) {
+            git_diff_free(_handle);
+        }
+    }
+};
+
 } // namespace GIT
 
 #endif // HANDLE_H

@@ -1,10 +1,10 @@
 #include "configuration.h"
 
-#include <Kanoop/commonexception.h>
 #include <Kanoop/klog.h>
 #include <Kanoop/pathutil.h>
 
 #include <configurationentry.h>
+#include <gitexception.h>
 #include <repository.h>
 #include <repositoryinformation.h>
 
@@ -15,15 +15,38 @@ using namespace GIT;
 Configuration::Configuration(Repository* repo) :
     GitEntity(ConfigurationEntity, repo)
 {
+    reload();
+}
+
+Configuration::~Configuration()
+{
+    _handle.dispose();
+}
+
+Signature Configuration::buildSignature(const QDateTime& timestamp)
+{
+    Signature result;
+    QVariant name = get("user.name").value();
+    QVariant email = get("user.email").value();
+    if(name.toString().isEmpty() == false && email.toString().isEmpty() == false) {
+        result = Signature(name.toString(), email.toString(), timestamp);
+    }
+    return result;
+}
+
+void Configuration::reload()
+{
     try
     {
+        _handle.dispose();
+
         git_config* config = nullptr;
         if(git_config_new(&config) == 0) {
             _handle = ConfigurationHandle(config);
         }
 
         if(_handle.isNull()) {
-            throw CommonException("Failed to create handle for config");
+            throw GitException("Failed to create handle for config");
         }
 
         RepositoryHandle repoHandle = repository()->handle();
@@ -45,7 +68,7 @@ Configuration::Configuration(Repository* repo) :
             _programDataConfigPath = buf.ptr;
         }
 
-        QString path = PathUtil::combine(repo->info()->path(), "config");
+        QString path = PathUtil::combine(repository()->info()->path(), "config");
         git_config_add_file_ondisk(_handle.value(), path.toUtf8().constData(), (git_config_level_t)Local, repoHandle.value(), true);
         _repoConfigPath = path;
 
@@ -66,25 +89,9 @@ Configuration::Configuration(Repository* repo) :
             git_config_add_file_ondisk(_handle.value(), _programDataConfigPath.toUtf8().constData(), (git_config_level_t)ProgramData, repository()->handle().value(), true);
         }
     }
-    catch(CommonException&)
+    catch(const GitException&)
     {
     }
-}
-
-Configuration::~Configuration()
-{
-    _handle.dispose();
-}
-
-Signature Configuration::buildSignature(const QDateTime& timestamp)
-{
-    Signature result;
-    QVariant name = get("user.name").value();
-    QVariant email = get("user.email").value();
-    if(name.toString().isEmpty() == false && email.toString().isEmpty() == false) {
-        result = Signature(name.toString(), email.toString(), timestamp);
-    }
-    return result;
 }
 
 ConfigurationHandle Configuration::createHandle(ConfigurationLevel level) const
@@ -120,7 +127,7 @@ ConfigurationEntry Configuration::get(const QString& keyP1, const QString& keyP2
         throwOnError(git_config_get_entry(&entry, snapshot, key.toUtf8().constData()));
         result = ConfigurationEntry(entry->name, entry->value, (ConfigurationLevel)entry->level);
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
 
     }
@@ -160,7 +167,7 @@ bool Configuration::set(const QString& key, const QString& value, ConfigurationL
         throwOnError(git_config_set_string(levelHandle.value(), key.toUtf8().constData(), value.toUtf8().constData()));
         result = true;
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
         result = false;
     }

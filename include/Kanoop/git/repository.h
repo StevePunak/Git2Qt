@@ -2,6 +2,8 @@
 #define REPOSITORY_H
 #include <QString>
 #include <git2.h>
+#include <Kanoop/git/branchcollection.h>
+#include <Kanoop/git/tagcollection.h>
 #include <Kanoop/git/gitentity.h>
 #include <Kanoop/git/branch.h>
 #include <Kanoop/git/commit.h>
@@ -11,7 +13,13 @@
 #include <Kanoop/git/checkoutoptions.h>
 #include <Kanoop/git/stageoptions.h>
 
+
+class QFileSystemWatcher;
 namespace GIT {
+
+class AnnotatedTag;
+
+class LightweightTag;
 
 class BranchCollection;
 class TagCollection;
@@ -62,27 +70,32 @@ public:
 
     // Commits
     Commit commit(const QString& message, const Signature& author, const Signature& committer, const CommitOptions& options = CommitOptions());
+    Commit findCommit(const ObjectId& objectId);
     Commit::List findCommits(const QString& messageRegex);
     Commit::List findCommits(const QRegularExpression& messageRegex);
     Commit::List findCommits(const Reference& from);
+    Commit::List commitsFromHead();
 
     // Status
     GIT::RepositoryStatus status();
 
     // Stage
-    void stage(const QString& path, const StageOptions& stageOptions = StageOptions());
-    void stage(const QStringList& paths, const StageOptions& stageOptions = StageOptions());
+    bool stage(const QString& path, const StageOptions& stageOptions = StageOptions());
+    bool stage(const StatusEntry::List& entries, const StageOptions& stageOptions = StageOptions());
+    bool stage(const QStringList& paths, const StageOptions& stageOptions = StageOptions());
+    bool unstage(const QStringList& paths);
 
     // Add
     void add(const GIT::StatusEntry::List& items);
 
     // Tags
-    Tag findTag(const QString& name) const;
-    Tag createLightweightTag(const QString& name, const GitObject& targetObject);
-    Tag createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject);
+    const Tag* findTag(const QString& name) const;
+    const LightweightTag* createLightweightTag(const QString& name, const GitObject& targetObject);
+    const AnnotatedTag* createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject);
 
     // Lookup
     Tree lookupTree(const ObjectId& objectId);
+    Tree lookupTree(const QString& sha);
     Commit lookupCommit(const ObjectId& objectId);
 
     // Credentials Callback
@@ -94,7 +107,7 @@ public:
     QString localPath() const { return _localPath; }
     bool isBare() const { return _bare; }
 
-    BranchCollection* branches() const { return _branches; }
+    Branch::List branches() const { return _branches->branches(); }
     ReferenceCollection* references() const { return _references; }
     const RepositoryHandle handle() const { return _handle; }
     Index* index() const { return _index; }
@@ -103,7 +116,7 @@ public:
     Network* network() const { return _network; }
     Diff* diff() const { return _diff; }
     SubmoduleCollection* submodules() const { return _submodules; }
-    TagCollection* tags() const { return _tags; }
+    Tag::ConstPtrList tags() const { return _tags != nullptr ? _tags->tags() : Tag::ConstPtrList();  }
 
     virtual bool isNull() const override { return _handle.isNull(); }
 
@@ -137,6 +150,7 @@ private:
     TagCollection* _tags = nullptr;
     CredentialResolver* _credentialResolver = nullptr;
     BranchCollection* _branches = nullptr;
+    QFileSystemWatcher* _fileSystemWatcher;
 
     Commit::List _mergeHeads;
 
@@ -150,6 +164,10 @@ private:
 
 signals:
     void progress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects);
+    void fileSystemChanged();
+
+private slots:
+    void onFileSystemChanged(const QString&);
 };
 
 } // namespace GIT

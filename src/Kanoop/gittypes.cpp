@@ -4,7 +4,7 @@
 
 namespace GIT {
 
-QString getFileStatusString(FileStatus value)
+QString getFileStatusString(FileStatuses value)
 {
     return EnumStrings::getFileStatusString(value);
 }
@@ -92,6 +92,66 @@ ObjectType getObjectType(const QString& value)
 QList<ObjectType> getObjectTypeValues()
 {
     return EnumStrings::getObjectTypeValues();
+}
+
+QString getModeString(Mode value)
+{
+    return EnumStrings::getModeString(value);
+}
+
+Mode getMode(const QString& value)
+{
+    return EnumStrings::getMode(value);
+}
+
+QList<Mode> getModeValues()
+{
+    return EnumStrings::getModeValues();
+}
+
+QString getStageLevelString(StageLevel value)
+{
+    return EnumStrings::getStageLevelString(value);
+}
+
+StageLevel getStageLevel(const QString& value)
+{
+    return EnumStrings::getStageLevel(value);
+}
+
+QList<StageLevel> getStageLevelValues()
+{
+    return EnumStrings::getStageLevelValues();
+}
+
+QString getTreeEntryTargetTypeString(TreeEntryTargetType value)
+{
+    return EnumStrings::getTreeEntryTargetTypeString(value);
+}
+
+TreeEntryTargetType getTreeEntryTargetType(const QString& value)
+{
+    return EnumStrings::getTreeEntryTargetType(value);
+}
+
+QList<TreeEntryTargetType> getTreeEntryTargetTypeValues()
+{
+    return EnumStrings::getTreeEntryTargetTypeValues();
+}
+
+QString getBranchTypeString(BranchType value)
+{
+    return EnumStrings::getBranchTypeString(value);
+}
+
+BranchType getBranchType(const QString& value)
+{
+    return EnumStrings::getBranchType(value);
+}
+
+QList<BranchType> getBranchTypeValues()
+{
+    return EnumStrings::getBranchTypeValues();
 }
 
 }   // namespace

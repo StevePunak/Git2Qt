@@ -1,9 +1,9 @@
 #include "reference.h"
 
+#include <gitexception.h>
 #include <referencecollection.h>
 #include <repository.h>
 
-#include <Kanoop/commonexception.h>
 #include <Kanoop/klog.h>
 
 using namespace GIT;
@@ -121,7 +121,7 @@ Reference Reference::create(Repository* repo, git_reference* handle)
             break;
         }
     }
-    catch(const CommonException& e)
+    catch(const GitException& e)
     {
         KLog::sysLogText(KLOG_ERROR, e.message());
     }
@@ -138,7 +138,7 @@ Reference Reference::create(Repository* repo, const QString& name, const ObjectI
         throwOnError(repo, git_reference_create(&ref, repo->handle().value(), name.toUtf8().constData(), targetId.toNative(), allowOverwrite, logMessage.toUtf8().constData()));
         reference = create(repo, ref);
     }
-    catch(const CommonException& e)
+    catch(const GitException& e)
     {}
     return reference;
 }
@@ -207,7 +207,7 @@ void Reference::resolveTarget()
             handle.dispose();
         }
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
 }
