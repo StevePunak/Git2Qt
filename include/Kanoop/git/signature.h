@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This is a signature for a commit, containing name, email and timestamp.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef SIGNATURE_H
 #define SIGNATURE_H
 

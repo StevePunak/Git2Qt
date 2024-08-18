@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class wraps the git_diff_delta object from libgit2.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef DIFFDELTA_H
 #define DIFFDELTA_H
 #include <Kanoop/git/gitentity.h>
@@ -49,7 +56,7 @@ public:
 
 
 private:
-    DeltaType _status = GIT_DELTA_UNMODIFIED;
+    DeltaType _status = DeltaUnmodified;
     DiffDeltaFlags _flags = (DiffDeltaFlag)0;
     int _similarity = 0;
     int _fileCount = 0;

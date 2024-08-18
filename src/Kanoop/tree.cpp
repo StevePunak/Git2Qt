@@ -1,15 +1,34 @@
 #include "tree.h"
 
+#include <gitexception.h>
 #include <repository.h>
+
+#include <Kanoop/klog.h>
 
 using namespace GIT;
 
-Tree::Tree(Repository* repo, git_object* treeish) :
-    GitEntity(TreeEntity, repo)
+Tree::Tree(Repository* repo, const ObjectId& objectId) :
+    GitObject(TreeEntity, repo, objectId)
 {
-    const git_oid* oid = git_object_id(treeish);
-    if(oid != nullptr) {
-        _objectId = ObjectId(oid);
+    try
+    {
+        git_object* obj = nullptr;
+        throwOnError(git_object_lookup(&obj, repository()->handle().value(), objectId.toNative(), GIT_OBJECT_TREE));
+        git_object_free(obj);
+
+        TreeHandle handle = createTreeHandle();
+        throwIfTrue(handle.isNull());
+        size_t count = git_tree_entrycount(handle.value());
+        for(size_t i = 0;i < count;i++) {
+            const git_tree_entry* nativeEntry = git_tree_entry_byindex(handle.value(), i);
+            throwIfNull(nativeEntry);
+            ObjectId entryId = git_tree_entry_id(nativeEntry);
+            TreeEntry entry(repository(), objectId, entryId);
+            _entries.append(entry);
+        }
+    }
+    catch(const GitException&)
+    {
     }
 }
 
@@ -32,7 +51,7 @@ ObjectHandle Tree::createObjectHandle() const
 {
     ObjectHandle result;
     git_object* obj = nullptr;
-    if(git_object_lookup(&obj, repository()->handle().value(), _objectId.toNative(), GIT_OBJECT_TREE) == 0) {
+    if(git_object_lookup(&obj, repository()->handle().value(), objectId().toNative(), GIT_OBJECT_TREE) == 0) {
         result = ObjectHandle(obj);
     }
     return result;
@@ -42,8 +61,19 @@ TreeHandle Tree::createTreeHandle() const
 {
     TreeHandle result;
     git_tree* tree = nullptr;
-    if(git_tree_lookup(&tree, repository()->handle().value(), _objectId.toNative()) == 0) {
+    if(git_tree_lookup(&tree, repository()->handle().value(), objectId().toNative()) == 0) {
         result = TreeHandle(tree);
     }
     return result;
 }
+
+TreeHandle Tree::createTreeHandle(Repository* repo, const ObjectId& treeObjectId)
+{
+    TreeHandle result;
+    git_tree* tree = nullptr;
+    if(git_tree_lookup(&tree, repo->handle().value(), treeObjectId.toNative()) == 0) {
+        result = TreeHandle(tree);
+    }
+    return result;
+}
+

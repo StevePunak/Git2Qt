@@ -1,5 +1,13 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class is a port of the SimilarityOptions class from libgit2sharp.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef SIMILARITYOPTIONS_H
 #define SIMILARITYOPTIONS_H
+#include <git2.h>
 
 namespace GIT {
 
@@ -37,32 +45,32 @@ public:
         /// <summary>
         /// Obey the user's `diff.renames` configuration setting
         /// </summary>
-        Default,
+        RenameDetectionDefault,
 
         /// <summary>
         /// Attempt no rename or copy detection
         /// </summary>
-        None,
+        RenameDetectionNone,
 
         /// <summary>
         /// Detect exact renames and copies (compare SHA hashes only)
         /// </summary>
-        Exact,
+        RenameDetectionExact,
 
         /// <summary>
         /// Detect fuzzy renames (use similarity metric)
         /// </summary>
-        Renames,
+        RenameDetectionRenames,
 
         /// <summary>
         /// Detect renames and copies
         /// </summary>
-        Copies,
+        RenameDetectionCopies,
 
         /// <summary>
         /// Detect renames, and include unmodified files when looking for copies
         /// </summary>
-        CopiesHarder,
+        RenameDetectionCopiesHarder,
     };
 
     static SimilarityOptions none();
@@ -92,6 +100,8 @@ public:
 
     int renameLimit() const { return _renameLimit; }
     void setRenameLimit(int value) { _renameLimit = value; }
+
+    git_diff_find_options toNativeDiffFindOptions() const;
 
 private:
     /// <summary>

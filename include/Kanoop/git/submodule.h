@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a git submodule
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef SUBMODULE_H
 #define SUBMODULE_H
 #include <Kanoop/git/gitentity.h>

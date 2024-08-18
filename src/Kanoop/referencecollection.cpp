@@ -1,8 +1,8 @@
 #include "referencecollection.h"
 
+#include <gitexception.h>
 #include <repository.h>
 
-#include <Kanoop/commonexception.h>
 #include <Kanoop/klog.h>
 
 using namespace GIT;
@@ -14,116 +14,115 @@ ReferenceCollection::ReferenceCollection(Repository* repo) :
 
 ReferenceCollection::~ReferenceCollection()
 {
-    qDeleteAll(_references);
-    if(_head != nullptr) {
-        delete _head;
+    for(Reference& reference : _references) {
+        reference.dispose();
     }
 }
 
-void ReferenceCollection::resolveSymbolicTargets(Repository* repo)
+void ReferenceCollection::resolveSymbolicTargets()
 {
-    for(Reference* reference : _references) {
-        SymbolicReference* symbolicReference = dynamic_cast<SymbolicReference*>(reference);
-        if(symbolicReference == nullptr) {
+    for(Reference& reference : _references) {
+        if(reference.type() != SymbolicReferenceType) {
             continue;
         }
-        if(symbolicReference->target() == nullptr) {
-            symbolicReference->setTarget(repo->references()->findReference(symbolicReference->targetIdentifier()));
+        if(reference.target() == nullptr) {
+            reference.resolveTarget();
         }
     }
 }
 
-Reference* ReferenceCollection::head()
+Reference ReferenceCollection::head()
 {
     try
     {
-        Reference* tmpRef = nullptr;
-        throwIfNull((tmpRef = Reference::lookup(repository(), "HEAD")));
-        if(_head != nullptr) {
-            if(_head->isSymbolic() == false || tmpRef->isSymbolic() == false) {
-                throw CommonException("HEAD ref not symbolic");
+        Reference tmpRef;
+        throwIfTrue((tmpRef = Reference::lookup(repository(), "HEAD")).isNull());
+        if(_head.isNull() == false) {
+            if(_head.isSymbolic() == false || tmpRef.isSymbolic() == false) {
+                throw GitException("HEAD ref not symbolic");
             }
             // If they are not the same, replace head with new
             // Otherwise, continue to use the old head ref
-            if(static_cast<SymbolicReference*>(_head)->targetIdentifier() != static_cast<SymbolicReference*>(tmpRef)->targetIdentifier()) {
-                delete _head;
+            if(_head.targetIdentifier() != tmpRef.targetIdentifier()) {
                 _head = tmpRef;
-            }
-            else {
-                delete tmpRef;
             }
         }
         else {
             _head = tmpRef;
         }
+        _head.resolveTarget();
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
     return _head;
 }
 
-Reference* ReferenceCollection::findReference(const QString& name) const
+Reference ReferenceCollection::findReference(const QString& name) const
 {
     return _references.value(name);
 }
 
-Reference* ReferenceCollection::findReference(const ObjectId& objectId) const
+Reference ReferenceCollection::findReference(const ObjectId& objectId) const
 {
     return _references.findByObjectId(objectId);
 }
 
 void ReferenceCollection::clear()
 {
-    qDeleteAll(_references);
     _references.clear();
 }
 
-void ReferenceCollection::append(Reference* reference)
+void ReferenceCollection::appendDirectReference(const Reference& reference)
 {
-    _references.insert(reference->name(), reference);
+    _references.insert(reference.name(), reference);
 }
 
-void ReferenceCollection::append(QList<Reference*> references)
+void ReferenceCollection::appendDirectReference(const QList<Reference>& references)
 {
-    for(Reference* reference : references) {
-        append(reference);
+    for(const Reference& reference : references) {
+        appendDirectReference(reference);
     }
 }
 
-Reference* ReferenceCollection::updateTarget(DirectReference* directRef, const ObjectId& targetId, const QString& logMessage)
+Reference ReferenceCollection::updateTarget(const Reference& directRef, const ObjectId& targetId, const QString& logMessage)
 {
-    Reference* result = nullptr;
-    if(directRef->canonicalName() == "HEAD") {
-        result = updateHeadTarget(targetId, logMessage);
+    Reference reference;
+    if(directRef.canonicalName() == "HEAD") {
+        reference = updateHeadTarget(targetId, logMessage);
     }
     else {
-        result = updateDirectReferenceTarget(directRef, targetId, logMessage);
+        reference = updateDirectReferenceTarget(directRef, targetId, logMessage);
     }
-    return result;
+    return reference;
 }
 
-Reference* ReferenceCollection::updateHeadTarget(const ObjectId& targetId, const QString& logMessage)
+Reference ReferenceCollection::updateHeadTarget(const ObjectId& targetId, const QString& logMessage)
 {
-    return append("HEAD", targetId, logMessage, true);
+    return appendDirectReference("HEAD", targetId, logMessage, true);
 }
 
-Reference* ReferenceCollection::updateDirectReferenceTarget(DirectReference* directRef, const ObjectId& targetId, const QString& logMessage)
+Reference ReferenceCollection::updateDirectReferenceTarget(const Reference& directRef, const ObjectId& targetId, const QString& logMessage)
 {
-    Reference* result = nullptr;
+    Reference reference;
     git_reference* ref = nullptr;
-    if(git_reference_set_target(&ref, directRef->handle(), targetId.toNative(), logMessage.toUtf8().constData()) == 0) {
-        result = Reference::create(repository(), ref);
-        append(result);
+
+    ReferenceHandle referenceHandle = directRef.createHandle();
+    if(referenceHandle.isNull() == false) {
+        if(git_reference_set_target(&ref, referenceHandle.value(), targetId.toNative(), logMessage.toUtf8().constData()) == 0) {
+            reference = Reference::create(repository(), ref);
+            appendDirectReference(reference);
+        }
+        referenceHandle.dispose();
     }
-    return result;
+    return reference;
 }
 
-DirectReference* ReferenceCollection::append(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite)
+Reference ReferenceCollection::appendDirectReference(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite)
 {
-    Reference* reference = Reference::create(repository(), name, targetId, logMessage, allowOverwrite);
-    if(reference == nullptr || reference->type() != Reference::DirectReferenceType) {
+    Reference reference = Reference::create(repository(), name, targetId, logMessage, allowOverwrite);
+    if(reference.isNull() || reference.type() != DirectReferenceType) {
         KLog::sysLogText(KLOG_ERROR, "Failed to create DIRECT reference");
     }
-    return static_cast<DirectReference*>(reference);
+    return reference;
 }

@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class provides the available commit options.
+ * It is a port of the CommitOptions class from libgit2sharp.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef COMMITOPTIONS_H
 #define COMMITOPTIONS_H
 #include <Kanoop/git/gittypes.h>

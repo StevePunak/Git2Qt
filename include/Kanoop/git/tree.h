@@ -1,8 +1,15 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a git tree object
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef TREE_H
 #define TREE_H
-#include <Kanoop/git/gitentity.h>
-#include <Kanoop/git/objectid.h>
+#include <Kanoop/git/gitobject.h>
 #include <Kanoop/git/handle.h>
+#include <Kanoop/git/treeentry.h>
 
 #include <QMap>
 
@@ -10,26 +17,42 @@ namespace GIT {
 
 class Repository;
 
-class Tree : public GitEntity
+class Tree : public GitObject
 {
-private:
-    Tree() : GitEntity(TreeEntity) {}
-
 public:
-    Tree(Repository* repo, git_object* treeish);
+    Tree() :
+        GitObject(TreeEntity, nullptr, ObjectId()) {}
+
+    Tree(Repository* repo, const ObjectId& objectId);
     virtual ~Tree();
 
     static Tree createFromBranchName(Repository* repo, const QString& branchName);
 
-    ObjectId objectId() const { return _objectId; }
+    TreeEntry findEntryByPath(const QString& path) { return _entries.findByPath(path); }
+    TreeEntry::List entries() const { return _entries; }
 
     ObjectHandle createObjectHandle() const;
     TreeHandle createTreeHandle() const;
 
-    virtual bool isNull() const override { return _objectId.isValid() == false; }
+    static TreeHandle createTreeHandle(Repository* repo, const ObjectId& treeObjectId);
+
+    class List : public QList<Tree>
+    {
+    public:
+        Tree findByObjectId(const ObjectId& objectId) const
+        {
+            Tree result;
+            auto it = std::find_if(constBegin(), constEnd(), [objectId](const Tree& t) { return t.objectId() == objectId;} );
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
+    };
 
 private:
-    ObjectId _objectId;
+    TreeEntry::List _entries;
+    Tree::List _trees;
 };
 
 } // namespace GIT

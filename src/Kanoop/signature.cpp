@@ -1,6 +1,6 @@
 #include "signature.h"
 
-#include <Kanoop/commonexception.h>
+#include <gitexception.h>
 
 using namespace GIT;
 
@@ -28,6 +28,6 @@ const git_signature* Signature::toNative()
             throwOnError(git_signature_new(&_native, _name.toUtf8().constData(), _email.toUtf8().constData(), (git_time_t)_timestamp.toMSecsSinceEpoch(), 0));
         }
     }
-    catch(const CommonException&) {}
+    catch(const GitException&) {}
     return _native;
 }

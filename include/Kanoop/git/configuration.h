@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class provides access to the various levels of git configuration.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 #include <Kanoop/git/gittypes.h>
@@ -9,10 +16,13 @@
 namespace GIT {
 
 class Signature;
-class Configuration : public GitEntity
+class Configuration : public QObject,
+                      public GitEntity
 {
+    Q_OBJECT
 public:
     Configuration(Repository* repo);
+    virtual ~Configuration();
 
     // Getters
     ConfigurationEntry get(const QString& keyP1, const QString& keyP2 = QString(), const QString& keyP3 = QString());
@@ -30,6 +40,9 @@ public:
     QString programDataConfigPath() const { return _programDataConfigPath; }
 
     virtual bool isNull() const { return _handle.isNull(); }
+
+public slots:
+    void reload();
 
 private:
     ConfigurationHandle createHandle(ConfigurationLevel level) const;

@@ -2,7 +2,6 @@
 
 #include "credentialresolver.cpp"
 
-#include <Kanoop/commonexception.h>
 #include <Kanoop/klog.h>
 #include <Kanoop/pathutil.h>
 

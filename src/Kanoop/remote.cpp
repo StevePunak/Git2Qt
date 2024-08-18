@@ -3,8 +3,9 @@
 #include <credentialresolver.h>
 #include <repository.h>
 #include <referencecollection.h>
+#include <gitexception.h>
 
-#include <Kanoop/commonexception.h>
+#include <Kanoop/klog.h>
 
 using namespace GIT;
 
@@ -22,12 +23,18 @@ Remote::~Remote()
     }
 }
 
+void Remote::dispose()
+{
+    createHandle().dispose();
+}
+
 void Remote::commonInit()
 {
     RemoteHandle handle = createHandle();
     if(handle.isNull() == false) {
         _url = git_remote_url(handle.value());
         _name = git_remote_name(handle.value());
+        handle.dispose();
     }
     _references = new ReferenceCollection(repository());
 }
@@ -51,12 +58,12 @@ void Remote::reloadReferences()
     size_t count;
     try
     {
-        QMap<QString, Reference*> references;
+        QMap<QString, Reference> references;
         QMap<QString, QString> symRefs;
 
         RemoteHandle handle = createHandle();
         if(handle.isNull()) {
-            throw CommonException("Failed to create handle for reference");
+            throw GitException("Failed to create handle for reference");
         }
 
         git_remote_callbacks callbacks = GIT_REMOTE_CALLBACKS_INIT;
@@ -69,14 +76,14 @@ void Remote::reloadReferences()
             QString name = head->name;
             QString symRefTargetName = head->symref_target;
             if(name.isEmpty()) {
-                throw CommonException("Not expecting null value for reference name.");
+                throw GitException("Not expecting null value for reference name.");
             }
 
             if(symRefTargetName.isEmpty() == false) {
                 symRefs.insert(name, symRefTargetName);
             }
             else {
-                references.insert(name, new DirectReference(repository(), name, ObjectId(head->oid)));
+                references.insert(name, Reference::createDirectReferenceObject(repository(), name, ObjectId(head->oid)));
             }
         }
 
@@ -84,14 +91,14 @@ void Remote::reloadReferences()
             QString key = it.key();
             QString value = it.value();
             if(references.contains(value) == false) {
-                throw CommonException("Symbolic reference target not found in direct reference results.");
+                throw GitException("Symbolic reference target not found in direct reference results.");
             }
-            references.insert(key, new SymbolicReference(repository(), key, value, references.value(value)));
+            references.insert(key, Reference::createSymbolicReferenceObject(repository(), key, value));
         }
 
-        _references->append(references.values());
+        _references->appendDirectReference(references.values());
     }
-    catch(const CommonException& e)
+    catch(const GitException& e)
     {
     }
 }
@@ -110,7 +117,7 @@ QString Remote::fetchSpecTransformToSource(const QString& value)
         throwOnError(git_refspec_rtransform(&buf, refspec, value.toUtf8().constData()));
         result = buf.ptr;
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
     if(remoteHandle != nullptr) {

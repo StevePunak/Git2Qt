@@ -1,77 +1,85 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class IS-A collection of tree changes. It is used
+ * by the repository to maintain its tree change information.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef TREECHANGES_H
 #define TREECHANGES_H
 #include <Kanoop/git/gitentity.h>
-#include <Kanoop/git/treeentrychanges.h>
+#include <Kanoop/git/treechangeentry.h>
 
 namespace GIT {
 
-class TreeChanges : public TreeEntryChanges::List
+class TreeChanges : public TreeChangeEntry::List
 {
 public:
-    TreeChanges() : TreeEntryChanges::List() {}
+    TreeChanges() : TreeChangeEntry::List() {}
 
     /// <summary>
-    /// List of <see cref="TreeEntryChanges"/> that have been been added.
+    /// List of <see cref="TreeChangeEntry"/> that have been been added.
     /// </summary>
-    TreeEntryChanges::List added() const
+    TreeChangeEntry::List added() const
     {
-        return getChangesOfKind(ChangeKind::Added);
+        return getChangesOfKind(ChangeKind::ChangeKindAdded);
     }
 
     /// <summary>
-    /// List of <see cref="TreeEntryChanges"/> that have been deleted.
+    /// List of <see cref="TreeChangeEntry"/> that have been deleted.
     /// </summary>
-    TreeEntryChanges::List deleted() const
+    TreeChangeEntry::List deleted() const
     {
-        return getChangesOfKind(ChangeKind::Deleted);
+        return getChangesOfKind(ChangeKind::ChangeKindDeleted);
     }
 
     /// <summary>
-    /// List of <see cref="TreeEntryChanges"/> that have been modified.
+    /// List of <see cref="TreeChangeEntry"/> that have been modified.
     /// </summary>
-    TreeEntryChanges::List modified() const
+    TreeChangeEntry::List modified() const
     {
-        return getChangesOfKind(ChangeKind::Modified);
+        return getChangesOfKind(ChangeKind::ChangeKindModified);
     }
 
     /// <summary>
-    /// List of <see cref="TreeEntryChanges"/> which type have been changed.
+    /// List of <see cref="TreeChangeEntry"/> which type have been changed.
     /// </summary>
-    TreeEntryChanges::List typeChanged() const
+    TreeChangeEntry::List typeChanged() const
     {
-        return getChangesOfKind(ChangeKind::TypeChanged);
+        return getChangesOfKind(ChangeKind::ChangeKindTypeChanged);
     }
 
     /// <summary>
-    /// List of <see cref="TreeEntryChanges"/> which have been renamed
+    /// List of <see cref="TreeChangeEntry"/> which have been renamed
     /// </summary>
-    TreeEntryChanges::List renamed() const
+    TreeChangeEntry::List renamed() const
     {
-        return getChangesOfKind(ChangeKind::Renamed);
+        return getChangesOfKind(ChangeKind::ChangeKindRenamed);
     }
 
     /// <summary>
-    /// List of <see cref="TreeEntryChanges"/> which have been copied
+    /// List of <see cref="TreeChangeEntry"/> which have been copied
     /// </summary>
-    TreeEntryChanges::List copied() const
+    TreeChangeEntry::List copied() const
     {
-        return getChangesOfKind(ChangeKind::Copied);
+        return getChangesOfKind(ChangeKind::ChangeKindCopied);
     }
 
     /// <summary>
-    /// List of <see cref="TreeEntryChanges"/> which are unmodified
+    /// List of <see cref="TreeChangeEntry"/> which are unmodified
     /// </summary>
-    TreeEntryChanges::List unmodified() const
+    TreeChangeEntry::List unmodified() const
     {
-        return getChangesOfKind(ChangeKind::Unmodified);
+        return getChangesOfKind(ChangeKind::ChangeKindUnmodified);
     }
 
     /// <summary>
-    /// List of <see cref="TreeEntryChanges"/> which are conflicted
+    /// List of <see cref="TreeChangeEntry"/> which are conflicted
     /// </summary>
-    TreeEntryChanges::List conflicted() const
+    TreeChangeEntry::List conflicted() const
     {
-        return getChangesOfKind(ChangeKind::Conflicted);
+        return getChangesOfKind(ChangeKind::ChangeKindConflicted);
     }
 
 };

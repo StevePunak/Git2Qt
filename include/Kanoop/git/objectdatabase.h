@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class is a port of the ObjectDatabase class from libgit2sharp.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef OBJECTDATABASE_H
 #define OBJECTDATABASE_H
 #include <Kanoop/git/commit.h>

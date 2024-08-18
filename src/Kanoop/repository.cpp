@@ -2,7 +2,6 @@
 
 #include "credentialresolver.cpp"
 
-#include <Kanoop/commonexception.h>
 #include <Kanoop/datetimeutil.h>
 #include <Kanoop/klog.h>
 #include <Kanoop/pathutil.h>
@@ -27,7 +26,9 @@
 #include <remote.h>
 #include <stringarray.h>
 #include <submodulecollection.h>
-#include <tagcollection.h>
+#include <QRegularExpression>
+#include <gitexception.h>
+#include <QFileSystemWatcher>
 
 using namespace GIT;
 
@@ -58,7 +59,7 @@ Repository::Repository(git_repository* nativeRepo) :
         _localPath = git_repository_path(_handle.value());
         postInitializationLookups();
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
 }
@@ -81,9 +82,12 @@ void Repository::commonInit()
             throwOnError(git_repository_open(&repo, _localPath.toUtf8().constData()));
         }
         _handle = RepositoryHandle(repo);
+        _fileSystemWatcher = new QFileSystemWatcher(QStringList() << _localPath);
+        connect(_fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, &Repository::onFileSystemChanged);
+        connect(_fileSystemWatcher, &QFileSystemWatcher::fileChanged, this, &Repository::onFileSystemChanged);
         postInitializationLookups();
     }
-    catch(const CommonException&) {}
+    catch(const GitException&) {}
 }
 
 void Repository::postInitializationLookups()
@@ -101,14 +105,20 @@ void Repository::postInitializationLookups()
     _network = new Network(this);
     _submodules = new SubmoduleCollection(this);
     _tags = new TagCollection(this);
+    _branches = new BranchCollection(this);
 
-    loadBranches();
+    connect(this, &Repository::fileSystemChanged, _index, &Index::reload);
+    connect(this, &Repository::fileSystemChanged, _config, &Configuration::reload);
+    connect(this, &Repository::fileSystemChanged, _network, &Network::reload);
+    connect(this, &Repository::fileSystemChanged, _tags, &TagCollection::reload);
+
+    _branches->reloadBranches();
+
     loadReferences();
 }
 
 void Repository::commonDestroy()
 {
-    qDeleteAll(_branches);
     if(_remote != nullptr) {
         git_remote_free(_remote);
         _remote = nullptr;
@@ -149,6 +159,11 @@ void Repository::commonDestroy()
         delete _tags;
         _tags = nullptr;
     }
+    if(_branches != nullptr) {
+        delete _branches;
+        _branches = nullptr;
+    }
+    delete _fileSystemWatcher;
 }
 
 bool Repository::clone(const QString& remoteUrl, CredentialResolver* credentialResolver)
@@ -164,7 +179,7 @@ bool Repository::clone(const QString& remoteUrl, CredentialResolver* credentialR
             int res = git_repository_is_empty(_handle.value());
             if(res == 1) {
                 if(dir.removeRecursively() == false) {
-                    throw CommonException("Failed to remove directory");
+                    throw GitException("Failed to remove directory");
                 }
             }
         }
@@ -188,7 +203,7 @@ bool Repository::clone(const QString& remoteUrl, CredentialResolver* credentialR
         postInitializationLookups();
         result = true;
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
         result = false;
     }
@@ -208,39 +223,39 @@ bool Repository::fetch()
 
         result = true;
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
         result = false;
     }
     return result;
 }
 
-bool Repository::push(Branch* branch)
+bool Repository::push(const Branch& branch)
 {
-    QList<Branch*> branches;
+    Branch::List branches;
     branches.append(branch);
     return push(branches);
 }
 
-bool Repository::push(const QList<Branch*> branches)
+bool Repository::push(const Branch::List& branches)
 {
     bool result = false;
     try
     {
         throwIfTrue(_handle.isNull(), "Repository is not initialized");
-        for(Branch* branch : branches) {
-            throwIfEmpty(branch->upstreamBranchCanonicalName());
+        for(const Branch& branch : branches) {
+            throwIfEmpty(branch.upstreamBranchCanonicalName());
         }
 
-        for(Branch* branch : branches) {
-            Remote* remote = _network->remoteForName(branch->remoteName());
+        for(const Branch& branch : branches) {
+            Remote* remote = _network->remoteForName(branch.remoteName());
             throwIfNull(remote, "remote not found for branch");
-            throwIfFalse(push(remote, QString("%1:%2").arg(branch->canonicalName()).arg(branch->upstreamBranchCanonicalName())));
+            throwIfFalse(push(remote, QString("%1:%2").arg(branch.canonicalName()).arg(branch.upstreamBranchCanonicalName())));
         }
 
         result = true;
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
         result = false;
     }
@@ -272,7 +287,7 @@ bool Repository::push(Remote* remote, const QStringList& pushRefSpecs)
 
         result = true;
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
         result = false;
     }
@@ -285,16 +300,16 @@ bool Repository::checkoutRemoteBranch(const QString& branchName, const CheckoutO
     try
     {
         throwIfTrue(_handle.isNull(), "Repository is not initialized");
-        throwIfNull(head(), "No HEAD found");
-        throwIfNull(_branches.findRemoteBranch(branchName), "Failed to find remote branch");
+        throwIfTrue(head().isNull(), "No HEAD found");
+        throwIfTrue(_branches->findRemoteBranch(branchName).isNull(), "Failed to find remote branch");
 
         // create new branch from head
         AnnotatedCommitHandle headAnnotatedCommit = AnnotatedCommitHandle::fromRef(this, head());
         throwIfTrue(headAnnotatedCommit.isNull(), "Failed to find annotated commit for HEAD");
 
-        if(_branches.findLocalBranch(branchName) == nullptr) {
-            Branch* newBranch = createBranchFromAnnotatedCommit(headAnnotatedCommit, branchName);
-            throwIfNull(newBranch);
+        if(_branches->findLocalBranch(branchName).isNull()) {
+            Branch newBranch = createBranchFromAnnotatedCommit(headAnnotatedCommit, branchName);
+            throwIfTrue(newBranch.isNull());
         }
 
         // Create and checkout tree
@@ -303,7 +318,7 @@ bool Repository::checkoutRemoteBranch(const QString& branchName, const CheckoutO
 
         result = checkoutTree(tree, branchName, options);
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
         result = false;
     }
@@ -316,8 +331,8 @@ bool Repository::checkoutLocalBranch(const QString& branchName, const CheckoutOp
     try
     {
         throwIfTrue(_handle.isNull(), "Repository is not initialized");
-        throwIfNull(head(), "No HEAD found");
-        throwIfNull(_branches.findLocalBranch(branchName), "Failed to find local branch");
+        throwIfTrue(head().isNull(), "No HEAD found");
+        throwIfTrue(_branches->findLocalBranch(branchName).isNull(), "Failed to find local branch");
 
         // Create and checkout tree
         Tree tree = Tree::createFromBranchName(this, branchName);
@@ -325,7 +340,7 @@ bool Repository::checkoutLocalBranch(const QString& branchName, const CheckoutOp
 
         result = checkoutTree(tree, branchName, options);
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
         result = false;
     }
@@ -348,27 +363,27 @@ bool Repository::checkoutTree(const Tree& tree, const QString& branchName, const
 
         result = true;
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
         result = false;
     }
     return result;
 }
 
-Branch* Repository::createBranch(const QString& branchName, bool switchToNewBranch)
+Branch Repository::createBranch(const QString& branchName, bool switchToNewBranch)
 {
-    Branch* result = nullptr;
+    Branch result;
     try
     {
         throwIfTrue(_handle.isNull(), "Repository is not initialized");
-        throwIfNull(head(), "No HEAD found");
+        throwIfTrue(head().isNull(), "No HEAD found");
 
         // create new branch from head
         AnnotatedCommitHandle headAnnotatedCommit = AnnotatedCommitHandle::fromRef(this, head());
         throwIfTrue(headAnnotatedCommit.isNull(), "Failed to find annotated commit for HEAD");
 
-        Branch* newBranch = createBranchFromAnnotatedCommit(headAnnotatedCommit, branchName);
-        throwIfNull(newBranch);
+        Branch newBranch = createBranchFromAnnotatedCommit(headAnnotatedCommit, branchName);
+        throwIfTrue(newBranch.isNull());
 
         if(switchToNewBranch) {
             // Create and checkout tree
@@ -378,21 +393,21 @@ Branch* Repository::createBranch(const QString& branchName, bool switchToNewBran
         }
         result = newBranch;
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
     return result;
 }
 
-Branch* Repository::createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& annotatedCommit, const QString& branchName)
+Branch Repository::createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& annotatedCommit, const QString& branchName)
 {
-    Branch* result = nullptr;
+    Branch result;
     git_reference* newBranch = nullptr;
     int rc = git_branch_create_from_annotated(&newBranch, _handle.value(), branchName.toUtf8().constData(), annotatedCommit.value(), false);
     if(rc == 0) {
-        Reference* reference = Reference::create(this, newBranch);
-        result = new Branch(this, reference, GIT_BRANCH_LOCAL);
-        _branches.insert(result->name(), result);
+        Reference reference = Reference::create(this, newBranch);
+        result = Branch(this, reference, GIT_BRANCH_LOCAL);
+        _branches->append(result);
     }
     return result;
 }
@@ -405,29 +420,29 @@ Commit Repository::commit(const QString& message, const Signature& author, const
     {
         bool orphaned = _info->isHeadUnborn();
         if(options.amendPreviousCommit() && orphaned) {
-            throw CommonException("Can not amend anything. The Head doesn't point at any commit.");
+            throw GitException("Can not amend anything. The Head doesn't point at any commit.");
         }
 
         ObjectId treeId = _index->writeTree();
         Tree tree = lookupTree(treeId);
         if(tree.isNull()) {
-            throw CommonException("Failed to lookup tree");
+            throw GitException("Failed to lookup tree");
         }
 
         Commit::List parents = retrieveParentsOfTheCommitBeingCreated(options.amendPreviousCommit());
         if(parents.count() == 1 && !options.allowEmptyCommit()) {
             bool treeSame = parents.at(0).treeId() == treeId;
-            bool amendMergeCommit = options.amendPreviousCommit() && !orphaned && head()->tip().parents().count() > 1;
+            bool amendMergeCommit = options.amendPreviousCommit() && !orphaned && head().tip().parents().count() > 1;
             if(treeSame && !amendMergeCommit) {
                 throw options.amendPreviousCommit()
-                    ? CommonException("Amending this commit would produce a commit that is identical to its parent")
-                    : CommonException("No changes; nothing to commit.");
+                    ? GitException("Amending this commit would produce a commit that is identical to its parent")
+                    : GitException("No changes; nothing to commit.");
             }
         }
 
         result = _objectDatabase->createCommit(author, committer, message, tree, parents, true);
         if(result.isValid() == false) {
-            throw CommonException("Failed to create commit");
+            throw GitException("Failed to create commit");
         }
 
         git_repository_state_cleanup(_handle.value());
@@ -436,14 +451,39 @@ Commit Repository::commit(const QString& message, const Signature& author, const
         updateHeadAndTerminalReference(result, logMessage);
 
     }
-    catch(CommonException&)
+    catch(const GitException&)
     {
 
     }
     return result;
 }
 
-Commit::List Repository::findCommits(Reference* from)
+Commit Repository::findCommit(const ObjectId& objectId)
+{
+    Commit::List allCommits = findCommits(head().reference());
+    Commit result = allCommits.findCommit(objectId);
+    return result;
+}
+
+Commit::List Repository::findCommits(const QString& messageRegex)
+{
+    return findCommits(QRegularExpression(messageRegex));
+}
+
+Commit::List Repository::findCommits(const QRegularExpression& messageRegex)
+{
+    Commit::List result;
+    Commit::List allCommits = findCommits(head().reference());
+    for(const Commit& commit : allCommits) {
+        QRegularExpressionMatch match = messageRegex.match(commit.message());
+        if(match.hasMatch()) {
+            result.append(commit);
+        }
+    }
+    return result;
+}
+
+Commit::List Repository::findCommits(const Reference& from)
 {
     Commit::List result;
 
@@ -455,7 +495,7 @@ Commit::List Repository::findCommits(Reference* from)
         ObjectId objid = ObjectId::createFromReference(from);
         Commit commit = Commit::lookup(this, objid);
         if(commit.isValid() == false) {
-            throw CommonException("Failed to find commit at starting reference");
+            throw GitException("Failed to find commit at starting reference");
         }
 
         git_revwalk_new(&walker, _handle.value());
@@ -465,12 +505,12 @@ Commit::List Repository::findCommits(Reference* from)
         while(git_revwalk_next(&oid, walker) == 0) {
             commit = Commit::lookup(this, ObjectId(oid));
             if(commit.isValid() == false) {
-                throw CommonException("Failed to lookup the next object");
+                throw GitException("Failed to lookup the next object");
             }
             result.append(commit);
        }
     }
-    catch(CommonException&)
+    catch(const GitException&)
     {
 
     }
@@ -480,6 +520,11 @@ Commit::List Repository::findCommits(Reference* from)
     }
 
     return result;
+}
+
+Commit::List Repository::commitsFromHead()
+{
+    return findCommits(head().reference());
 }
 
 RepositoryStatus Repository::status()
@@ -499,7 +544,7 @@ RepositoryStatus Repository::status()
             result.addStatusEntryForDelta((FileStatus)entry->status, entry->head_to_index, entry->index_to_workdir);
         }
     }
-    catch(CommonException&)
+    catch(const GitException&)
     {
 
     }
@@ -510,49 +555,55 @@ RepositoryStatus Repository::status()
     return result;
 }
 
-void Repository::stage(const QString& path, const StageOptions& stageOptions)
+bool Repository::stage(const QString& path, const StageOptions& stageOptions)
 {
     QStringList paths;
     paths.append(path);
-    stage(paths, stageOptions);
+    return stage(paths, stageOptions);
 }
 
-void Repository::stage(const QStringList& paths, const StageOptions& stageOptions)
+bool Repository::stage(const StatusEntry::List& entries, const StageOptions& stageOptions)
 {
+    return stage(entries.paths(), stageOptions);
+}
+
+bool Repository::stage(const QStringList& paths, const StageOptions& stageOptions)
+{
+    bool result = false;
     try
     {
-        Diff::DiffModifiers diffModifiers = Diff::IncludeUntracked;
+        DiffModifiers diffModifiers = DiffModIncludeUntracked;
         if(stageOptions.includeIgnored()) {
-            diffModifiers |= Diff::IncludeIgnored;
+            diffModifiers |= DiffModIncludeIgnored;
         }
 
         CompareOptions compareOptions;
         compareOptions.setSimilarity(SimilarityOptions::none());
         TreeChanges changes = _diff->compare(diffModifiers, paths, compareOptions);
 
-        QList<ChangeKind::Kind> validTypes = {
-            ChangeKind::Added,
-            ChangeKind::Modified,
-            ChangeKind::Conflicted,
-            ChangeKind::Unmodified,
-            ChangeKind::Deleted,
+        QList<ChangeKind> validTypes = {
+            ChangeKind::ChangeKindAdded,
+            ChangeKind::ChangeKindModified,
+            ChangeKind::ChangeKindConflicted,
+            ChangeKind::ChangeKindUnmodified,
+            ChangeKind::ChangeKindDeleted,
         };
-        TreeEntryChanges::List unexpected = changes.getChangesNotOfKinds(validTypes);
+        TreeChangeEntry::List unexpected = changes.getChangesNotOfKinds(validTypes);
 
         if(unexpected.count() > 0) {
-            throw CommonException(QString("Entry %1 contains an unexpected change").arg(unexpected.at(0).path()));
+            throw GitException(QString("Entry %1 contains an unexpected change").arg(unexpected.at(0).path()));
         }
 
-        for(const TreeEntryChanges& change : changes) {
-            switch (change.status())
+        for(const TreeChangeEntry& change : changes) {
+            switch (change.changeKind())
             {
-            case ChangeKind::Conflicted:
+            case ChangeKind::ChangeKindConflicted:
                 if (!change.exists()) {
                     _index->remove(change.path());
                 }
                 break;
 
-            case ChangeKind::Deleted:
+            case ChangeKind::ChangeKindDeleted:
                 _index->remove(change.path());
                 break;
 
@@ -560,15 +611,15 @@ void Repository::stage(const QStringList& paths, const StageOptions& stageOption
                 break;
             }
         }
-        for(const TreeEntryChanges& change : changes) {
-            switch (change.status())
+        for(const TreeChangeEntry& change : changes) {
+            switch (change.changeKind())
             {
-            case ChangeKind::Added:
-            case ChangeKind::Modified:
+            case ChangeKind::ChangeKindAdded:
+            case ChangeKind::ChangeKindModified:
                 _index->add(change.path());
                 break;
 
-            case ChangeKind::Conflicted:
+            case ChangeKind::ChangeKindConflicted:
                 if (change.exists()) {
                     _index->add(change.path());
                 }
@@ -580,26 +631,84 @@ void Repository::stage(const QStringList& paths, const StageOptions& stageOption
         }
 
         _index->write();
+        result = true;
     }
-    catch(CommonException&)
+    catch(const GitException&)
     {
+        result = false;
     }
+    return result;
+}
+
+bool Repository::unstage(const QStringList& paths)
+{
+    bool result = false;
+    try
+    {
+        if(_info->isHeadUnborn()) {
+            // TODO
+        }
+        else {
+            _index->replace(head().tip(), paths);
+        }
+        result = true;
+    }
+    catch(const GitException&)
+    {
+        result = false;
+    }
+    return result;
+}
+
+const Tag* Repository::findTag(const QString& name) const
+{
+    return _tags->findTag(name);
+}
+
+const LightweightTag* Repository::createLightweightTag(const QString& name, const GitObject& targetObject)
+{
+    return _tags->createLightweightTag(name, targetObject);
+}
+
+const AnnotatedTag* Repository::createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject)
+{
+    return _tags->createAnnotatedTag(name, message, signature, targetObject);
 }
 
 Tree Repository::lookupTree(const ObjectId& objectId)
 {
-    Tree result(repository(), nullptr);
+    Tree result;
     try
     {
         git_object* obj = nullptr;
-        throwOnError(git_object_lookup(&obj, _handle.value(), objectId.toNative(), GIT_OBJECT_TREE));
-        result = Tree(this, obj);
+        throwOnError(git_object_lookup(&obj, _handle.value(), objectId.toNative(), GIT_OBJECT_ANY));
+        ObjectType objectType = (ObjectType)git_object_type(obj);
+        switch(objectType) {
+        case ObjectTypeTree:
+            result = Tree(this, objectId);
+            break;
+
+        case ObjectTypeCommit:
+        {
+            Commit commit = findCommit(objectId);
+            result = Tree(this, commit.treeId());
+            break;
+        }
+        default:
+            throw GitException(QString("Unsupported object type %1 for tree lookup").arg(getObjectTypeString(objectType)));
+        }
+
         git_object_free(obj);
     }
-    catch(CommonException&)
+    catch(const GitException&)
     {
     }
     return result;
+}
+
+Tree Repository::lookupTree(const QString& sha)
+{
+    return lookupTree(ObjectId(sha));
 }
 
 Commit Repository::lookupCommit(const ObjectId& objectId)
@@ -608,14 +717,9 @@ Commit Repository::lookupCommit(const ObjectId& objectId)
     return result;
 }
 
-Branch* Repository::head() const
+Branch Repository::head() const
 {
-    for(Branch* branch : _branches) {
-        if(branch->isHead()) {
-            return branch;
-        }
-    }
-    return nullptr;
+    return _branches->head();
 }
 
 bool Repository::setHead(const QString& referenceName)
@@ -626,38 +730,6 @@ bool Repository::setHead(const QString& referenceName)
 void Repository::emitProgress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects)
 {
     emit progress(receivedBytes, receivedObjects, totalObjects);
-}
-
-bool Repository::loadBranches()
-{
-    bool result = false;
-    git_branch_iterator* it = nullptr;
-
-    qDeleteAll(_branches);
-    _branches.clear();
-
-    try
-    {
-        throwOnError(git_branch_iterator_new(&it, _handle.value(), GIT_BRANCH_ALL));
-        git_reference* reference;
-        git_branch_t type;
-        while(!git_branch_next(&reference, &type, it)) {
-            Branch* branch = new Branch(this, Reference::create(this, reference), type);
-            _branches.insert(branch->name(), branch);
-        }
-
-        result = true;
-    }
-    catch(const CommonException&)
-    {
-        result = false;
-    }
-
-    if(it != nullptr) {
-        git_branch_iterator_free(it);
-    }
-
-    return result;
 }
 
 bool Repository::loadReferences()
@@ -673,17 +745,17 @@ bool Repository::loadReferences()
         throwOnError(git_reference_iterator_new(&it, _handle.value()));
         git_reference* ref;
         while(!git_reference_next(&ref, it)) {
-            Reference* reference = Reference::create(this, ref);
-            if(reference != nullptr) {
-                _references->append(reference);
+            Reference reference = Reference::create(this, ref);
+            if(reference.isNull() == false) {
+                _references->appendDirectReference(reference);
             }
         }
 
-        _references->resolveSymbolicTargets(this);
+        _references->resolveSymbolicTargets();
 
         result = true;
     }
-    catch(const CommonException& e)
+    catch(const GitException& e)
     {
         result = false;
     }
@@ -699,11 +771,11 @@ Commit::List Repository::retrieveParentsOfTheCommitBeingCreated(bool amendPrevio
 {
     Commit::List result;
     if(amendPreviousCommit) {
-        result = head()->tip().parents();
+        result = head().tip().parents();
     }
     else {
         if(_info->isHeadUnborn() == false) {
-            result.append(head()->tip());
+            result.append(head().tip());
         }
 
         if(_info->currentOperation() == CurrentOperation::Merge) {
@@ -743,23 +815,25 @@ QString Repository::buildCommitLogMessage(const Commit& commit, bool amendPrevio
 
 void Repository::updateHeadAndTerminalReference(const Commit& commit, const QString& reflogMessage)
 {
-    Reference* reference = _references->head();
-    if(reference == nullptr) {
+    Reference reference = _references->head();
+    if(reference.isNull()) {
         KLog::sysLogText(KLOG_ERROR, "Failed to find HEAD reference!");
         return;
     }
 
     while(true) {
-        if(reference->isDirect()) {
-            _references->updateTarget(static_cast<DirectReference*>(reference), commit.objectId(), reflogMessage);
+        if(reference.isDirect()) {
+            _references->updateTarget(reference, commit.objectId(), reflogMessage);
             break;
         }
         else {
-            SymbolicReference* symRef = static_cast<SymbolicReference*>(reference);
-            reference = symRef->target();
-            if(reference == nullptr) {
-                _references->append(symRef->targetIdentifier(), commit.objectId(), reflogMessage);
+            Reference symRef = reference;
+            if(symRef.target() == nullptr) {
+                _references->appendDirectReference(symRef.targetIdentifier(), commit.objectId(), reflogMessage);
                 break;
+            }
+            else {
+                reference = *symRef.target();
             }
         }
     }
@@ -776,13 +850,13 @@ int Repository::credentialsCallback(git_cred** cred, const char* url, const char
     try
     {
         if(repo == nullptr) {
-            throw CommonException("No object passed in payload (bug)");
+            throw GitException("No object passed in payload (bug)");
         }
 
         const char *ssh_user = username ? username : "git";
         if(allowed_types & GIT_CREDTYPE_SSH_KEY){
             if(repo->_credentialResolver->getPublicKeyFilename().isEmpty() || repo->_credentialResolver->getPrivateKeyFilename().isEmpty()) {
-                throw CommonException("SSH keys not set");
+                throw GitException("SSH keys not set");
             }
             git_cred_ssh_key_new(cred, ssh_user,
                                  repo->_credentialResolver->getPublicKeyFilename().toUtf8().constData(),
@@ -790,27 +864,27 @@ int Repository::credentialsCallback(git_cred** cred, const char* url, const char
         }
         else if(allowed_types & GIT_CREDENTIAL_USERPASS_PLAINTEXT) {
             if(repo->_credentialResolver == nullptr) {
-                throw CommonException("Remote is asking for username/password and no resolver is set");
+                throw GitException("Remote is asking for username/password and no resolver is set");
             }
             CredentialResolver* resolver = repo->_credentialResolver;
 
             // Allow interactive behavior
             QString username = resolver->getUsername();
             if(username.isEmpty()) {
-                throw CommonException("Failed to obtain username from resolver");
+                throw GitException("Failed to obtain username from resolver");
             }
 
             QString password = resolver->getPassword();
             if(password.isEmpty()) {
-                throw CommonException("Failed to obtain username and password from resolver");
+                throw GitException("Failed to obtain username and password from resolver");
             }
             git_cred_userpass_plaintext_new(cred, username.toUtf8().constData(), password.toUtf8().constData());
         }
         else {
-            throw CommonException("Allowed type not implemented");
+            throw GitException("Allowed type not implemented");
         }
     }
-    catch(const CommonException& e)
+    catch(const GitException& e)
     {
         KLog::sysLogText(KLOG_WARNING, e.message());
         return 1;
@@ -838,4 +912,10 @@ int Repository::mergeHeadForeachCallback(const git_oid* oid, void* payload)
         return 0;
     }
     return 1;
+}
+
+void Repository::onFileSystemChanged(const QString&)
+{
+    loadReferences();
+    emit fileSystemChanged();
 }

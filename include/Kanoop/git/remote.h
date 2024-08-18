@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a git remote.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef REMOTE_H
 #define REMOTE_H
 #include <Kanoop/git/gitentity.h>
@@ -13,6 +20,7 @@ class Remote : public GitEntity
 public:
     Remote(Repository* repo, const QString& name);
     virtual ~Remote();
+    void dispose();
 
     QString name() const { return _name; }
     QString url() const { return _url; }

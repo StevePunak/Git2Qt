@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class contains the status of all files in the git repository.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef REPOSITORYSTATUS_H
 #define REPOSITORYSTATUS_H
 #include <Kanoop/git/gittypes.h>
@@ -14,7 +21,7 @@ public:
 
     void addStatusEntryForDelta(FileStatus fileStatus, git_diff_delta* deltaHeadToIndex, git_diff_delta* deltaIndexToWorkDir);
 
-    StatusEntry::List statusEntries() const { return _statusEntries; }
+    StatusEntry::List entries() const { return _statusEntries; }
     StatusEntry::List added() const { return _statusEntries.findByStatus(NewInIndex); }
     StatusEntry::List staged() const { return _statusEntries.findByStatus(ModifiedInIndex); }
     StatusEntry::List removed() const { return _statusEntries.findByStatus(DeletedFromIndex); }

@@ -22,6 +22,20 @@ ObjectId::ObjectId(const git_oid* oid) :
     _sha = _oid.id().toHex().toLower();
 }
 
+ObjectId::ObjectId(const git_object* obj)
+{
+    const git_oid* oid = git_object_id(obj);
+    if(oid != nullptr) {
+        _oid = GitOid(oid);
+        _sha = _oid.id().toHex().toLower();
+    }
+}
+
+ObjectId::ObjectId(const QString& sha) :
+    _oid(sha), _sha(sha)
+{
+}
+
 ObjectId ObjectId::createFromHandle(git_reference* handle)
 {
     ObjectId result;
@@ -33,7 +47,13 @@ ObjectId ObjectId::createFromHandle(git_reference* handle)
     return result;
 }
 
-ObjectId ObjectId::createFromReference(Reference* reference)
+ObjectId ObjectId::createFromReference(const Reference& reference)
 {
-    return createFromHandle(reference->handle());
+    ObjectId result;
+    ReferenceHandle referenceHandle = reference.createHandle();
+    if(referenceHandle.isNull() == false) {
+        result = createFromHandle(referenceHandle.value());
+        referenceHandle.dispose();
+    }
+    return result;
 }

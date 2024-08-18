@@ -1,9 +1,9 @@
 #include "reference.h"
 
+#include <gitexception.h>
 #include <referencecollection.h>
 #include <repository.h>
 
-#include <Kanoop/commonexception.h>
 #include <Kanoop/klog.h>
 
 using namespace GIT;
@@ -13,18 +13,89 @@ const QString Reference::RemoteTrackingBranchPrefix = "refs/remotes/";
 const QString Reference::TagPrefix                  = "refs/tags/";
 const QString Reference::NotePrefix                 = "refs/notes/";
 
-Reference::Reference(Repository* repo, const QString& canonicalName, const QString& targetIdentifier) :
+Reference::Reference(Repository* repo, const QString& canonicalName, const QString& targetIdentifier, ReferenceType referenceType) :
     GitEntity(ReferenceEntity, repo),
-    _canonicalName(canonicalName), _targetIdentifier(targetIdentifier)
+    _canonicalName(canonicalName), _targetIdentifier(targetIdentifier),
+    _type(referenceType)
 {}
+
+Reference::Reference(const Reference& other) :
+    GitEntity(ReferenceEntity, other.repository())
+{
+    *this = other;
+}
 
 Reference::~Reference()
 {
+    if(_target != nullptr) {
+        _target->dispose();
+        delete _target;
+    }
 }
 
-Reference* Reference::create(Repository* repo, git_reference* handle)
+Reference& Reference::operator=(const Reference& other)
 {
-    Reference* result = nullptr;
+    GitEntity::operator =(other);
+    _canonicalName = other._canonicalName;
+    _targetIdentifier = other._targetIdentifier;
+    _targetOid = other._targetOid;
+    _type = other._type;
+    if(_type == SymbolicReferenceType) {
+        resolveTarget();
+    }
+    return *this;
+}
+
+void Reference::dispose()
+{
+    createHandle().dispose();
+}
+
+ReferenceHandle Reference::createHandle() const
+{
+    ReferenceHandle handle;
+    git_reference* ref = nullptr;
+    if(git_reference_lookup(&ref, repository()->handle().value(), _canonicalName.toUtf8().constData()) == 0) {
+        handle = ReferenceHandle(ref);
+    }
+    return handle;
+}
+
+Reference Reference::createSymbolicReferenceObject(Repository* repo, const QString& canonicalName, const QString& targetIdentifier)
+{
+    Reference reference;
+    git_reference* ref = nullptr;
+    if(git_reference_lookup(&ref, repo->handle().value(), canonicalName.toUtf8().constData()) == 0) {
+        reference = Reference(repo, canonicalName, targetIdentifier, SymbolicReferenceType);
+        reference.resolveTarget();
+        ReferenceHandle refHandle(ref);
+        if(typeFromHandle(refHandle) != SymbolicReferenceType) {
+            KLog::sysLogText(KLOG_ERROR, "Unmatching reference type");
+        }
+        git_reference_free(ref);
+    }
+    return reference;
+}
+
+Reference Reference::createDirectReferenceObject(Repository* repo, const QString& canonicalName, const ObjectId& targetoid)
+{
+    Reference reference;
+    git_reference* ref = nullptr;
+    if(git_reference_lookup(&ref, repo->handle().value(), canonicalName.toUtf8().constData()) == 0) {
+        reference = Reference(repo, canonicalName, targetoid.sha(), DirectReferenceType);
+        reference._targetOid = targetoid;
+        ReferenceHandle refHandle(ref);
+        if(typeFromHandle(refHandle) != DirectReferenceType) {
+            KLog::sysLogText(KLOG_ERROR, "Unmatching reference type");
+        }
+        git_reference_free(ref);
+    }
+    return reference;
+}
+
+Reference Reference::create(Repository* repo, git_reference* handle)
+{
+    Reference result;
 
     try
     {
@@ -35,17 +106,14 @@ Reference* Reference::create(Repository* repo, git_reference* handle)
         case SymbolicReferenceType:
         {
             QString targetIdentifier = symbolicTargetNameFromHandle(handle);
-            Reference* targetRef = repo->references()->findReference(targetIdentifier);
-            result = new SymbolicReference(repo, name, targetIdentifier, targetRef);
-            result->_reference = handle;
+            result = createSymbolicReferenceObject(repo, name, targetIdentifier);
             break;
         }
 
         case DirectReferenceType:
         {
             ObjectId oid = objectIdFromHandle(handle);
-            result = new DirectReference(repo, name, oid);
-            result->_reference = handle;
+            result = createDirectReferenceObject(repo, name, oid);
             break;
         }
 
@@ -53,7 +121,7 @@ Reference* Reference::create(Repository* repo, git_reference* handle)
             break;
         }
     }
-    catch(const CommonException& e)
+    catch(const GitException& e)
     {
         KLog::sysLogText(KLOG_ERROR, e.message());
     }
@@ -61,42 +129,101 @@ Reference* Reference::create(Repository* repo, git_reference* handle)
     return result;
 }
 
-Reference* Reference::create(Repository* repo, const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite)
+Reference Reference::create(Repository* repo, const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite)
 {
-    Reference* result = nullptr;
-    git_reference* ref = nullptr;
-    if(git_reference_create(&ref, repo->handle().value(), name.toUtf8().constData(), targetId.toNative(), allowOverwrite, logMessage.toUtf8().constData()) == 0) {
-        result = create(repo, ref);
+    Reference reference;
+    try
+    {
+        git_reference* ref = nullptr;
+        throwOnError(repo, git_reference_create(&ref, repo->handle().value(), name.toUtf8().constData(), targetId.toNative(), allowOverwrite, logMessage.toUtf8().constData()));
+        reference = create(repo, ref);
     }
-    return result;
+    catch(const GitException& e)
+    {}
+    return reference;
 }
 
-Reference* Reference::lookup(Repository* repo, const QString& name)
+Reference Reference::lookup(Repository* repo, const QString& name)
 {
-    Reference* result = nullptr;
+    Reference reference;
     git_reference* ref = nullptr;
     if(git_reference_lookup(&ref, repo->handle().value(), name.toUtf8()) == 0) {
-        result = create(repo, ref);
+        reference = create(repo, ref);
     }
-    return result;
+    return reference;
 }
 
 QString Reference::name() const
 {
-    return nameFromHandle(_reference);
+    QString result;
+    ReferenceHandle handle = createHandle();
+    if(handle.isNull() == false) {
+        result = nameFromHandle(handle.value());
+        handle.dispose();
+    }
+    return result;
 }
 
-Reference::ReferenceType Reference::type() const
+#if 0
+ReferenceType Reference::type() const
 {
-    return typeFromHandle(_reference);
+    ReferenceType result = UnknownReferenceType;
+    ReferenceHandle handle = createHandle();
+    if(handle.isNull() == false) {
+        result = typeFromHandle(handle.value());
+        handle.dispose();
+    }
+    return result;
 }
+#endif
 
 ObjectId Reference::objectId() const
 {
-    return objectIdFromHandle(_reference);
+    ObjectId result;
+    ReferenceHandle handle = createHandle();
+    if(handle.isNull() == false) {
+        result = objectIdFromHandle(handle);
+        handle.dispose();
+    }
+    return result;
 }
 
-Reference::ReferenceType Reference::typeFromHandle(const ReferenceHandle& handle)
+void Reference::resolveTarget()
+{
+    if(_target != nullptr) {
+        delete _target;
+        _target = nullptr;
+    }
+
+    try
+    {
+        git_reference* targetRef = nullptr;
+        ReferenceHandle handle = createHandle();
+        throwOnError(git_reference_resolve(&targetRef, handle.value()));
+        const git_oid* oid = git_reference_target(targetRef);
+        if(oid != nullptr) {
+            ObjectId targetObjectId(oid);
+            _target = new Reference(repository(), _targetIdentifier, targetObjectId.toString(), DirectReferenceType);
+            handle.dispose();
+        }
+    }
+    catch(const GitException&)
+    {
+    }
+}
+
+bool Reference::isNull() const
+{
+    bool result = true;
+    if(repository() != nullptr) {
+        ReferenceHandle handle = createHandle();
+        result = handle.isNull();
+        handle.dispose();
+    }
+    return result;
+}
+
+ReferenceType Reference::typeFromHandle(const ReferenceHandle& handle)
 {
     ReferenceType result = UnknownReferenceType;
 
@@ -132,21 +259,4 @@ ObjectId Reference::objectIdFromHandle(const ReferenceHandle& handle)
     }
     return result;
 }
-
-// --------------------- SymbolicReference ----------------------
-
-SymbolicReference::SymbolicReference(Repository* repo, const QString& canonicalName, const QString& targetIdentifier, Reference* target) :
-    Reference(repo, canonicalName, targetIdentifier),
-    _target(target)
-{
-}
-
-// --------------------- DirectReference ----------------------
-
-DirectReference::DirectReference(Repository* repo, const QString& canonicalName, const ObjectId& targetOid) :
-    Reference(repo, canonicalName, targetOid.sha()),
-    _targetOid(targetOid)
-{
-}
-
 

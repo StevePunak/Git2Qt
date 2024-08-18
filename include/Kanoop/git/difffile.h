@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class wraps the git_diff_file object from libgit2.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef DIFFFILE_H
 #define DIFFFILE_H
 #include <Kanoop/git/gitentity.h>

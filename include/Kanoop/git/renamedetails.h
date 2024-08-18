@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class is a port of the RenameDetails class from libgit2sharp.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef RENAMEDETAILS_H
 #define RENAMEDETAILS_H
 

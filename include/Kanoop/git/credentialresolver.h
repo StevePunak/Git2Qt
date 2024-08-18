@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class is intended to be subclassed to provide callbacks for credential
+ * resolution during authentication to a remote repository.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef CREDENTIALRESOLVER_H
 #define CREDENTIALRESOLVER_H
 #include <Kanoop/git/kanoopgit.h>

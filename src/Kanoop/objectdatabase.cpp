@@ -1,9 +1,8 @@
 #include "objectdatabase.h"
 
+#include <gitexception.h>
 #include <repository.h>
 #include <tree.h>
-
-#include <Kanoop/commonexception.h>
 
 using namespace GIT;
 
@@ -59,7 +58,7 @@ Commit ObjectDatabase::createCommit(const Signature& author, const Signature& co
 
         result = repository()->lookupCommit(commitOid);
     }
-    catch(const CommonException&)
+    catch(const GitException&)
     {
     }
     return result;

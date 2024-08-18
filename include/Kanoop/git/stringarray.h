@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class wraps the git_strarray structure from libgit2
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef STRINGARRAY_H
 #define STRINGARRAY_H
 
