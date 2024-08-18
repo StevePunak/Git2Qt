@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents git branch.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef BRANCH_H
 #define BRANCH_H
 #include <Kanoop/git/gitentity.h>

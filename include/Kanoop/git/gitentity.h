@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * Base class for all git entities in this library.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef GITENTITY_H
 #define GITENTITY_H
 

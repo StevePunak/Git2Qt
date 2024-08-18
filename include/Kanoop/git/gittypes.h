@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * Common types for libgit2qt.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef GITTYPES_H
 #define GITTYPES_H
 #include <Kanoop/kanoopcommon.h>

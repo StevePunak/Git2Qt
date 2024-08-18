@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a single git commit.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef COMMIT_H
 #define COMMIT_H
 #include <Kanoop/git/gitobject.h>

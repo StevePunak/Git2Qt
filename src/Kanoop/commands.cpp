@@ -1,5 +1,0 @@
-#include "commands.h"
-#include <git2.h>
-
-using namespace GIT;
-

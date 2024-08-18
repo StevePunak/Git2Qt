@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a single entry in one of the git configuration files.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef CONFIGURATIONENTRY_H
 #define CONFIGURATIONENTRY_H
 #include <Kanoop/git/gittypes.h>

@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * Represents a git_index from libgit2.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef INDEX_H
 #define INDEX_H
 #include <Kanoop/git/gitentity.h>

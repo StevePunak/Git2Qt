@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class wraps the git_diff_delta object from libgit2.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef DIFFDELTA_H
 #define DIFFDELTA_H
 #include <Kanoop/git/gitentity.h>

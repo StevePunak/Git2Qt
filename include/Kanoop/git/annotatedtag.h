@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a concrete implemetation of an annotated tag.
+ * As such, it is a trivial subclass of the abstract Tag class.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef ANNOTATEDTAG_H
 #define ANNOTATEDTAG_H
 #include <Kanoop/git/tag.h>

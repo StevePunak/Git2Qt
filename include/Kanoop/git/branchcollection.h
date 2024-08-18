@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class HAS-A collection of git branches, and is used by the repository
+ * object to maintain the collection.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef BRANCHCOLLECTION_H
 #define BRANCHCOLLECTION_H
 #include <Kanoop/git/gitentity.h>

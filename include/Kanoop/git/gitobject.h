@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * Base class for blob, commit, tag, annotation and tree objects.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef GITOBJECT_H
 #define GITOBJECT_H
 #include <Kanoop/git/gitentity.h>

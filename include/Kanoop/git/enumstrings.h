@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * Classes and methods for converting between various enums and strings
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef ENUMSTRINGS_H
 #define ENUMSTRINGS_H
 #include <Kanoop/git/gittypes.h>

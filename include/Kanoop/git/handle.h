@@ -1,3 +1,14 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * Handle wrappers for git_... handles from libgit2.
+ *
+ * Note that the handles are not freed when the object is destroyed.
+ * This allows the handles to be copied and are valid until dispose() is
+ * called.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef HANDLE_H
 #define HANDLE_H
 #include <git2.h>

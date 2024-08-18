@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * Wrapper for git_oid from libgit2.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef GITOID_H
 #define GITOID_H
 

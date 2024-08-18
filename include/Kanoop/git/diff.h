@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class provides git diff comparison functionality.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef DIFF_H
 #define DIFF_H
 #include <Kanoop/git/gitentity.h>

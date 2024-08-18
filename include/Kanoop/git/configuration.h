@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class provides access to the various levels of git configuration.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 #include <Kanoop/git/gittypes.h>

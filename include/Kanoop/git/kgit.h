@@ -1,8 +1,10 @@
 /**
- *  KGit
+ * Copyright (c) 2024 Stephen Punak
  *
- *  Stephen Punak, July 24 2024
- */
+ * Master header for libgit2qt
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef KGIT_H
 #define KGIT_H
 #include <Kanoop/git/kanoopgit.h>

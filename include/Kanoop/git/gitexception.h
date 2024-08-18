@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * QException subclass for libgit2qt
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef GITEXCEPTION_H
 #define GITEXCEPTION_H
 

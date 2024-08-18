@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class provides the available diff compare options.
+ * It is a port of the CompareOptions class from libgit2sharp.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef COMPAREOPTIONS_H
 #define COMPAREOPTIONS_H
 

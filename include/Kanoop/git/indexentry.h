@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * Represents a single entry in an Index.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef INDEXENTRY_H
 #define INDEXENTRY_H
 #include <Kanoop/git/gitentity.h>

@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents git blob.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef BLOB_H
 #define BLOB_H
 
