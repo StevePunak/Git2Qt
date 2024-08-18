@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 include(GNUInstallDirs)
 
-set(PROJ KanoopGit)
+set(PROJ Git2Qt)
 project(${PROJ})
 
 find_package(Qt6 REQUIRED COMPONENTS Network)
@@ -22,7 +22,7 @@ target_compile_options(${PROJ} PRIVATE -Wextra -Wall -Werror)
 
 set_target_properties(${PROJ} PROPERTIES VERSION "${KANOOP_GIT_VERSION}")
 set_target_properties(${PROJ} PROPERTIES SOVERSION 1)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/libKanoopGit.pc.in" "libKanoopGit.pc" @ONLY)
+# configure_file("${CMAKE_CURRENT_SOURCE_DIR}/libKanoopGit.pc.in" "libKanoopGit.pc" @ONLY)
 
 target_include_directories(${PROJ} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
