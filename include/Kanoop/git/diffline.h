@@ -10,6 +10,8 @@
 #include <Kanoop/git/gitentity.h>
 #include <Kanoop/git/gittypes.h>
 
+#include <QList>
+
 namespace GIT {
 
 class DiffLine

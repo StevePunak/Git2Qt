@@ -29,11 +29,10 @@ target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Kanoop/git)
 
 # For submoudles projects, KanoopCommon is expected to reside at the same level as KanoopGit
-get_directory_property(PARENT_DIR PARENT_DIRECTORY)
-target_include_directories(${PROJ} PRIVATE ${PARENT_DIR}/KanoopCommon/include)
+# get_directory_property(PARENT_DIR PARENT_DIRECTORY)
+# target_include_directories(${PROJ} PRIVATE ${PARENT_DIR}/KanoopCommon/include)
 
 target_link_libraries(${PROJ} PRIVATE Qt6::Network)
-target_link_libraries(KanoopCommon PRIVATE Qt6::Network)
 
 add_compile_definitions(KANOOP_GIT)
 add_compile_definitions(QT_DEPRECATED_WARNINGS)

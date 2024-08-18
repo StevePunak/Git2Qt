@@ -4,7 +4,7 @@
 #include <referencecollection.h>
 #include <repository.h>
 
-#include <Kanoop/klog.h>
+#include "log.h"
 
 using namespace GIT;
 
@@ -70,7 +70,7 @@ Reference Reference::createSymbolicReferenceObject(Repository* repo, const QStri
         reference.resolveTarget();
         ReferenceHandle refHandle(ref);
         if(typeFromHandle(refHandle) != SymbolicReferenceType) {
-            KLog::sysLogText(KLOG_ERROR, "Unmatching reference type");
+            Log::sysLogText(KLOG_ERROR, "Unmatching reference type");
         }
         git_reference_free(ref);
     }
@@ -86,7 +86,7 @@ Reference Reference::createDirectReferenceObject(Repository* repo, const QString
         reference._targetOid = targetoid;
         ReferenceHandle refHandle(ref);
         if(typeFromHandle(refHandle) != DirectReferenceType) {
-            KLog::sysLogText(KLOG_ERROR, "Unmatching reference type");
+            Log::sysLogText(KLOG_ERROR, "Unmatching reference type");
         }
         git_reference_free(ref);
     }
@@ -123,7 +123,7 @@ Reference Reference::create(Repository* repo, git_reference* handle)
     }
     catch(const GitException& e)
     {
-        KLog::sysLogText(KLOG_ERROR, e.message());
+        Log::sysLogText(KLOG_ERROR, e.message());
     }
 
     return result;

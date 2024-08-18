@@ -1,7 +1,5 @@
 #include "tagcollection.h"
 
-#include <Kanoop/klog.h>
-
 #include <annotatedtag.h>
 #include <gitexception.h>
 #include <lightweighttag.h>

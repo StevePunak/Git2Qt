@@ -3,7 +3,7 @@
 #include <gitexception.h>
 #include <repository.h>
 
-#include <Kanoop/klog.h>
+#include "log.h"
 
 using namespace GIT;
 
@@ -62,7 +62,7 @@ void AnnotatedTag::commonInit()
     }
     catch(const GitException& e)
     {
-        KLog::sysLogText(KLOG_ERROR, QString("Annotated tag create failure: %1").arg(e.message()));
+        Log::sysLogText(KLOG_ERROR, QString("Annotated tag create failure: %1").arg(e.message()));
     }
 }
 

@@ -8,6 +8,7 @@
 #ifndef ENUMSTRINGS_H
 #define ENUMSTRINGS_H
 #include <Kanoop/git/gittypes.h>
+#include <Kanoop/git/enumtostringmap.h>
 #include <Qt>
 
 namespace GIT {
@@ -56,7 +57,7 @@ public:
     static QList<BranchType> getBranchTypeValues() { return _BranchTypeToStringMap.getTypes(); }
 
 private:
-    class FileStatusToStringMap : public KANOOP::EnumToStringMap<FileStatus>
+    class FileStatusToStringMap : public GIT::EnumToStringMap<FileStatus>
     {
     public:
         FileStatusToStringMap()
@@ -79,7 +80,7 @@ private:
         }
     };
 
-    class ConfigurationLevelToStringMap : public KANOOP::EnumToStringMap<ConfigurationLevel>
+    class ConfigurationLevelToStringMap : public GIT::EnumToStringMap<ConfigurationLevel>
     {
     public:
         ConfigurationLevelToStringMap()
@@ -92,7 +93,7 @@ private:
         }
     };
 
-    class DeltaTypeToStringMap : public KANOOP::EnumToStringMap<DeltaType>
+    class DeltaTypeToStringMap : public GIT::EnumToStringMap<DeltaType>
     {
     public:
         DeltaTypeToStringMap()
@@ -111,7 +112,7 @@ private:
         }
     };
 
-    class DiffDeltaFlagToStringMap : public KANOOP::EnumToStringMap<DiffDeltaFlag>
+    class DiffDeltaFlagToStringMap : public GIT::EnumToStringMap<DiffDeltaFlag>
     {
     public:
         DiffDeltaFlagToStringMap()
@@ -124,7 +125,7 @@ private:
         }
     };
 
-    class ReferenceTypeToStringMap : public KANOOP::EnumToStringMap<ReferenceType>
+    class ReferenceTypeToStringMap : public GIT::EnumToStringMap<ReferenceType>
     {
     public:
         ReferenceTypeToStringMap()
@@ -135,7 +136,7 @@ private:
         }
     };
 
-    class ObjectTypeToStringMap : public KANOOP::EnumToStringMap<ObjectType>
+    class ObjectTypeToStringMap : public GIT::EnumToStringMap<ObjectType>
     {
     public:
         ObjectTypeToStringMap()
@@ -151,7 +152,7 @@ private:
         }
     };
 
-    class ModeToStringMap : public KANOOP::EnumToStringMap<Mode>
+    class ModeToStringMap : public GIT::EnumToStringMap<Mode>
     {
     public:
         ModeToStringMap()
@@ -166,7 +167,7 @@ private:
         }
     };
 
-    class StageLevelToStringMap : public KANOOP::EnumToStringMap<StageLevel>
+    class StageLevelToStringMap : public GIT::EnumToStringMap<StageLevel>
     {
     public:
         StageLevelToStringMap()
@@ -178,7 +179,7 @@ private:
         }
     };
 
-    class TreeEntryTargetTypeToStringMap : public KANOOP::EnumToStringMap<TreeEntryTargetType>
+    class TreeEntryTargetTypeToStringMap : public GIT::EnumToStringMap<TreeEntryTargetType>
     {
     public:
         TreeEntryTargetTypeToStringMap()
@@ -189,7 +190,7 @@ private:
         }
     };
 
-    class BranchTypeToStringMap : public KANOOP::EnumToStringMap<BranchType>
+    class BranchTypeToStringMap : public GIT::EnumToStringMap<BranchType>
     {
     public:
         BranchTypeToStringMap()

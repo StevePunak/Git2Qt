@@ -9,6 +9,7 @@
 #define DIFFBINARYFILE_H
 #include <Kanoop/git/gitentity.h>
 #include <Kanoop/git/gittypes.h>
+#include <Kanoop/git/enumtostringmap.h>
 
 namespace GIT {
 
@@ -36,7 +37,7 @@ private:
     QByteArray _data;
     int _inflatedlen;
 
-    class DiffBinaryTypeToStringMap : public KANOOP::EnumToStringMap<DiffBinaryType>
+    class DiffBinaryTypeToStringMap : public GIT::EnumToStringMap<DiffBinaryType>
     {
     public:
         DiffBinaryTypeToStringMap()

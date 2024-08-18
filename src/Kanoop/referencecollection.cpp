@@ -3,7 +3,7 @@
 #include <gitexception.h>
 #include <repository.h>
 
-#include <Kanoop/klog.h>
+#include "log.h"
 
 using namespace GIT;
 
@@ -122,7 +122,7 @@ Reference ReferenceCollection::appendDirectReference(const QString& name, const 
 {
     Reference reference = Reference::create(repository(), name, targetId, logMessage, allowOverwrite);
     if(reference.isNull() || reference.type() != DirectReferenceType) {
-        KLog::sysLogText(KLOG_ERROR, "Failed to create DIRECT reference");
+        Log::sysLogText(KLOG_ERROR, "Failed to create DIRECT reference");
     }
     return reference;
 }

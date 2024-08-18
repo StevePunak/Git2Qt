@@ -3,7 +3,7 @@
 #include <gitexception.h>
 #include <repository.h>
 
-#include <Kanoop/klog.h>
+#include "log.h"
 
 using namespace GIT;
 

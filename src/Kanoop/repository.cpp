@@ -2,10 +2,6 @@
 
 #include "credentialresolver.cpp"
 
-#include <Kanoop/datetimeutil.h>
-#include <Kanoop/klog.h>
-#include <Kanoop/pathutil.h>
-
 #include <QDir>
 #include <branch.h>
 #include <commit.h>
@@ -29,6 +25,8 @@
 #include <QRegularExpression>
 #include <gitexception.h>
 #include <QFileSystemWatcher>
+#include <utility.h>
+#include <log.h>
 
 using namespace GIT;
 
@@ -794,7 +792,7 @@ Commit::List Repository::mergeHeads()
 
 QString Repository::makeReferenceName(const QString& branchName)
 {
-    return PathUtil::combine("refs", "heads", branchName);
+    return Utility::combine("refs", "heads", branchName);
 }
 
 QString Repository::buildCommitLogMessage(const Commit& commit, bool amendPreviousCommit, bool isHeadOrphaned, bool isMergeCommit) const
@@ -817,7 +815,7 @@ void Repository::updateHeadAndTerminalReference(const Commit& commit, const QStr
 {
     Reference reference = _references->head();
     if(reference.isNull()) {
-        KLog::sysLogText(KLOG_ERROR, "Failed to find HEAD reference!");
+        Log::sysLogText(KLOG_ERROR, "Failed to find HEAD reference!");
         return;
     }
 
@@ -886,7 +884,7 @@ int Repository::credentialsCallback(git_cred** cred, const char* url, const char
     }
     catch(const GitException& e)
     {
-        KLog::sysLogText(KLOG_WARNING, e.message());
+        Log::sysLogText(KLOG_WARNING, e.message());
         return 1;
     }
     return 0;

@@ -1,7 +1,5 @@
 #include "lightweighttag.h"
 
-#include <Kanoop/klog.h>
-
 #include <blob.h>
 #include <gitexception.h>
 #include <repository.h>

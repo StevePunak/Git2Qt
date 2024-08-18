@@ -11,7 +11,7 @@
 #include <diffline.h>
 #include <gitexception.h>
 #include <tree.h>
-#include <Kanoop/klog.h>
+#include "log.h"
 
 using namespace GIT;
 
@@ -237,7 +237,7 @@ int Diff::binaryCallback(const git_diff_delta* d, const git_diff_binary* binary,
         delta->appendBinary(DiffBinary(binary));
     }
     else {
-        KLog::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
+        Log::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
     }
     return 0;
 }
@@ -250,7 +250,7 @@ int Diff::hunkCallback(const git_diff_delta* d, const git_diff_hunk* h, void* pa
         xdelta->appendHunk(DiffHunk(h));
     }
     else {
-        KLog::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
+        Log::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
     }
     return 0;
 }
@@ -265,11 +265,11 @@ int Diff::lineCallback(const git_diff_delta* d, const git_diff_hunk* h, const gi
             hunk->appendLine(DiffLine(l));
         }
         else {
-            KLog::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING HUNK!!!!"));
+            Log::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING HUNK!!!!"));
         }
     }
     else {
-        KLog::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
+        Log::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
     }
     return 0;
 }

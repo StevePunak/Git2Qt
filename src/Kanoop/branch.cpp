@@ -2,7 +2,7 @@
 #include "reference.h"
 #include "commit.h"
 
-#include <Kanoop/klog.h>
+#include "log.h"
 
 #include <configuration.h>
 #include <configurationentry.h>
@@ -62,7 +62,7 @@ QString Branch::friendlyName() const
         result = _reference.canonicalName().mid(Reference::RemoteTrackingBranchPrefix.length());
     }
     else {
-        KLog::sysLogText(KLOG_ERROR, QString("%1 does not look like a valid branch name").arg(_reference.canonicalName()));
+        Log::sysLogText(KLOG_ERROR, QString("%1 does not look like a valid branch name").arg(_reference.canonicalName()));
     }
     return result;
 }

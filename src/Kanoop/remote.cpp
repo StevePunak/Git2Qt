@@ -5,7 +5,7 @@
 #include <referencecollection.h>
 #include <gitexception.h>
 
-#include <Kanoop/klog.h>
+#include "log.h"
 
 using namespace GIT;
 

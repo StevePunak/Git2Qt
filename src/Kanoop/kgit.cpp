@@ -2,8 +2,7 @@
 
 #include "credentialresolver.cpp"
 
-#include <Kanoop/klog.h>
-#include <Kanoop/pathutil.h>
+#include "log.h"
 
 bool KGit::_git2Initialized = false;
 

@@ -7,7 +7,7 @@
 */
 #ifndef GITTYPES_H
 #define GITTYPES_H
-#include <Kanoop/kanoopcommon.h>
+#include <Qt>
 
 namespace GIT {
 

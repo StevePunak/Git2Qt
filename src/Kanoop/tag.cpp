@@ -1,7 +1,7 @@
 #include "tag.h"
 #include "repository.h"
 
-#include <Kanoop/klog.h>
+#include "log.h"
 
 #include <annotatedtag.h>
 #include <blob.h>

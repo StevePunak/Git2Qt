@@ -6,7 +6,7 @@
 #include <tree.h>
 #include <treechanges.h>
 
-#include <Kanoop/klog.h>
+#include "log.h"
 
 using namespace GIT;
 

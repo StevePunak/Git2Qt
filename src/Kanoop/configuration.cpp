@@ -1,7 +1,7 @@
 #include "configuration.h"
 
-#include <Kanoop/klog.h>
-#include <Kanoop/pathutil.h>
+#include "log.h"
+#include <utility.h>
 
 #include <configurationentry.h>
 #include <gitexception.h>
@@ -68,7 +68,7 @@ void Configuration::reload()
             _programDataConfigPath = buf.ptr;
         }
 
-        QString path = PathUtil::combine(repository()->info()->path(), "config");
+        QString path = Utility::combine(repository()->info()->path(), "config");
         git_config_add_file_ondisk(_handle.value(), path.toUtf8().constData(), (git_config_level_t)Local, repoHandle.value(), true);
         _repoConfigPath = path;
 
@@ -180,7 +180,7 @@ void Configuration::dumpToLog(git_config* config)
     git_config_entry* entry;
     int error = git_config_iterator_new(&it, config);
     while(error == false && git_config_next(&entry, it) == 0) {
-        KLog::sysLogText(KLOG_DEBUG, QString("%1 = %2").arg(entry->name).arg(entry->value));
+        Log::sysLogText(KLOG_DEBUG, QString("%1 = %2").arg(entry->name).arg(entry->value));
     }
     git_config_iterator_free(it);
 }
