@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class IS-A collection of tree changes. It is used
+ * by the repository to maintain its tree change information.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef TREECHANGES_H
 #define TREECHANGES_H
 #include <Kanoop/git/gitentity.h>

@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class contains information about the repository object.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef REPOSITORYINFORMATION_H
 #define REPOSITORYINFORMATION_H
 #include <Kanoop/git/gittypes.h>

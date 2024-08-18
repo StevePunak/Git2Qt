@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a single entry in the RepositoryStatus collection.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef STATUSENTRY_H
 #define STATUSENTRY_H
 

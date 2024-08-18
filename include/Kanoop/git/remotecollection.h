@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class HAS-A collection of remotes. It is used by the repository
+ * object to maintain the repo remotes.
+ *
+ * TODO: Should probably not be a public header.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef REMOTECOLLECTION_H
 #define REMOTECOLLECTION_H
 #include <Kanoop/git/gitentity.h>

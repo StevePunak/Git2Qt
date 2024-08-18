@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a change in a git tree
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef TREEENTRYCHANGES_H
 #define TREEENTRYCHANGES_H
 

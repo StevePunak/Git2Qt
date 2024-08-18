@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a git repository. All interfacces to the
+ * repository should got through an instance of this object.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
 #include <QString>

@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class HAS-A collection of Submodule object and is used
+ * by the repository to maintain its submodule information.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef SUBMODULECOLLECTION_H
 #define SUBMODULECOLLECTION_H
 #include <Kanoop/git/gitentity.h>

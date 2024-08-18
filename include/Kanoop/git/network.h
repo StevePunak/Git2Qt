@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class is a port of the Network class from libgit2sharp.
+ *
+ * Stephen Punak, August 1, 2024
+*/
+
 #ifndef NETWORK_H
 #define NETWORK_H
 #include <Kanoop/git/gitentity.h>

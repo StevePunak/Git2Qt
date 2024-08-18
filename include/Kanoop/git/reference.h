@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a git-reference.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef REFERENCE_H
 #define REFERENCE_H
 #include <Kanoop/git/gitentity.h>

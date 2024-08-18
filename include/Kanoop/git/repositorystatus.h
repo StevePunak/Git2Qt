@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class contains the status of all files in the git repository.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef REPOSITORYSTATUS_H
 #define REPOSITORYSTATUS_H
 #include <Kanoop/git/gittypes.h>

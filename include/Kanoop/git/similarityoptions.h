@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class is a port of the SimilarityOptions class from libgit2sharp.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef SIMILARITYOPTIONS_H
 #define SIMILARITYOPTIONS_H
 #include <git2.h>

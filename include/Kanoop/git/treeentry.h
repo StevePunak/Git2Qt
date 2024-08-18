@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a single entry in a git tree.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef TREEENTRY_H
 #define TREEENTRY_H
 #include <Kanoop/git/gitentity.h>

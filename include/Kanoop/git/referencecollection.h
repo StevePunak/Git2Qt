@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class HAS-A collection of references. It is used by the repository
+ * object to maintain the repo references.
+ *
+ * TODO: Should probably not be a public header.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef REFERENCECOLLECTION_H
 #define REFERENCECOLLECTION_H
 #include <Kanoop/git/gitentity.h>

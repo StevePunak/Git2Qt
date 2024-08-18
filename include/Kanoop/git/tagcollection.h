@@ -1,9 +1,18 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class HAS-A collection of Tag objects and is used
+ * by the repository to maintain its submodule information.
+ *
+ * TODO: Should probably not be a public header.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef TAGCOLLECTION_H
 #define TAGCOLLECTION_H
 #include <Kanoop/git/gitentity.h>
 #include <Kanoop/git/gittypes.h>
 #include <Kanoop/git/tag.h>
-#include <Kanoop/git/tagannotation.h>
 
 namespace GIT {
 

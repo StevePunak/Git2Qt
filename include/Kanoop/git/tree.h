@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a git tree object
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef TREE_H
 #define TREE_H
 #include <Kanoop/git/gitobject.h>

@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a git remote.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef REMOTE_H
 #define REMOTE_H
 #include <Kanoop/git/gitentity.h>

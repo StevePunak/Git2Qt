@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class represents a SHA objectId. It wraps and extends the GitOid class
+ * which in turn directly wraps git_oit from libgit2.
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef OBJECTID_H
 #define OBJECTID_H
 #include <Kanoop/git/gitoid.h>

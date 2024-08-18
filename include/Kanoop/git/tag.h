@@ -1,3 +1,15 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This abstract class represents a git tag. The concrete implementations
+ * are AnnotatedTag and LightweightTag.
+ *
+ * This abstract class will be returned as a const Tag* from the repository
+ * and should immediately be converted to the trivial concrete class via
+ * toLightweightTag() and toAnnotatedTag().
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef TAG_H
 #define TAG_H
 #include <Kanoop/git/gitobject.h>
