@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 include(GNUInstallDirs)
 
-set(PROJ Git2Qt)
+set(PROJ git2qt)
 project(${PROJ})
 
 find_package(Qt6 REQUIRED COMPONENTS Network)
@@ -26,13 +26,9 @@ set_target_properties(${PROJ} PROPERTIES SOVERSION 1)
 
 target_include_directories(${PROJ} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Kanoop/git)
+target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/git2qt)
 
-# For submoudles projects, KanoopCommon is expected to reside at the same level as KanoopGit
-# get_directory_property(PARENT_DIR PARENT_DIRECTORY)
-# target_include_directories(${PROJ} PRIVATE ${PARENT_DIR}/KanoopCommon/include)
-
-target_link_libraries(${PROJ} PRIVATE Qt6::Network)
+target_link_libraries(${PROJ} PRIVATE Qt6::Network git2)
 
 add_compile_definitions(KANOOP_GIT)
 add_compile_definitions(QT_DEPRECATED_WARNINGS)
