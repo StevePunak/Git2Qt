@@ -408,6 +408,11 @@ Branch Repository::createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& 
     return result;
 }
 
+Branch Repository::findLocalBranch(const QString& branchName) const
+{
+    return _branches->findLocalBranch(branchName);
+}
+
 Commit Repository::commit(const QString& message, const Signature& author, const Signature& committer, const CommitOptions& options)
 {
     Commit result(this);

@@ -75,6 +75,7 @@ public:
     // Branch creation
     Branch createBranch(const QString& branchName, bool switchToNewBranch = false);
     Branch createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& annotatedCommit, const QString& branchName);
+    Branch findLocalBranch(const QString& branchName) const;
 
     // Commits
     Commit commit(const QString& message, const Signature& author, const Signature& committer, const CommitOptions& options = CommitOptions());
