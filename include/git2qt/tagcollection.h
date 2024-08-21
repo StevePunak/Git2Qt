@@ -31,8 +31,9 @@ public:
     TagCollection(Repository* repo);
 
     const LightweightTag* createLightweightTag(const QString& name, const GitObject& targetObject);
-    const AnnotatedTag* createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject);
+    const AnnotatedTag* createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject, bool allowOverwrite = false);
     const Tag* findTag(const QString& name) const;
+    const Tag* findTag(const ObjectId& objectId) const;
     bool deleteLocalTag(const QString& name);
 
     Tag::ConstPtrList tags() const { return _tags; }
@@ -43,7 +44,7 @@ public slots:
     void reload();
 
 private:
-    void retrieveTags();
+    void refreshTags();
 
     // Callbacks
     static int gitTagForeachCallback(const char *name, git_oid *oid, void *payload);

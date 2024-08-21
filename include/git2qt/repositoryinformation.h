@@ -3,6 +3,8 @@
  *
  * This class contains information about the repository object.
  *
+ * It's a port from libgit2sharp object of the same name.
+ *
  * Stephen Punak, August 1, 2024
 */
 #ifndef REPOSITORYINFORMATION_H

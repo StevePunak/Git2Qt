@@ -62,7 +62,7 @@ void AnnotatedTag::commonInit()
     }
     catch(const GitException& e)
     {
-        Log::sysLogText(KLOG_ERROR, QString("Annotated tag create failure: %1").arg(e.message()));
+        Log::logText(LVL_ERROR, QString("Annotated tag create failure: %1").arg(e.message()));
     }
 }
 

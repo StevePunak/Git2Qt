@@ -9,7 +9,7 @@ using namespace GIT;
 
 const Log::LogLevelToStringMap Log::_LogLevelToStringMap;
 
-void Log::sysLogText(const char* file, int line, LogLevel level, const QString& text)
+void Log::logText(const char* file, int line, LogLevel level, const QString& text)
 {
     QString result;
     QTextStream output(&result);

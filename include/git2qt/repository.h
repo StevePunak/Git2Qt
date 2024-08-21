@@ -14,6 +14,7 @@
 #include <git2qt/tagcollection.h>
 #include <git2qt/gitentity.h>
 #include <git2qt/branch.h>
+#include <git2qt/diffdelta.h>
 #include <git2qt/commit.h>
 #include <git2qt/commitoptions.h>
 #include <git2qt/reference.h>
@@ -25,26 +26,26 @@
 class QFileSystemWatcher;
 namespace GIT {
 
-class AnnotatedTag;
-
-class LightweightTag;
-
-class BranchCollection;
-class TagCollection;
-class Tag;
-class SubmoduleCollection;
-class ReferenceCollection;
-class ObjectDatabase;
-class Configuration;
-class RepositoryInformation;
-class StageOptions;
-class Tree;
-class CredentialResolver;
 class AnnotatedCommitHandle;
+class AnnotatedTag;
+class BranchCollection;
+class CompareOptions;
+class Configuration;
+class CredentialResolver;
 class Diff;
 class Index;
+class LightweightTag;
 class Network;
+class ObjectDatabase;
+class ReferenceCollection;
 class Remote;
+class RepositoryInformation;
+class StageOptions;
+class SubmoduleCollection;
+class Tag;
+class TagCollection;
+class Tree;
+
 class Repository : public QObject,
                    public GitEntity
 {
@@ -54,9 +55,6 @@ public:
     explicit Repository(const QString& localPath);
     explicit Repository(git_repository* nativeRepo);
     virtual ~Repository();
-
-    // Clone
-    bool clone(const QString& remoteUrl, CredentialResolver* credentialResolver = nullptr);
 
     // Fetch
     bool fetch();
@@ -71,6 +69,8 @@ public:
     bool checkoutRemoteBranch(const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
     bool checkoutLocalBranch(const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
     bool checkoutTree(const Tree& tree, const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
+    bool checkoutTree(const Tree& tree, const QStringList& paths, const CheckoutOptions& options = CheckoutOptions());
+    bool checkoutPaths(const QString& branchName, const QStringList& paths, const CheckoutOptions& options = CheckoutOptions());
 
     // Branch creation
     Branch createBranch(const QString& branchName, bool switchToNewBranch = false);
@@ -78,11 +78,15 @@ public:
 
     // Commits
     Commit commit(const QString& message, const Signature& author, const Signature& committer, const CommitOptions& options = CommitOptions());
+    Commit findCommit(const QString& sha) { return findCommit(ObjectId(sha)); }
     Commit findCommit(const ObjectId& objectId);
     Commit::List findCommits(const QString& messageRegex);
     Commit::List findCommits(const QRegularExpression& messageRegex);
     Commit::List findCommits(const Reference& from);
     Commit::List commitsFromHead();
+
+    // Reset
+    bool reset(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions = CheckoutOptions());
 
     // Status
     GIT::RepositoryStatus status();
@@ -91,20 +95,30 @@ public:
     bool stage(const QString& path, const StageOptions& stageOptions = StageOptions());
     bool stage(const StatusEntry::List& entries, const StageOptions& stageOptions = StageOptions());
     bool stage(const QStringList& paths, const StageOptions& stageOptions = StageOptions());
+    bool unstage(const QString& path) { return unstage(QStringList() << path); }
     bool unstage(const QStringList& paths);
 
     // Add
     void add(const GIT::StatusEntry::List& items);
 
+    // Restore
+    bool restore(const QStringList& paths);
+
     // Tags
     const Tag* findTag(const QString& name) const;
+    const Tag* findTag(const ObjectId& objectId) const;
     const LightweightTag* createLightweightTag(const QString& name, const GitObject& targetObject);
     const AnnotatedTag* createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject);
+    bool deleteTag(const QString& tagName);
 
     // Lookup
     Tree lookupTree(const ObjectId& objectId);
     Tree lookupTree(const QString& sha);
     Commit lookupCommit(const ObjectId& objectId);
+    Commit lookupCommit(const QString& revName);
+
+    // Diffs
+    DiffDelta::List getDiffDeltas(const CompareOptions& compareOptions, DiffModifiers diffFlags = DiffModifier::DiffModNone);
 
     // Credentials Callback
     void setCredentialResolver(CredentialResolver* value) { _credentialResolver = value; }

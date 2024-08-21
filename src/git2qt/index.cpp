@@ -25,6 +25,7 @@ void Index::remove(const QString& path)
     IndexHandle handle = createHandle();
     if(handle.isNull() == false) {
         git_index_remove_bypath(handle.value(), path.toUtf8().constData());
+        handle.dispose();
     }
 }
 
@@ -33,7 +34,28 @@ void Index::add(const QString& path)
     IndexHandle handle = createHandle();
     if(handle.isNull() == false) {
         git_index_add_bypath(handle.value(), path.toUtf8().constData());
+        handle.dispose();
     }
+}
+
+void Index::add(const QString& path, const ObjectId& objectId, Mode mode)
+{
+    IndexHandle handle = createHandle();
+    try
+    {
+        throwIfTrue(handle.isNull());
+        git_index_entry entry;
+        memset(&entry, 0, sizeof(entry));
+        entry.mode = mode;
+        memcpy(&entry.id, objectId.toNative(), sizeof(entry.id));
+        entry.path = path.toUtf8().constData();
+
+        throwOnError(git_index_add(handle.value(), &entry));
+    }
+    catch(const GitException&)
+    {
+    }
+    handle.dispose();
 }
 
 void Index::replace(const Commit& commit, const QStringList& paths, const CompareOptions& compareOptions)
@@ -41,8 +63,30 @@ void Index::replace(const Commit& commit, const QStringList& paths, const Compar
     CompareOptions options = compareOptions;
     options.setSimilarity(SimilarityOptions::none());
     TreeChanges changes = repository()->diff()->compare(commit.tree(), DiffTargetIndex, paths, options);
+    replace(changes);
+}
 
-    // continue here
+void Index::replace(const TreeChanges& changes)
+{
+    for(const TreeChangeEntry& change : changes) {
+        switch(change.changeKind()) {
+        case ChangeKindUnmodified:
+            break;
+
+        case ChangeKindAdded:
+            remove(change.path());
+            break;
+
+        case ChangeKindDeleted:
+        case ChangeKindModified:
+            add(change.oldPath(), change.oldOid(), change.oldMode());
+            break;
+
+        default:
+            Log::logText(LVL_ERROR, QString("Entry '%1' has an unexpected change kind %2").arg(change.path()).arg(getChangeKindString(change.changeKind())));
+            break;
+        }
+    }
 }
 
 void Index::write()
@@ -50,6 +94,7 @@ void Index::write()
     IndexHandle handle = createHandle();
     if(handle.isNull() == false) {
         git_index_write(handle.value());
+        handle.dispose();
     }
 }
 
@@ -62,6 +107,7 @@ ObjectId Index::writeTree()
         if(git_index_write_tree(&oid, handle.value()) == 0) {
             result = ObjectId(oid);
         }
+        handle.dispose();
     }
     return result;
 }
@@ -105,4 +151,13 @@ IndexHandle Index::createHandle() const
         result = IndexHandle(index);
     }
     return result;
+}
+
+bool Index::isNull() const
+{
+    IndexHandle handle = createHandle();
+    bool result = handle.isNull();
+    handle.dispose();
+    return result;
+    return createHandle().isNull();
 }

@@ -62,7 +62,7 @@ QString Branch::friendlyName() const
         result = _reference.canonicalName().mid(Reference::RemoteTrackingBranchPrefix.length());
     }
     else {
-        Log::sysLogText(KLOG_ERROR, QString("%1 does not look like a valid branch name").arg(_reference.canonicalName()));
+        Log::logText(LVL_ERROR, QString("%1 does not look like a valid branch name").arg(_reference.canonicalName()));
     }
     return result;
 }

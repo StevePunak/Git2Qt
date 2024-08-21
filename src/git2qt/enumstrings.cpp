@@ -14,6 +14,7 @@ const EnumStrings::ModeToStringMap EnumStrings::_ModeToStringMap;
 const EnumStrings::StageLevelToStringMap EnumStrings::_StageLevelToStringMap;
 const EnumStrings::TreeEntryTargetTypeToStringMap EnumStrings::_TreeEntryTargetTypeToStringMap;
 const EnumStrings::BranchTypeToStringMap EnumStrings::_BranchTypeToStringMap;
+const EnumStrings::ChangeKindToStringMap EnumStrings::_ChangeKindToStringMap;
 
 
 QString EnumStrings::getFileStatusString(FileStatuses value)

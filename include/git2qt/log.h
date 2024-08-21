@@ -20,7 +20,7 @@ public:
         Debug           = 7,
     };
 
-    static void sysLogText(const char* file, int line, LogLevel level, const QString& text);
+    static void logText(const char* file, int line, LogLevel level, const QString& text);
 
 private:
     class LogLevelToStringMap : public EnumToStringMap<LogLevel>
@@ -43,11 +43,11 @@ private:
 
 };
 
-#define KLOG_DEBUG      __FILE__,__LINE__,Log::LogLevel::Debug
-#define KLOG_INFO       __FILE__,__LINE__,Log::LogLevel::Informational
-#define KLOG_WARNING    __FILE__,__LINE__,Log::LogLevel::Warning
-#define KLOG_ERROR      __FILE__,__LINE__,Log::LogLevel::Error
-#define KLOG_FATAL      __FILE__,__LINE__,Log::LogLevel::Fatal
+#define LVL_DEBUG      __FILE__,__LINE__,Log::LogLevel::Debug
+#define LVL_INFO       __FILE__,__LINE__,Log::LogLevel::Informational
+#define LVL_WARNING    __FILE__,__LINE__,Log::LogLevel::Warning
+#define LVL_ERROR      __FILE__,__LINE__,Log::LogLevel::Error
+#define LVL_FATAL      __FILE__,__LINE__,Log::LogLevel::Fatal
 
 } // namspace GIT
 

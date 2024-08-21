@@ -11,39 +11,36 @@
 #include <diffline.h>
 #include <gitexception.h>
 #include <tree.h>
+#include <diffoptions.h>
 #include "log.h"
 
 using namespace GIT;
 
-TreeChanges Diff::compare(DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions)
+TreeChanges Diff::compare(DiffModifiers diffModifiers, const QStringList& paths, const CompareOptions& compareOptions)
 {
     TreeChanges result;
 
+    IndexHandle indexHandle = repository()->index()->createHandle();
     try
     {
         git_diff* diff = nullptr;
         git_diff_options options = GIT_DIFF_OPTIONS_INIT;
-        IndexHandle indexHandle = repository()->index()->handle();
         throwIfTrue(indexHandle.isNull());
         throwOnError(git_diff_index_to_workdir(&diff, repository()->handle().value(), indexHandle.value(), &options));
         git_diff_free(diff);
         diff = nullptr;
 
         // Build options (
-        buildDiffOptions(diffOptions, compareOptions, options);
-
-        StringArray pathArray(paths);
-        options.pathspec = *pathArray.native();
-
-        throwOnError(git_diff_index_to_workdir(&diff, repository()->handle().value(), indexHandle.value(), &options));
-        DiffHandle handle(diff);
-        result = buildTreeChanges(handle);
-        handle.dispose();
+        DiffOptions diffOptions = buildDiffOptions(diffModifiers, paths, compareOptions);
+        throwOnError(git_diff_index_to_workdir(&diff, repository()->handle().value(), indexHandle.value(), diffOptions.toNative()));
+        DiffHandle diffHandle(diff);
+        result = buildTreeChanges(diffHandle);
+        diffHandle.dispose();
     }
     catch(const GitException&)
     {
     }
-
+    indexHandle.dispose();
     return result;
 }
 
@@ -62,12 +59,12 @@ TreeChanges Diff::compare(const Tree& fromTree, const Tree& toTree, DiffModifier
     try
     {
         git_diff* diff = nullptr;
-        git_diff_options options = GIT_DIFF_OPTIONS_INIT;
-        buildDiffOptions(diffOptions, compareOptions, options);
+
+        DiffOptions options = buildDiffOptions(diffOptions, QStringList(), compareOptions);
 
         throwIfTrue(fromHandle.isNull());
         throwIfTrue(toHandle.isNull());
-        throwOnError(git_diff_tree_to_tree(&diff, repository()->handle().value(), fromHandle.value(), toHandle.value(), &options));
+        throwOnError(git_diff_tree_to_tree(&diff, repository()->handle().value(), fromHandle.value(), toHandle.value(), options.toNative()));
 
         DiffHandle handle(diff);
         result = buildTreeChanges(handle);
@@ -100,17 +97,14 @@ DiffDelta::List Diff::listDiffs(const CompareOptions& compareOptions, DiffModifi
     DiffDelta::List collection;
     git_diff* diff = nullptr;
 
+    IndexHandle indexHandle = repository()->index()->createHandle();
     try
     {
-        git_diff_options options;
-        buildDiffOptions(diffFlags, compareOptions, options);
-        StringArray pathArray("*");
-        options.pathspec = *pathArray.native();
+        DiffOptions options = buildDiffOptions(diffFlags, QStringList() << "*", compareOptions);
 
-        IndexHandle indexHandle = repository()->index()->handle();
         throwIfTrue(indexHandle.isNull());
 
-        throwOnError(git_diff_index_to_workdir(&diff, repository()->handle().value(), indexHandle.value(), &options));
+        throwOnError(git_diff_index_to_workdir(&diff, repository()->handle().value(), indexHandle.value(), options.toNative()));
         int count = git_diff_num_deltas(diff);
         if(count > 0) {
             git_diff_foreach(diff, fileCallback, binaryCallback, hunkCallback, lineCallback, &collection);
@@ -123,67 +117,69 @@ DiffDelta::List Diff::listDiffs(const CompareOptions& compareOptions, DiffModifi
     if(diff != nullptr) {
         git_diff_free(diff);
     }
+    indexHandle.dispose();
     return collection;
 }
 
-void Diff::buildDiffOptions(DiffModifiers diffOptions, const CompareOptions& compareOptions, git_diff_options& options)
+DiffOptions Diff::buildDiffOptions(DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions)
 {
-    options = GIT_DIFF_OPTIONS_INIT;
+    DiffOptions options;
 
-    // Build options (
-    options.flags |= GIT_DIFF_INCLUDE_TYPECHANGE;
-    options.context_lines = compareOptions.contextLines();
-    options.interhunk_lines = compareOptions.interhunkLines();
+    options.setFlags(DiffOptionIncludeTypeChange);
+    options.setContextLines(compareOptions.contextLines());
+    options.setInterhunkLines(compareOptions.interhunkLines());
+
     if(diffOptions & DiffModIncludeUntracked) {
-        options.flags |= (GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS | GIT_DIFF_SHOW_UNTRACKED_CONTENT);
+        options.setFlags(DiffOptionIncludeUntracked | DiffOptionRecurseUntrackedDirs | DiffOptionShowUntrackedContent);
     }
     if(diffOptions & DiffModIncludeIgnored) {
-        options.flags |= (GIT_DIFF_INCLUDE_IGNORED | GIT_DIFF_RECURSE_IGNORED_DIRS);
+        options.setFlags(DiffOptionIncludeIgnored | DiffOptionRecurseIgnoredDirs);
     }
-    if((diffOptions & DiffModIncludeUnmodified || compareOptions.includeUnmodified()) ||
-        compareOptions.similarity().renameDetectionMode() == SimilarityOptions::RenameDetectionCopiesHarder || compareOptions.similarity().renameDetectionMode() == SimilarityOptions::RenameDetectionExact) {
-        options.flags |= GIT_DIFF_INCLUDE_UNMODIFIED;
+    if(((diffOptions & DiffModIncludeUnmodified) || compareOptions.includeUnmodified()) ||
+        compareOptions.similarity().renameDetectionMode() == SimilarityOptions::RenameDetectionCopiesHarder ||
+        compareOptions.similarity().renameDetectionMode() == SimilarityOptions::RenameDetectionExact) {
+        options.setFlags(DiffOptionIncludeUnmodified);
     }
 
     if(compareOptions.algorithm() == Patience) {
-        options.flags |= GIT_DIFF_PATIENCE;
+        options.setFlags(DiffOptionPatience);
     }
-    else if (compareOptions.algorithm() == Minimal) {
-        options.flags |= GIT_DIFF_MINIMAL;
-    }
-
-    if (diffOptions & DiffModDisablePathspecMatch) {
-        options.flags |= GIT_DIFF_DISABLE_PATHSPEC_MATCH;
+    else if(compareOptions.algorithm() == Minimal) {
+        options.setFlags(DiffOptionMinimal);
     }
 
-    if (compareOptions.identHeurisitc()) {
-        options.flags |= GIT_DIFF_INDENT_HEURISTIC;
+    if(diffOptions & DiffModDisablePathspecMatch) {
+        options.setFlags(DiffOptionDisablePathspecMatch);
     }
+
+    if(compareOptions.indentHeurisitc()) {
+        options.setFlags(DiffOptionIndentHeuristic);
+    }
+
+    options.setPaths(paths);
+
+    return options;
 }
 
 DiffHandle Diff::buildDiffList(const ObjectId& oldTreeId, DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions)
 {
-    Q_UNUSED(paths) // TODO
     git_diff* diff = nullptr;
     TreeHandle treeHandle;
     DiffHandle result;
     try
     {
-        git_diff_options options;
-        buildDiffOptions(diffOptions, compareOptions, options);
+        DiffOptions options = buildDiffOptions(diffOptions, paths, compareOptions);
         Tree oldTree = repository()->lookupTree(oldTreeId);
         throwIfTrue(oldTree.isNull());
         treeHandle = oldTree.createTreeHandle();
-        throwOnError(git_diff_tree_to_index(&diff, repository()->handle().value(), treeHandle.value(), repository()->index()->handle().value(), &options));
+        const git_diff_options* opts = options.toNative();
+        throwOnError(git_diff_tree_to_index(&diff, repository()->handle().value(), treeHandle.value(), repository()->index()->createHandle().value(), opts));
         result = DiffHandle(diff);
     }
     catch(const GitException& e)
     {
     }
 
-    if(diff != nullptr) {
-        git_diff_free(diff);
-    }
     treeHandle.dispose();
 
     return result;
@@ -237,7 +233,7 @@ int Diff::binaryCallback(const git_diff_delta* d, const git_diff_binary* binary,
         delta->appendBinary(DiffBinary(binary));
     }
     else {
-        Log::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
+        Log::logText(LVL_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
     }
     return 0;
 }
@@ -250,7 +246,7 @@ int Diff::hunkCallback(const git_diff_delta* d, const git_diff_hunk* h, void* pa
         xdelta->appendHunk(DiffHunk(h));
     }
     else {
-        Log::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
+        Log::logText(LVL_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
     }
     return 0;
 }
@@ -265,11 +261,11 @@ int Diff::lineCallback(const git_diff_delta* d, const git_diff_hunk* h, const gi
             hunk->appendLine(DiffLine(l));
         }
         else {
-            Log::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING HUNK!!!!"));
+            Log::logText(LVL_DEBUG, QString("FAILED TO FIND MATCHING HUNK!!!!"));
         }
     }
     else {
-        Log::sysLogText(KLOG_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
+        Log::logText(LVL_DEBUG, QString("FAILED TO FIND MATCHING DELTA!!!!"));
     }
     return 0;
 }

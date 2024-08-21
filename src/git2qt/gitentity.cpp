@@ -56,9 +56,7 @@ void GitEntity::throwException(const QString& message)
             errorText = err->message;
         }
     }
-    else {
-        setErrorText(errorText);
-    }
+    setErrorText(errorText);
     throw GitException(errorText);
 }
 

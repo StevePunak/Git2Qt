@@ -180,7 +180,7 @@ void Configuration::dumpToLog(git_config* config)
     git_config_entry* entry;
     int error = git_config_iterator_new(&it, config);
     while(error == false && git_config_next(&entry, it) == 0) {
-        Log::sysLogText(KLOG_DEBUG, QString("%1 = %2").arg(entry->name).arg(entry->value));
+        Log::logText(LVL_DEBUG, QString("%1 = %2").arg(entry->name).arg(entry->value));
     }
     git_config_iterator_free(it);
 }

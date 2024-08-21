@@ -56,6 +56,10 @@ public:
     static BranchType getBranchType(const QString& value) { return _BranchTypeToStringMap.getType(value); }
     static QList<BranchType> getBranchTypeValues() { return _BranchTypeToStringMap.getTypes(); }
 
+    static QString getChangeKindString(ChangeKind value) { return _ChangeKindToStringMap.getString(value); }
+    static ChangeKind getChangeKind(const QString& value) { return _ChangeKindToStringMap.getType(value); }
+    static QList<ChangeKind> getChangeKindValues() { return _ChangeKindToStringMap.getTypes(); }
+
 private:
     class FileStatusToStringMap : public GIT::EnumToStringMap<FileStatus>
     {
@@ -201,6 +205,25 @@ private:
         }
     };
 
+    class ChangeKindToStringMap : public GIT::EnumToStringMap<ChangeKind>
+    {
+    public:
+        ChangeKindToStringMap()
+        {
+            insert(ChangeKindUnmodified,        "Unmodified");
+            insert(ChangeKindAdded,             "Added");
+            insert(ChangeKindDeleted,           "Deleted");
+            insert(ChangeKindModified,          "Modified");
+            insert(ChangeKindRenamed,           "Renamed");
+            insert(ChangeKindCopied,            "Copied");
+            insert(ChangeKindIgnored,           "Ignored");
+            insert(ChangeKindUntracked,         "Untracked");
+            insert(ChangeKindTypeChanged,       "TypeChanged");
+            insert(ChangeKindUnreadable,        "Unreadable");
+            insert(ChangeKindConflicted,        "Conflicted");
+        }
+    };
+
     static const FileStatusToStringMap _FileStatusToStringMap;
     static const ConfigurationLevelToStringMap _ConfigurationLevelToStringMap;
     static const DeltaTypeToStringMap _DeltaTypeToStringMap;
@@ -211,6 +234,7 @@ private:
     static const StageLevelToStringMap _StageLevelToStringMap;
     static const TreeEntryTargetTypeToStringMap _TreeEntryTargetTypeToStringMap;
     static const BranchTypeToStringMap _BranchTypeToStringMap;
+    static const ChangeKindToStringMap _ChangeKindToStringMap;
 };
 
 } // namespace GIT

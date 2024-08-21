@@ -122,7 +122,7 @@ Reference ReferenceCollection::appendDirectReference(const QString& name, const 
 {
     Reference reference = Reference::create(repository(), name, targetId, logMessage, allowOverwrite);
     if(reference.isNull() || reference.type() != DirectReferenceType) {
-        Log::sysLogText(KLOG_ERROR, "Failed to create DIRECT reference");
+        Log::logText(LVL_ERROR, "Failed to create DIRECT reference");
     }
     return reference;
 }

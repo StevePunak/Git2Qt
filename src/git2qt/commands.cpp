@@ -97,7 +97,7 @@ int Commands::credentialsCallback(git_cred** cred, const char* url, const char* 
     }
     catch(const GitException& e)
     {
-        Log::sysLogText(KLOG_WARNING, e.message());
+        Log::logText(LVL_WARNING, e.message());
         return 1;
     }
     return 0;

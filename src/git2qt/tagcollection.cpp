@@ -10,7 +10,7 @@ using namespace GIT;
 TagCollection::TagCollection(Repository* repo) :
     GitEntity(TagCollectionEntity, repo)
 {
-    retrieveTags();
+    refreshTags();
 }
 
 const LightweightTag* TagCollection::createLightweightTag(const QString& name, const GitObject& targetObject)
@@ -23,6 +23,7 @@ const LightweightTag* TagCollection::createLightweightTag(const QString& name, c
         git_oid oid;
         throwOnError(git_tag_create_lightweight(&oid, repository()->handle().value(), name.toUtf8().constData(), handle.value(), false));
         tag = new LightweightTag(repository(), name, targetObject.objectId());
+        _tags.append(tag);
     }
     catch(const GitException&)
     {
@@ -31,7 +32,7 @@ const LightweightTag* TagCollection::createLightweightTag(const QString& name, c
     return tag;
 }
 
-const AnnotatedTag* TagCollection::createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject)
+const AnnotatedTag* TagCollection::createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject, bool allowOverwrite)
 {
     AnnotatedTag* tag = nullptr;
     ObjectHandle targetHandle = targetObject.createObjectHandle();
@@ -40,12 +41,15 @@ const AnnotatedTag* TagCollection::createAnnotatedTag(const QString& name, const
         throwIfTrue(targetHandle.isNull());
         Signature sig = signature;      // non-const
         git_oid oid;
-        throwOnError(git_tag_annotation_create(&oid, repository()->handle().value(),
-                                               name.toUtf8().constData(),
-                                               targetHandle.value(),
-                                               sig.toNative(),
-                                               message.toUtf8().constData()));
-        tag = new AnnotatedTag(repository(), name, targetObject.objectId());
+        throwOnError(git_tag_create(&oid,
+                                    repository()->handle().value(),
+                                    name.toUtf8().constData(),
+                                    targetHandle.value(),
+                                    sig.toNative(),
+                                    message.toUtf8().constData(),
+                                    allowOverwrite));
+        tag = new AnnotatedTag(repository(), name, ObjectId(oid));
+        _tags.append(tag);
     }
     catch(const GitException&)
     {
@@ -59,15 +63,25 @@ const Tag* TagCollection::findTag(const QString& name) const
     return _tags.findByName(name);
 }
 
+const Tag* TagCollection::findTag(const ObjectId& objectId) const
+{
+    return _tags.findByObjectId(objectId);
+}
+
 bool TagCollection::deleteLocalTag(const QString& name)
 {
-    // TODO
-
-    Tag* tag = _tags.findByName(name);
-    if(tag->isNull()) {
-
+    bool result = false;
+    try
+    {
+        throwOnError(git_tag_delete(repository()->handle().value(), name.toUtf8().constData()));
+        result = true;
     }
-    return false;
+    catch(const GitException&)
+    {
+        result = false;
+    }
+
+    return result;
 }
 
 bool TagCollection::isNull() const
@@ -77,10 +91,10 @@ bool TagCollection::isNull() const
 
 void TagCollection::reload()
 {
-    retrieveTags();
+    refreshTags();
 }
 
-void TagCollection::retrieveTags()
+void TagCollection::refreshTags()
 {
     qDeleteAll(_tags);
     _tags.clear();

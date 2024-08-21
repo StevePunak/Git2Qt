@@ -1,6 +1,13 @@
 #include "stringarray.h"
 
+#include <log.h>
+
 using namespace GIT;
+
+StringArray::StringArray()
+{
+    commonInit(QStringList());
+}
 
 StringArray::StringArray(const QStringList& values)
 {
@@ -10,6 +17,19 @@ StringArray::StringArray(const QStringList& values)
 StringArray::StringArray(const QString& value)
 {
     commonInit(QStringList() << value);
+}
+
+StringArray::StringArray(const StringArray& other)
+{
+    *this = other;
+}
+
+StringArray& StringArray::operator=(const StringArray& other)
+{
+    if(git_strarray_copy(&_native, &other._native) != 0) {
+        Log::logText(LVL_ERROR, "Failed to dup strarray");
+    }
+    return *this;
 }
 
 StringArray::~StringArray()

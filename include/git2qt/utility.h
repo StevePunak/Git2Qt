@@ -1,3 +1,15 @@
+/**
+ * Copyright (c) 2024 Stephen Punak
+ *
+ * This class contains some utility objects copied directly from the StringUtil class
+ * in KanoopCommonQt library to remove dependency.
+ *
+ * The original exists and is maintained at:
+ *
+ *   git@github.com:StevePunak/KanoopCommonQt.git
+ *
+ * Stephen Punak, August 1, 2024
+*/
 #ifndef UTILITY_H
 #define UTILITY_H
 

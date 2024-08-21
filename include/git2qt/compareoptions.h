@@ -34,7 +34,7 @@ public:
     DiffAlgorithm algorithm() const { return _algorithm; }
     void setAlgorithm(DiffAlgorithm value) { _algorithm = value; }
 
-    bool identHeurisitc() const { return _identHeurisitc; }
+    bool indentHeurisitc() const { return _identHeurisitc; }
     void setIdentHeurisitc(bool value) { _identHeurisitc = value; }
 
 private:

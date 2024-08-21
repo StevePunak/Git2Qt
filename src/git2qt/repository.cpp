@@ -164,50 +164,6 @@ void Repository::commonDestroy()
     delete _fileSystemWatcher;
 }
 
-bool Repository::clone(const QString& remoteUrl, CredentialResolver* credentialResolver)
-{
-    _credentialResolver = credentialResolver;
-
-    bool result = false;
-    try
-    {
-        // if the directory exists, the repo must be empty and we will blow away the directory and start over
-        QDir dir(_localPath);
-        if(dir.exists()) {
-            int res = git_repository_is_empty(_handle.value());
-            if(res == 1) {
-                if(dir.removeRecursively() == false) {
-                    throw GitException("Failed to remove directory");
-                }
-            }
-        }
-
-        commonDestroy();
-
-        git_clone_options clone_opts = GIT_CLONE_OPTIONS_INIT;
-        clone_opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
-        clone_opts.bare = _bare ? 1 : 0;
-
-        clone_opts.fetch_opts.callbacks.payload = this;
-        clone_opts.fetch_opts.callbacks.credentials = credentialsCallback;
-        clone_opts.fetch_opts.callbacks.transfer_progress = progressCallback;
-
-        /* try to clone */
-        git_repository* repo = nullptr;
-        throwOnError(git_clone(&repo, remoteUrl.toUtf8().constData(), _localPath.toUtf8().constData(), &clone_opts));
-        _handle = RepositoryHandle(repo);
-
-        // load repo objects
-        postInitializationLookups();
-        result = true;
-    }
-    catch(const GitException&)
-    {
-        result = false;
-    }
-    return result;
-}
-
 bool Repository::fetch()
 {
     bool result = false;
@@ -281,7 +237,7 @@ bool Repository::push(Remote* remote, const QStringList& pushRefSpecs)
         opts.callbacks = callbacks;
 
         StringArray strs(pushRefSpecs);
-        throwOnError(git_remote_push(remote->handle().value(), strs.native(), &opts));
+        throwOnError(git_remote_push(remote->handle().value(), strs.toNative(), &opts));
 
         result = true;
     }
@@ -353,11 +309,53 @@ bool Repository::checkoutTree(const Tree& tree, const QString& branchName, const
         throwIfTrue(_handle.isNull(), "Repository is not initialized");
 
         ObjectHandle objectHandle = tree.createObjectHandle();
-        throwOnError(git_checkout_tree(_handle.value(), objectHandle.value(), options.options()));
+        CheckoutOptions opts = options;
+        throwOnError(git_checkout_tree(_handle.value(), objectHandle.value(), opts.toNative()));
         objectHandle.dispose();
 
         QString referenceName = makeReferenceName(branchName);
         throwIfFalse(setHead(referenceName), "Failed to set HEAD");
+
+        result = true;
+    }
+    catch(const GitException&)
+    {
+        result = false;
+    }
+    return result;
+}
+
+bool Repository::checkoutTree(const Tree& tree, const QStringList& paths, const CheckoutOptions& options)
+{
+    bool result = false;
+    try
+    {
+        throwIfTrue(_handle.isNull(), "Repository is not initialized");
+
+        ObjectHandle objectHandle = tree.createObjectHandle();
+
+        CheckoutOptions opts = options;
+        opts.setPaths(paths);
+        throwOnError(git_checkout_tree(_handle.value(), objectHandle.value(), opts.toNative()));
+        objectHandle.dispose();
+
+        result = true;
+    }
+    catch(const GitException&)
+    {
+        result = false;
+    }
+    return result;
+}
+
+bool Repository::checkoutPaths(const QString& branchName, const QStringList& paths, const CheckoutOptions& options)
+{
+    bool result = false;
+    try
+    {
+        Commit commit = lookupCommit(branchName);
+
+        checkoutTree(commit.tree(), paths, options);
 
         result = true;
     }
@@ -525,6 +523,24 @@ Commit::List Repository::commitsFromHead()
     return findCommits(head().reference());
 }
 
+bool Repository::reset(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions)
+{
+    bool result = false;
+    ObjectHandle objectHandle = commit.createObjectHandle();
+    try
+    {
+        CheckoutOptions opts = checkoutOptions;
+        throwOnError(git_reset(_handle.value(), objectHandle.value(), (git_reset_t)resetMode, opts.toNative()));
+        result = true;
+    }
+    catch(const GitException&)
+    {
+        result = false;
+    }
+    objectHandle.dispose();
+    return result;
+}
+
 RepositoryStatus Repository::status()
 {
     RepositoryStatus result;
@@ -532,7 +548,7 @@ RepositoryStatus Repository::status()
 
     try
     {
-        throwOnError(git_index_read(_index->handle().value(), false));
+        throwOnError(git_index_read(_index->createHandle().value(), false));
 
         StatusOptions options;
         throwOnError(git_status_list_new(&status_list, _handle.value(), options.toNative()));
@@ -647,8 +663,34 @@ bool Repository::unstage(const QStringList& paths)
             // TODO
         }
         else {
-            _index->replace(head().tip(), paths);
+            git_reference *head;
+            git_object *head_commit;
+
+            throwOnError(git_repository_head(&head, repository()->handle().value()));
+            throwOnError(git_reference_peel(&head_commit, head, GIT_OBJ_COMMIT));
+
+            StringArray str(paths);
+            throwOnError(git_reset_default(repository()->handle().value(), head_commit, str.toNative()));
         }
+        result = true;
+    }
+    catch(const GitException&)
+    {
+        result = false;
+    }
+    return result;
+}
+
+bool Repository::restore(const QStringList& paths)
+{
+    bool result = false;
+    try
+    {
+        CheckoutOptions options;
+        options.setModifiers(CheckoutOptions::Force);
+
+        throwIfFalse(checkoutPaths(head().friendlyName(), paths, options));
+
         result = true;
     }
     catch(const GitException&)
@@ -663,6 +705,11 @@ const Tag* Repository::findTag(const QString& name) const
     return _tags->findTag(name);
 }
 
+const Tag* Repository::findTag(const ObjectId& objectId) const
+{
+    return _tags->findTag(objectId);
+}
+
 const LightweightTag* Repository::createLightweightTag(const QString& name, const GitObject& targetObject)
 {
     return _tags->createLightweightTag(name, targetObject);
@@ -671,6 +718,11 @@ const LightweightTag* Repository::createLightweightTag(const QString& name, cons
 const AnnotatedTag* Repository::createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject)
 {
     return _tags->createAnnotatedTag(name, message, signature, targetObject);
+}
+
+bool Repository::deleteTag(const QString& tagName)
+{
+    return _tags->deleteLocalTag(tagName);
 }
 
 Tree Repository::lookupTree(const ObjectId& objectId)
@@ -713,6 +765,27 @@ Commit Repository::lookupCommit(const ObjectId& objectId)
 {
     Commit result = Commit::lookup(this, objectId);
     return result;
+}
+
+Commit Repository::lookupCommit(const QString& revName)
+{
+    Commit result;
+    try
+    {
+        git_object* obj = nullptr;
+        throwOnError(git_revparse_single(&obj, _handle.value(), revName.toUtf8().constData()));
+        ObjectId objectId = git_object_id(obj);
+        result = Commit::lookup(this, objectId);
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
+DiffDelta::List Repository::getDiffDeltas(const CompareOptions& compareOptions, DiffModifiers diffFlags)
+{
+    return _diff->listDiffs(compareOptions, diffFlags);
 }
 
 Branch Repository::head() const
@@ -815,7 +888,7 @@ void Repository::updateHeadAndTerminalReference(const Commit& commit, const QStr
 {
     Reference reference = _references->head();
     if(reference.isNull()) {
-        Log::sysLogText(KLOG_ERROR, "Failed to find HEAD reference!");
+        Log::logText(LVL_ERROR, "Failed to find HEAD reference!");
         return;
     }
 
@@ -884,7 +957,7 @@ int Repository::credentialsCallback(git_cred** cred, const char* url, const char
     }
     catch(const GitException& e)
     {
-        Log::sysLogText(KLOG_WARNING, e.message());
+        Log::logText(LVL_WARNING, e.message());
         return 1;
     }
     return 0;

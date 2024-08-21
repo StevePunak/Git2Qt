@@ -59,6 +59,19 @@ public:
             }
             return result;
         }
+
+        Tag* findByObjectId(const ObjectId& objectId) const
+        {
+            Tag* result;
+            auto it = std::find_if(constBegin(), constEnd(), [objectId](const Tag* t)
+            {
+                return t->objectId() == objectId;
+            });
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
     };
 
     class ConstPtrList : public QList<const Tag*>

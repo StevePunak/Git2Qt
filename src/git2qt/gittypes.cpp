@@ -139,11 +139,6 @@ QList<TreeEntryTargetType> getTreeEntryTargetTypeValues()
     return EnumStrings::getTreeEntryTargetTypeValues();
 }
 
-QString getBranchTypeString(BranchType value)
-{
-    return EnumStrings::getBranchTypeString(value);
-}
-
 BranchType getBranchType(const QString& value)
 {
     return EnumStrings::getBranchType(value);
@@ -152,6 +147,26 @@ BranchType getBranchType(const QString& value)
 QList<BranchType> getBranchTypeValues()
 {
     return EnumStrings::getBranchTypeValues();
+}
+
+QString getBranchTypeString(BranchType value)
+{
+    return EnumStrings::getBranchTypeString(value);
+}
+
+QString getChangeKindString(ChangeKind value)
+{
+    return EnumStrings::getChangeKindString(value);
+}
+
+ChangeKind getChangeKind(const QString& value)
+{
+    return EnumStrings::getChangeKind(value);
+}
+
+QList<ChangeKind> getChangeKindValues()
+{
+    return EnumStrings::getChangeKindValues();
 }
 
 }   // namespace

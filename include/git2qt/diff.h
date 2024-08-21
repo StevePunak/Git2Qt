@@ -14,6 +14,7 @@
 
 namespace GIT {
 
+class DiffOptions;
 class Tree;
 class TreeChanges;
 class CompareOptions;
@@ -35,7 +36,7 @@ public:
     virtual bool isNull() const override { return false; }
 
 private:
-    void buildDiffOptions(DiffModifiers diffOptions, const CompareOptions& compareOptions, git_diff_options& options);
+    DiffOptions buildDiffOptions(DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions);
     DiffHandle buildDiffList(const ObjectId& oldTreeId, DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions);
     void detectRenames(const DiffHandle& handle, const CompareOptions& compareOptions);
     TreeChanges buildTreeChanges(const DiffHandle& handle);

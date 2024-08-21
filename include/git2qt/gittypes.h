@@ -123,6 +123,33 @@ enum GitStatusShow
     WorkDirOnly = 2,
 };
 
+enum SubmoduleIgnore
+{
+    /// <summary>
+    /// Reset to the last saved ignore rule.
+    /// </summary>
+    Reset = -1,
+
+    /// <summary>
+    /// Any change or untracked == dirty
+    /// </summary>
+    None = 1,
+
+    /// <summary>
+    /// Dirty if tracked files change
+    /// </summary>
+    Untracked = 2,
+
+    /// <summary>
+    /// Only dirty if HEAD moved
+    /// </summary>
+    Dirty = 3,
+
+    /// <summary>
+    /// Never dirty
+    /// </summary>
+    All = 4,
+};
 enum DiffAlgorithm
 {
     /// <summary>
@@ -546,6 +573,221 @@ enum GitDiffFindFlag
 };
 Q_DECLARE_FLAGS(GitDiffFindFlags, GitDiffFindFlag)
 
+enum DiffOptionFlag
+{
+    /// <summary>
+    /// Normal diff, the default
+    /// </summary>
+    DiffOptionNormal = 0,
+
+    /*
+     * Options controlling which files will be in the diff
+     */
+
+    /// <summary>
+    /// Reverse the sides of the diff
+    /// </summary>
+    DiffOptionReverse = (1 << 0),
+
+    /// <summary>
+    /// Include ignored files in the diff
+    /// </summary>
+    DiffOptionIncludeIgnored = (1 << 1),
+
+    /// <summary>
+    /// Even with GIT_DIFF_INCLUDE_IGNORED, an entire ignored directory
+    /// will be marked with only a single entry in the diff; this flag
+    /// adds all files under the directory as IGNORED entries, too.
+    /// </summary>
+    DiffOptionRecurseIgnoredDirs = (1 << 2),
+
+    /// <summary>
+    /// Include untracked files in the diff
+    /// </summary>
+    DiffOptionIncludeUntracked = (1 << 3),
+
+    /// <summary>
+    /// Even with GIT_DIFF_INCLUDE_UNTRACKED, an entire untracked
+    /// directory will be marked with only a single entry in the diff
+    /// (a la what core Git does in `git status`); this flag adds *all*
+    /// files under untracked directories as UNTRACKED entries, too.
+    /// </summary>
+    DiffOptionRecurseUntrackedDirs = (1 << 4),
+
+    /// <summary>
+    /// Include unmodified files in the diff
+    /// </summary>
+    DiffOptionIncludeUnmodified = (1 << 5),
+
+    /// <summary>
+    /// Normally, a type change between files will be converted into a
+    /// DELETED record for the old and an ADDED record for the new; this
+    /// options enabled the generation of TYPECHANGE delta records.
+    /// </summary>
+    DiffOptionIncludeTypeChange = (1 << 6),
+
+    /// <summary>
+    /// Even with GIT_DIFF_INCLUDE_TYPECHANGE, blob->tree changes still
+    /// generally show as a DELETED blob.  This flag tries to correctly
+    /// label blob->tree transitions as TYPECHANGE records with new_file's
+    /// mode set to tree.  Note: the tree SHA will not be available.
+    /// </summary>
+    DiffOptionIncludeTypechangeTrees = (1 << 7),
+
+    /// <summary>
+    /// Ignore file mode changes
+    /// </summary>
+    DiffOptionIgnoreFilemode = (1 << 8),
+
+    /// <summary>
+    /// Treat all submodules as unmodified
+    /// </summary>
+    DiffOptionIgnoreSubmodules = (1 << 9),
+
+    /// <summary>
+    /// Use case insensitive filename comparisons
+    /// </summary>
+    DiffOptionIgnoreCase = (1 << 10),
+
+
+    /// <summary>
+    /// May be combined with `GIT_DIFF_IGNORE_CASE` to specify that a file
+    /// that has changed case will be returned as an add/delete pair.
+    /// </summary>
+    DiffOptionIncludeCasechange = (1 << 11),
+
+    /// <summary>
+    /// If the pathspec is set in the diff options, this flags means to
+    /// apply it as an exact match instead of as an fnmatch pattern.
+    /// </summary>
+    DiffOptionDisablePathspecMatch = (1 << 12),
+
+    /// <summary>
+    /// Disable updating of the `binary` flag in delta records.  This is
+    /// useful when iterating over a diff if you don't need hunk and data
+    /// callbacks and want to avoid having to load file completely.
+    /// </summary>
+    DiffOptionSkipBinaryCheck = (1 << 13),
+
+    /// <summary>
+    /// When diff finds an untracked directory, to match the behavior of
+    /// core Git, it scans the contents for IGNORED and UNTRACKED files.
+    /// If *all* contents are IGNORED, then the directory is IGNORED; if
+    /// any contents are not IGNORED, then the directory is UNTRACKED.
+    /// This is extra work that may not matter in many cases.  This flag
+    /// turns off that scan and immediately labels an untracked directory
+    /// as UNTRACKED (changing the behavior to not match core Git).
+    /// </summary>
+    DiffOptionEnableFastUntrackedDirs = (1 << 14),
+
+    /// <summary>
+    /// When diff finds a file in the working directory with stat
+    /// information different from the index, but the OID ends up being the
+    /// same, write the correct stat information into the index.  Note:
+    /// without this flag, diff will always leave the index untouched.
+    /// </summary>
+    DiffOptionUpdateIndex = (1 << 15),
+
+    /// <summary>
+    /// Include unreadable files in the diff
+    /// </summary>
+    DiffOptionIncludeUnreadable = (1 << 16),
+
+    /// <summary>
+    /// Include unreadable files in the diff
+    /// </summary>
+    DiffOptionIncludeUnreadableAsUntracked = (1 << 17),
+
+    /*
+     * Options controlling how output will be generated
+     */
+
+    /// <summary>
+    /// Use a heuristic that takes indentation and whitespace into account
+    /// which generally can produce better diffs when dealing with ambiguous
+    /// diff hunks.
+    /// </summary>
+    DiffOptionIndentHeuristic = (1 << 18),
+
+    /// <summary>
+    /// Treat all files as text, disabling binary attributes and detection
+    /// </summary>
+    DiffOptionForceText = (1 << 20),
+
+    /// <summary>
+    /// Treat all files as binary, disabling text diffs
+    /// </summary>
+    DiffOptionForceBinary = (1 << 21),
+
+    /// <summary>
+    /// Ignore all whitespace
+    /// </summary>
+    DiffOptionIgnoreWhitespace = (1 << 22),
+
+    /// <summary>
+    /// Ignore changes in amount of whitespace
+    /// </summary>
+    DiffOptionIgnoreWhitespaceChange = (1 << 23),
+
+    /// <summary>
+    /// Ignore whitespace at end of line
+    /// </summary>
+    DiffOptionIgnoreWhitespaceEol = (1 << 24),
+
+    /// <summary>
+    /// When generating patch text, include the content of untracked
+    /// files.  This automatically turns on GIT_DIFF_INCLUDE_UNTRACKED but
+    /// it does not turn on GIT_DIFF_RECURSE_UNTRACKED_DIRS.  Add that
+    /// flag if you want the content of every single UNTRACKED file.
+    /// </summary>
+    DiffOptionShowUntrackedContent = (1 << 25),
+
+    /// <summary>
+    /// When generating output, include the names of unmodified files if
+    /// they are included in the git_diff.  Normally these are skipped in
+    /// the formats that list files (e.g. name-only, name-status, raw).
+    /// Even with this, these will not be included in patch format.
+    /// </summary>
+    DiffOptionShowUnmodified = (1 << 26),
+
+    /// <summary>
+    /// Use the "patience diff" algorithm
+    /// </summary>
+    DiffOptionPatience = (1 << 28),
+
+    /// <summary>
+    /// Take extra time to find minimal diff
+    /// </summary>
+    DiffOptionMinimal = (1 << 29),
+
+    /// <summary>
+    /// Include the necessary deflate / delta information so that `git-apply`
+    /// can apply given diff information to binary files.
+    /// </summary>
+    DiffOptionShowBinary = (1 << 30),
+};
+Q_DECLARE_FLAGS(DiffOptionFlags, DiffOptionFlag)
+
+enum ResetMode
+{
+    /// <summary>
+    /// Moves the branch pointed to by HEAD to the specified commit object.
+    /// </summary>
+    ResetSoft = 1,
+
+    /// <summary>
+    /// Moves the branch pointed to by HEAD to the specified commit object and resets the index
+    /// to the tree recorded by the commit.
+    /// </summary>
+    ResetMixed,
+
+    /// <summary>
+    /// Moves the branch pointed to by HEAD to the specified commit object, resets the index
+    /// to the tree recorded by the commit and updates the working directory to match the content
+    /// of the index.
+    /// </summary>
+    ResetHard,
+};
 
 QString getFileStatusString(FileStatuses value);
 FileStatus getFileStatus(const QString& value);
@@ -587,11 +829,16 @@ QString getBranchTypeString(BranchType value);
 BranchType getBranchType(const QString& value);
 QList<BranchType> getBranchTypeValues();
 
+QString getChangeKindString(ChangeKind value);
+ChangeKind getChangeKind(const QString& value);
+QList<ChangeKind> getChangeKindValues();
+
 } // namespace GIT
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffDeltaFlags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::FileStatuses)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffModifiers)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::GitDiffFindFlags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffOptionFlags)
 
 #endif // GITTYPES_H

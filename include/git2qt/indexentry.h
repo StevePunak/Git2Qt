@@ -46,6 +46,21 @@ public:
             }
             return result;
         }
+
+        IndexEntry findByObjectId(const QString& objectId) const
+        {
+            return findByObjectId(ObjectId(objectId));
+        }
+
+        IndexEntry findByObjectId(const ObjectId& objectId) const
+        {
+            IndexEntry result;
+            auto it = std::find_if(constBegin(), constEnd(), [objectId](const IndexEntry& e) { return e.objectId() == objectId; } );
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
     };
 
 private:

@@ -14,6 +14,8 @@
 
 namespace GIT {
 
+class TreeChanges;
+
 class Commit;
 class Index : public QObject,
               public GitEntity
@@ -26,21 +28,22 @@ public:
 
     void remove(const QString& path);
     void add(const QString& path);
+    void add(const QString& path, const ObjectId& objectId, Mode mode);
     void replace(const Commit& commit, const QStringList& paths, const CompareOptions& compareOptions = CompareOptions());
+    void replace(const TreeChanges& changes);
     void write();
     ObjectId writeTree();
 
+    IndexHandle createHandle() const;
+
     IndexEntry findByPath(const QString& path) { return _entries.findByPath(path); }
     IndexEntry::List entries() const { return _entries; }
-    IndexHandle handle() const { return createHandle(); }
-
-    virtual bool isNull() const override { return createHandle().isNull(); }
+    virtual bool isNull() const override;
 
 public slots:
     void reload();
 
 private:
-    IndexHandle createHandle() const;
     IndexEntry::List _entries;
 };
 
