@@ -793,6 +793,16 @@ DiffDelta::List Repository::getDiffDeltas(const CompareOptions& compareOptions, 
     return _diff->listDiffs(compareOptions, diffFlags);
 }
 
+void Repository::listRemoteReferences()
+{
+    Reference::List references;
+    for(Remote* remote : _network->remotes()->remotes()) {
+        for(const Reference& reference : remote->references()->references()) {
+            references.append(reference);
+        }
+    }
+}
+
 Branch Repository::head() const
 {
     return _branches->head();

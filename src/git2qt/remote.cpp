@@ -58,6 +58,22 @@ void Remote::reloadReferences()
     size_t count;
     try
     {
+        {
+            git_strarray ref_names;
+            throwOnError(git_reference_list(&ref_names, repository()->handle().value()));
+            for(int i = 0;i < (int)ref_names.count;i++) {
+                git_reference* ref = nullptr;
+                const char* name = ref_names.strings[i];
+                int res = git_reference_lookup(&ref, repository()->handle().value(), name);
+                Log::logText(LVL_DEBUG, QString("[%1] Res: %2").arg(name).arg(res));
+
+                git_reference_free(ref);
+            }
+
+        }
+
+
+
         QMap<QString, Reference> references;
         QMap<QString, QString> symRefs;
 

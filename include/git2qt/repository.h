@@ -121,6 +121,9 @@ public:
     // Diffs
     DiffDelta::List getDiffDeltas(const CompareOptions& compareOptions, DiffModifiers diffFlags = DiffModifier::DiffModNone);
 
+    // Remote
+    void listRemoteReferences();
+
     // Credentials Callback
     void setCredentialResolver(CredentialResolver* value) { _credentialResolver = value; }
 

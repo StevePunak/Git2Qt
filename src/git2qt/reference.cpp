@@ -79,16 +79,18 @@ Reference Reference::createSymbolicReferenceObject(Repository* repo, const QStri
 
 Reference Reference::createDirectReferenceObject(Repository* repo, const QString& canonicalName, const ObjectId& targetoid)
 {
-    Reference reference;
+    Reference reference(repo, canonicalName, targetoid.sha(), DirectReferenceType);
+    reference._targetOid = targetoid;
     git_reference* ref = nullptr;
     if(git_reference_lookup(&ref, repo->handle().value(), canonicalName.toUtf8().constData()) == 0) {
-        reference = Reference(repo, canonicalName, targetoid.sha(), DirectReferenceType);
-        reference._targetOid = targetoid;
         ReferenceHandle refHandle(ref);
         if(typeFromHandle(refHandle) != DirectReferenceType) {
             Log::logText(LVL_ERROR, "Unmatching reference type");
         }
         git_reference_free(ref);
+    }
+    else {
+        Log::logText(LVL_DEBUG, git_error_last()->message);
     }
     return reference;
 }
@@ -155,13 +157,13 @@ Reference Reference::lookup(Repository* repo, const QString& name)
 
 QString Reference::name() const
 {
-    QString result;
+    QString name;
     ReferenceHandle handle = createHandle();
     if(handle.isNull() == false) {
-        result = nameFromHandle(handle.value());
+        name = nameFromHandle(handle.value());
         handle.dispose();
     }
-    return result;
+    return name;
 }
 
 #if 0

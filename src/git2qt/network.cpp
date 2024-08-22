@@ -42,6 +42,7 @@ void Network::reload()
     if(git_remote_list(&list, repository()->handle().value()) == 0) {
         for(int i = 0;i < (int)list.count;i++) {
             Remote* remote = new Remote(repository(), list.strings[i]);
+            remote->reloadReferences();
             _remotes->append(remote);
         }
         git_strarray_free(&list);

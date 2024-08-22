@@ -64,6 +64,9 @@ public:
     static bool looksLikeNote(const QString& canonicalName) { return isPrefixedBy(canonicalName, NotePrefix); }
     static bool isPrefixedBy(const QString& value, const QString& prefix) { return value.startsWith(prefix); }
 
+    class List : public QList<Reference>
+    {};
+
     class Map : public QMap<QString, Reference>
     {
     public:
