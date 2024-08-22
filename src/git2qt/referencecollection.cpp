@@ -78,7 +78,7 @@ void ReferenceCollection::appendDirectReference(const Reference& reference)
     _references.insert(reference.name(), reference);
 }
 
-void ReferenceCollection::appendDirectReference(const QList<Reference>& references)
+void ReferenceCollection::appendDirectReferences(const QList<Reference>& references)
 {
     for(const Reference& reference : references) {
         appendDirectReference(reference);

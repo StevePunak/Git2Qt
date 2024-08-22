@@ -9,13 +9,12 @@ RemoteCollection::RemoteCollection(Repository* repo) :
 
 RemoteCollection::~RemoteCollection()
 {
-    for(Remote* remote : _remotes) {
-        remote->dispose();
+    for(Remote& remote : _remotes) {
+        remote.dispose();
     }
-    qDeleteAll(_remotes);
 }
 
-void RemoteCollection::append(Remote* remote)
+void RemoteCollection::append(const Remote& remote)
 {
     _remotes.append(remote);
 }

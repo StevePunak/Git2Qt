@@ -30,10 +30,10 @@ public:
     void clear();
 
     void appendDirectReference(const Reference& reference);
-    void appendDirectReference(const QList<Reference>& references);
+    void appendDirectReferences(const QList<Reference>& references);
     Reference appendDirectReference(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite = false);
 
-    Reference::Map references() const { return _references; }
+    Reference::List references() const { return Reference::List(_references.values()); }
 
     Reference updateTarget(const Reference& directRef, const ObjectId& targetId, const QString& logMessage);
     Reference updateHeadTarget(const ObjectId& targetId, const QString& logMessage);

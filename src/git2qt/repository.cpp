@@ -202,8 +202,8 @@ bool Repository::push(const Branch::List& branches)
         }
 
         for(const Branch& branch : branches) {
-            Remote* remote = _network->remoteForName(branch.remoteName());
-            throwIfNull(remote, "remote not found for branch");
+            Remote remote = _network->remoteForName(branch.remoteName());
+            throwIfTrue(remote.isNull(), "remote not found for branch");
             throwIfFalse(push(remote, QString("%1:%2").arg(branch.canonicalName()).arg(branch.upstreamBranchCanonicalName())));
         }
 
@@ -216,14 +216,14 @@ bool Repository::push(const Branch::List& branches)
     return result;
 }
 
-bool Repository::push(Remote* remote, const QString& pushRefSpec)
+bool Repository::push(const Remote& remote, const QString& pushRefSpec)
 {
     QStringList pushRefSpecs;
     pushRefSpecs.append(pushRefSpec);
     return push(remote, pushRefSpecs);
 }
 
-bool Repository::push(Remote* remote, const QStringList& pushRefSpecs)
+bool Repository::push(const Remote& remote, const QStringList& pushRefSpecs)
 {
     bool result = false;
     try
@@ -237,7 +237,9 @@ bool Repository::push(Remote* remote, const QStringList& pushRefSpecs)
         opts.callbacks = callbacks;
 
         StringArray strs(pushRefSpecs);
-        throwOnError(git_remote_push(remote->handle().value(), strs.toNative(), &opts));
+        RemoteHandle remoteHandle = remote.createHandle();
+        throwIfTrue(remoteHandle.isNull());
+        throwOnError(git_remote_push(remote.createHandle().value(), strs.toNative(), &opts));
 
         result = true;
     }
@@ -793,14 +795,23 @@ DiffDelta::List Repository::getDiffDeltas(const CompareOptions& compareOptions, 
     return _diff->listDiffs(compareOptions, diffFlags);
 }
 
-void Repository::listRemoteReferences()
+Remote::List Repository::remotes() const
+{
+    return _network->remotes();
+}
+
+Reference::List Repository::remoteReferences(const QString& remoteName)
 {
     Reference::List references;
-    for(Remote* remote : _network->remotes()->remotes()) {
-        for(const Reference& reference : remote->references()->references()) {
-            references.append(reference);
+    Remote remote = _network->remoteForName(remoteName);
+    if(remote.isNull() == false) {
+        for(const Reference& reference : remote.references()) {
+            if(reference.isRemote()) {
+                references.append(reference);
+            }
         }
     }
+    return references;
 }
 
 Branch Repository::head() const

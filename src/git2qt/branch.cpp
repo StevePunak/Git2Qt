@@ -71,8 +71,8 @@ QString Branch::upstreamBranchCanonicalName() const
 {
     QString name;
     if(isRemote()) {
-        Remote* remote = repository()->network()->remoteForName(remoteName());
-        name = remote->fetchSpecTransformToSource(_reference.canonicalName());
+        Remote remote = repository()->network()->remoteForName(remoteName());
+        name = remote.fetchSpecTransformToSource(_reference.canonicalName());
     }
     else {
         name = upstreamBranchCanonicalNameFromLocalBranch();

@@ -22,9 +22,9 @@ public:
     RemoteCollection(Repository* repo);
     virtual ~RemoteCollection();
 
-    void append(Remote* remote);
-    Remote* value(int index) { return _remotes.at(index); }
-    Remote* findByName(const QString& name) { return _remotes.findByName(name); }
+    void append(const Remote& remote);
+    Remote value(int index) { return _remotes.at(index); }
+    Remote findByName(const QString& name) { return _remotes.findByName(name); }
 
     Remote::List remotes() const { return _remotes; }
 

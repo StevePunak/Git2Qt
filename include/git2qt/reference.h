@@ -40,6 +40,7 @@ public:
     ReferenceType type() const { return _type; }
 
     QString canonicalName() const { return _canonicalName; }
+    QString friendlyName() const;
     QString targetIdentifier() const { return _targetIdentifier; }
     ObjectId objectId() const;
 
@@ -48,9 +49,17 @@ public:
 
     void resolveTarget();
 
+    bool isBranch() const { return _isBranch; }
+    bool isNote() const { return _isNote; }
+    bool isRemote() const { return _isRemote; }
+    bool isTag() const { return _isTag; }
+
     virtual bool isDirect() const { return type() == DirectReferenceType; }
     virtual bool isSymbolic() const { return type() == SymbolicReferenceType; }
     virtual bool isNull() const override;
+
+    QVariant toVariant() const { return QVariant::fromValue<Reference>(*this); }
+    static Reference fromVariant(const QVariant& value) { return value.value<Reference>(); }
 
     bool looksLikeLocalBranch() const { return looksLikeLocalBranch(_canonicalName); }
     bool looksLikeRemoteTrackingBranch() const { return looksLikeRemoteTrackingBranch(_canonicalName); }
@@ -65,7 +74,16 @@ public:
     static bool isPrefixedBy(const QString& value, const QString& prefix) { return value.startsWith(prefix); }
 
     class List : public QList<Reference>
-    {};
+    {
+    public:
+        List() {}
+        List(const QList<Reference>& other)
+        {
+            for(const Reference& r : other) {
+                append(r);
+            }
+        }
+    };
 
     class Map : public QMap<QString, Reference>
     {
@@ -88,6 +106,8 @@ public:
     virtual ~Reference();
 
 private:
+    void resolveProperties();
+
     static ReferenceType typeFromHandle(const ReferenceHandle& handle);
     static QString nameFromHandle(const ReferenceHandle& handle);
     static QString symbolicTargetNameFromHandle(const ReferenceHandle& handle);
@@ -97,6 +117,11 @@ private:
     QString _canonicalName;
     QString _targetIdentifier;
     ReferenceType _type;
+
+    bool _isBranch = false;
+    bool _isNote = false;
+    bool _isRemote = false;
+    bool _isTag = false;
 
     Reference* _target = nullptr;
     ObjectId _targetOid;
@@ -109,5 +134,7 @@ public:
 };
 
 } // namespace GIT
+
+Q_DECLARE_METATYPE(GIT::Reference)
 
 #endif // REFERENCE_H

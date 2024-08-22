@@ -40,10 +40,26 @@ Reference& Reference::operator=(const Reference& other)
     _targetIdentifier = other._targetIdentifier;
     _targetOid = other._targetOid;
     _type = other._type;
+    _isBranch = other._isBranch;
+    _isNote = other._isNote;
+    _isRemote = other._isRemote;
+    _isTag = other._isTag;
+
     if(_type == SymbolicReferenceType) {
         resolveTarget();
     }
     return *this;
+}
+
+void Reference::resolveProperties()
+{
+    ReferenceHandle handle = createHandle();
+    if(handle.isNull() == false) {
+        _isBranch = git_reference_is_branch(handle.value());
+        _isNote = git_reference_is_note(handle.value());
+        _isRemote = git_reference_is_remote(handle.value());
+        _isTag = git_reference_is_tag(handle.value());
+    }
 }
 
 void Reference::dispose()
@@ -68,6 +84,7 @@ Reference Reference::createSymbolicReferenceObject(Repository* repo, const QStri
     if(git_reference_lookup(&ref, repo->handle().value(), canonicalName.toUtf8().constData()) == 0) {
         reference = Reference(repo, canonicalName, targetIdentifier, SymbolicReferenceType);
         reference.resolveTarget();
+        reference.resolveProperties();
         ReferenceHandle refHandle(ref);
         if(typeFromHandle(refHandle) != SymbolicReferenceType) {
             Log::logText(LVL_ERROR, "Unmatching reference type");
@@ -87,6 +104,8 @@ Reference Reference::createDirectReferenceObject(Repository* repo, const QString
         if(typeFromHandle(refHandle) != DirectReferenceType) {
             Log::logText(LVL_ERROR, "Unmatching reference type");
         }
+        reference.resolveProperties();
+
         git_reference_free(ref);
     }
     else {
@@ -164,6 +183,24 @@ QString Reference::name() const
         handle.dispose();
     }
     return name;
+}
+
+QString Reference::friendlyName() const
+{
+    QString friendlyName = _canonicalName;
+    if(looksLikeLocalBranch()) {
+        friendlyName = _canonicalName.mid(LocalBranchPrefix.length());
+    }
+    else if(looksLikeRemoteTrackingBranch()) {
+        friendlyName = _canonicalName.mid(RemoteTrackingBranchPrefix.length());
+    }
+    else if(looksLikeNote()) {
+        friendlyName = _canonicalName.mid(NotePrefix.length());
+    }
+    else if(looksLikeTag()) {
+        friendlyName = _canonicalName.mid(TagPrefix.length());
+    }
+    return friendlyName;
 }
 
 #if 0

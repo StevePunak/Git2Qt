@@ -18,8 +18,10 @@
 #include <git2qt/commit.h>
 #include <git2qt/commitoptions.h>
 #include <git2qt/reference.h>
+#include <git2qt/remote.h>
 #include <git2qt/repositorystatus.h>
 #include <git2qt/checkoutoptions.h>
+#include <git2qt/referencecollection.h>
 #include <git2qt/stageoptions.h>
 
 
@@ -62,8 +64,8 @@ public:
     // Push
     bool push(const Branch& branch);
     bool push(const Branch::List& branches);
-    bool push(Remote* remote, const QString& pushRefSpec);
-    bool push(Remote* remote, const QStringList& pushRefSpecs);
+    bool push(const Remote& remote, const QString& pushRefSpec);
+    bool push(const Remote& remote, const QStringList& pushRefSpecs);
 
     // Checkout
     bool checkoutRemoteBranch(const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
@@ -122,7 +124,8 @@ public:
     DiffDelta::List getDiffDeltas(const CompareOptions& compareOptions, DiffModifiers diffFlags = DiffModifier::DiffModNone);
 
     // Remote
-    void listRemoteReferences();
+    Remote::List remotes() const;
+    Reference::List remoteReferences(const QString& remoteName);
 
     // Credentials Callback
     void setCredentialResolver(CredentialResolver* value) { _credentialResolver = value; }
@@ -134,7 +137,7 @@ public:
     bool isBare() const { return _bare; }
 
     Branch::List branches() const { return _branches->branches(); }
-    ReferenceCollection* references() const { return _references; }
+    Reference::List references() const { return _references->references(); }
     const RepositoryHandle handle() const { return _handle; }
     Index* index() const { return _index; }
     RepositoryInformation* info() const { return _info; }

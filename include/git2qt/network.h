@@ -9,13 +9,13 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 #include <git2qt/gitentity.h>
+#include <git2qt/remote.h>
 
 #include <QObject>
 
 namespace GIT {
 
 class CredentialResolver;
-class Remote;
 class RemoteCollection;
 class Repository;
 class Network : public QObject,
@@ -26,8 +26,8 @@ public:
     Network(Repository* repo);
     virtual ~Network();
 
-    RemoteCollection* remotes();
-    Remote* remoteForName(const QString& name) const;
+    Remote::List remotes();
+    Remote remoteForName(const QString& name) const;
 
     virtual bool isNull() const override { return false; }
 

@@ -472,9 +472,10 @@ enum DeltaType
 
 enum ReferenceType
 {
-    UnknownReferenceType,
-    SymbolicReferenceType,
-    DirectReferenceType,
+    UnknownReferenceType    = 0x00,
+    DirectReferenceType     = 0x01,
+    SymbolicReferenceType   = 0x02,
+    AllReferenceTypes = (DirectReferenceType |  SymbolicReferenceType),
 };
 
 enum ObjectType
