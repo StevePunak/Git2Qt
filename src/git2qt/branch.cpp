@@ -52,7 +52,7 @@ QString Branch::canonicalName() const
     return _reference.canonicalName();
 }
 
-QString Branch::friendlyName() const
+QString Branch::friendlyName(bool trimOrigin) const
 {
     QString result;
     if(_reference.looksLikeLocalBranch()) {
@@ -60,6 +60,10 @@ QString Branch::friendlyName() const
     }
     else if(_reference.looksLikeRemoteTrackingBranch()) {
         result = _reference.canonicalName().mid(Reference::RemoteTrackingBranchPrefix.length());
+        QString remote = remoteName();
+        if(trimOrigin && result.startsWith(remote) && result.length() > remote.length() + 1) {
+            result = result.mid(remote.length() + 1);
+        }
     }
     else {
         Log::logText(LVL_ERROR, QString("%1 does not look like a valid branch name").arg(_reference.canonicalName()));

@@ -19,6 +19,17 @@ Commit::Commit(Repository* repo) :
 Commit::Commit(Repository* repo, const ObjectId& objectId) :
     GitObject(CommitEntity, repo, objectId)
 {
+    resolve();
+}
+
+Commit::Commit(GitEntityType entityType, Repository* repo, const ObjectId& objectId) :
+    GitObject(entityType, repo, objectId)
+{
+    resolve();
+}
+
+void Commit::resolve()
+{
     CommitHandle handle = createHandle();
     if(handle.isNull() == false) {
         _author = Signature(git_commit_author(handle.value()));
@@ -65,6 +76,23 @@ ObjectId Commit::treeId() const
 Tree Commit::tree() const
 {
     return repository()->lookupTree(treeId());
+}
+
+bool Commit::isReachableFrom(const Commit& other) const
+{
+    Commit::List commits;
+    commits.append(other);
+    return isReachableFromAny(commits);
+}
+
+bool Commit::isReachableFromAny(const List& other) const
+{
+    git_oid oids[other.count()];
+    for(int i = 0;i < other.count();i++) {
+        oids[i] = *other.at(i).objectId().toNative();
+    }
+    int result = git_graph_reachable_from_any(repository()->handle().value(), objectId().toNative(), oids, other.count());
+    return result == 1;
 }
 
 Commit::List Commit::parents() const

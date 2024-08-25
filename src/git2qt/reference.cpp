@@ -241,8 +241,8 @@ void Reference::resolveTarget()
         throwOnError(git_reference_resolve(&targetRef, handle.value()));
         const git_oid* oid = git_reference_target(targetRef);
         if(oid != nullptr) {
-            ObjectId targetObjectId(oid);
-            _target = new Reference(repository(), _targetIdentifier, targetObjectId.toString(), DirectReferenceType);
+            _targetOid = ObjectId(oid);
+            _target = new Reference(repository(), _targetIdentifier, _targetOid.toString(), DirectReferenceType);
             handle.dispose();
         }
     }

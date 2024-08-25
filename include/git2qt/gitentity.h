@@ -10,6 +10,7 @@
 
 #include <QString>
 #include <git2.h>
+#include <git2qt/log.h>
 
 namespace GIT {
 
@@ -21,27 +22,29 @@ public:
         UnknownGitEntityType = 0,
 
         BlobEntity,
-        BranchEntity,
         BranchCollectionEntity,
+        BranchEntity,
         CommitEntity,
-        RepositoryEntity,
-        ReferenceEntity,
-        ReferenceCollectionEntity,
-        DiffEntity,
-        TreeEntity,
-        IndexEntity,
+        CommitLogEntity,
         ConfigurationEntity,
-        RepositoryInfoEntity,
-        ObjectDatabaseEntity,
+        DiffEntity,
+        GraphedCommitEntity,
+        IndexEntity,
         NetworkEntity,
-        RemoteEntity,
+        ObjectDatabaseEntity,
+        ReferenceCollectionEntity,
+        ReferenceEntity,
         RemoteCollectionEntity,
+        RemoteEntity,
+        RepositoryEntity,
+        RepositoryInfoEntity,
         SignatureEntity,
-        SubmoduleEntity,
         SubmoduleCollectionEntity,
-        TagLightweightEntity,
+        SubmoduleEntity,
         TagAnnotatedEntity,
         TagCollectionEntity,
+        TagLightweightEntity,
+        TreeEntity,
         TreeEntryEntity,
     };
 
@@ -74,6 +77,8 @@ protected:
     void throwIfFalse(bool result, const QString& message = QString());
     void throwIfTrue(bool result, const QString& message = QString()) { return throwIfFalse(!result, message); }
     void throwIfEmpty(const QString& value, const QString& message = QString());
+
+    void logText(const char* file, int line, Log::LogLevel level, const QString& text) const;
 
     static void throwOnError(Repository* repo, int result);
 

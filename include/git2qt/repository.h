@@ -87,6 +87,7 @@ public:
     Commit::List findCommits(const QRegularExpression& messageRegex);
     Commit::List findCommits(const Reference& from);
     Commit::List commitsFromHead();
+    Commit::List allCommits(CommitSortStrategies strategy = SortStrategyTime);
 
     // Reset
     bool reset(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions = CheckoutOptions());
@@ -126,6 +127,9 @@ public:
     // Remote
     Remote::List remotes() const;
     Reference::List remoteReferences(const QString& remoteName);
+
+    // Graph
+    void commitGraph();
 
     // Credentials Callback
     void setCredentialResolver(CredentialResolver* value) { _credentialResolver = value; }

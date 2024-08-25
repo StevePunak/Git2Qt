@@ -31,6 +31,9 @@ public:
     bool operator ==(const ObjectId& other) const { return _sha == other._sha; }
     bool operator !=(const ObjectId& other) const { return !(*this == other); }
 
+    bool operator ==(const QString& sha) const { return _sha == sha; }
+    bool operator !=(const QString& other) const { return !(*this == other); }
+
     static ObjectId createFromHandle(git_reference* handle);
     static ObjectId createFromReference(const Reference& reference);
 
@@ -39,7 +42,7 @@ public:
 
     const git_oid* toNative() const { return _oid.toNative(); }
 
-    QString toString() const { return _sha; }
+    QString toString(int count = 0) const { return count == 0 ? _sha : _sha.left(count); }
     bool isValid() const { return _oid.isEmtpy() == false; }
     bool isNull() const { return !isValid(); }
 

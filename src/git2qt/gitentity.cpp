@@ -1,6 +1,7 @@
 #include "gitentity.h"
 
 #include <gitexception.h>
+#include <log.h>
 #include <repository.h>
 
 using namespace GIT;
@@ -40,6 +41,11 @@ void GitEntity::throwIfEmpty(const QString& value, const QString& message)
     if(value.isEmpty()) {
         throwException(message);
     }
+}
+
+void GitEntity::logText(const char* file, int line, Log::LogLevel level, const QString& text) const
+{
+    Log::logText(file, line, level, text);
 }
 
 void GitEntity::throwOnError(Repository* repo, int result)

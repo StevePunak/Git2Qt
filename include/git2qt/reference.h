@@ -83,6 +83,32 @@ public:
                 append(r);
             }
         }
+
+        List localBranchReferences() const
+        {
+            List result;
+            for(const Reference& reference : *this) {
+                if(reference.isBranch() == true && reference.isRemote() == false) {
+                    result.append(reference);
+                }
+            }
+            return result;
+        }
+
+        ObjectId::List objectIds() const
+        {
+            ObjectId::List result;
+            for(const Reference& reference : *this) {
+                if(reference.isDirect()) {
+                    result.append(reference.objectId());
+                }
+                else {
+                    result.append(reference.targetOid());
+                }
+            }
+            return result;
+        }
+
     };
 
     class Map : public QMap<QString, Reference>

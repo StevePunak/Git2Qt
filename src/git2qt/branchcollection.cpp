@@ -37,6 +37,28 @@ Branch::List BranchCollection::reloadBranches()
     return _cachedBranches;
 }
 
+Branch::Map BranchCollection::localBranches() const
+{
+    Branch::Map branches;
+    for(const Branch& branch : _cachedBranches) {
+        if(branch.isRemote() == false) {
+            branches.insert(branch.friendlyName(), branch);
+        }
+    }
+    return branches;
+}
+
+Branch::Map BranchCollection::remoteBranches() const
+{
+    Branch::Map branches;
+    for(const Branch& branch : _cachedBranches) {
+        if(branch.isRemote() == true) {
+            branches.insert(branch.friendlyName(), branch);
+        }
+    }
+    return branches;
+}
+
 bool BranchCollection::isNull() const
 {
     return repository()->isNull();
