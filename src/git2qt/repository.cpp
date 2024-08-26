@@ -29,6 +29,7 @@
 #include <log.h>
 #include <commitlog.h>
 #include <graphedcommit.h>
+#include <reflogcollection.h>
 
 using namespace GIT;
 
@@ -834,13 +835,39 @@ void Repository::commitGraph()
     {
         Branch::Map localBranches = _branches->localBranches();
         Branch::Map remoteBranches = _branches->remoteBranches();
+        QMap<QString, ReflogCollection> reflogs;
         GraphedCommit::List parsedCommits;
 
+        // Create map of head commits
         QMap<QString, Commit> headCommits;
-        for(const Branch& branch : localBranches) {
-            Commit commit = Commit::lookup(branch.reference().objectId());
+        for(const Branch& branch : branches()) {
+            if(branch.reference().isSymbolic()) {
+                continue;
+            }
+            Commit commit = Commit::lookup(this, branch.reference().objectId());
             throwIfFalse(commit.isValid());
             headCommits.insert(branch.friendlyName(), commit);
+        }
+
+        // Create map of branch birth commits
+        QMap<QString, Commit> birthCommits;
+        for(const Branch& branch : branches()) {
+            if(branch.reference().isSymbolic()) {
+                continue;
+            }
+            ReflogCollection reflog(this, branch.canonicalName());
+            if(reflog.entries().count() > 0) {
+                ReflogEntry entry = reflog.entries().at(reflog.entries().count() - 1);
+                Commit commit = Commit::lookup(this, entry.to());
+                throwIfFalse(commit.isValid());
+                birthCommits.insert(branch.friendlyName(), commit);
+            }
+            reflogs.insert(branch.name(), reflog);
+
+            logText(LVL_DEBUG, QString("---------------------------------------- Reflog for %1").arg(branch.friendlyName()));
+            for(const ReflogEntry& entry : reflog.entries()) {
+                logText(LVL_DEBUG, QString("%1 %2").arg(entry.to().toString()).arg(entry.message()));
+            }
         }
 
         Branch head_DEP = Repository::head();
@@ -860,9 +887,6 @@ void Repository::commitGraph()
             const GraphedCommit commit = originalCommits[i];
             GraphedCommit parsedCommit = commit;
 
-if(parsedCommit.objectId() == "907c400afd8c19cca0eafc82ece6ee05aee446c2") {
-    logText(LVL_DEBUG, "Here");
-}
             // resolve children
             GraphedCommit::List children = originalCommits.findChildren(commit);
 
@@ -900,12 +924,20 @@ if(parsedCommit.objectId() == "907c400afd8c19cca0eafc82ece6ee05aee446c2") {
                 }
                 currentBranchName = commitBranchName;
             }
-            else if(i > 0) {
-                GraphedCommit previous = originalCommits[i - 1];
-                if(previous.isReachableFrom(headCommit_DEP) == false) {
-                    // The previous commit is unmerged. pop its branch off the stack
-                    branchNameStack.removeAll(currentBranchName);
-                    // level++;
+            else {
+                // Is the current commit reachable from the current branch head
+                Commit previousCommitHead = headCommits.value(currentBranchName);
+                if(previousCommitHead.isReachableFrom(commit) == false) {
+
+                    // Find the relevant head for this commit
+                    QStringList branchNames = headCommits.keys();
+                    for(const QString& branchName : branchNames) {
+                        Commit headCommit = headCommits.value(branchName);
+                        if(commit.isReachableFrom(headCommit)) {
+                            currentBranchName = branchName;
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -915,9 +947,16 @@ if(parsedCommit.objectId() == "907c400afd8c19cca0eafc82ece6ee05aee446c2") {
             }
 
             parsedCommit.setBranchName(currentBranchName);
-
+if(parsedCommit.objectId() == ObjectId("8b346920dbfd790a4c293e9993fc76bf3914a30d")) {
+    parsedCommit.parents();
+    logText(LVL_DEBUG, "HEre");
+}
+            // Determine the indent level
             int level = -1;
-            if(currentBranchName.isEmpty() == false) {
+            if((level = parsedCommits.levelForThisParent(parsedCommit)) > 0) {
+                // do nothing... we found the level
+            }
+            else if(currentBranchName.isEmpty() == false) {
                 level = parsedCommits.levelForBranchName(currentBranchName);
             }
             if(level <= 0) {
@@ -929,7 +968,7 @@ if(parsedCommit.objectId() == "907c400afd8c19cca0eafc82ece6ee05aee446c2") {
             if(children.count() == 0) {
                 tag = "*";
             }
-            if(commit.parents().count() == 0) {
+            if(parsedCommit.parents().count() == 0) {
                 tag = "*";
             }
 
@@ -939,6 +978,15 @@ if(parsedCommit.objectId() == "907c400afd8c19cca0eafc82ece6ee05aee446c2") {
             }
 
             parsedCommits.append(parsedCommit);
+
+            // Remove any branches we have reached their birth
+            QStringList branchNames = birthCommits.keys();
+            for(const QString& branchName : branchNames) {
+                Commit birthCommit = birthCommits.value(branchName);
+                if(birthCommit.objectId() == parsedCommit.objectId()) {
+                    branchNameStack.removeAll(branchName);
+                }
+            }
             logText(LVL_DEBUG, QString("%1 %2 %3 %4  %5")
                     .arg(tag)
                     .arg(parsedCommit.objectId().toString(5))

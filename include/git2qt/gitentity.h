@@ -34,6 +34,8 @@ public:
         ObjectDatabaseEntity,
         ReferenceCollectionEntity,
         ReferenceEntity,
+        ReflogCollectionEntity,
+        ReflogEntity,
         RemoteCollectionEntity,
         RemoteEntity,
         RepositoryEntity,

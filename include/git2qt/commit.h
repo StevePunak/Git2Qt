@@ -86,7 +86,7 @@ public:
         }
     };
 
-    Commit::List parents() const;
+    Commit::List parents();
     bool isReachableFrom(const Commit& other) const;
     bool isReachableFromAny(const Commit::List& other) const;
 

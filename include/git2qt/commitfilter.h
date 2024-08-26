@@ -15,9 +15,11 @@ public:
 
     Reference::List includeReachableFromRefs() const { return _includeReachableFromRefs; }
     void setIncludeReachableFrom(const Reference::List& value) { _includeReachableFromRefs = value; }
+    void setIncludeReachableFrom(const Reference& value) { _includeReachableFromRefs.append(value); }
 
     Reference::List excludeReachableFromRefs() const { return _excludeReachableFromRefs; }
     void setExcludeReachableFromRefs(const Reference::List& value) { _excludeReachableFromRefs = value; }
+    void setExcludeReachableFromRefs(const Reference& value) { _excludeReachableFromRefs.append(value); }
 
     CommitSortStrategies sortBy() const { return _sortBy; }
     void setSortBy(CommitSortStrategies value) { _sortBy = value; }

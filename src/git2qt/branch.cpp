@@ -126,6 +126,24 @@ Commit Branch::tip()
     return commit;
 }
 
+Commit Branch::birth()
+{
+    Commit commit(repository());
+
+    try
+    {
+        Commit tipCommit = tip();
+        Commit::List parents = tipCommit.parents();
+
+    }
+    catch(const GitException&)
+    {
+
+    }
+
+    return commit;
+}
+
 bool Branch::isHead() const
 {
     bool result = false;

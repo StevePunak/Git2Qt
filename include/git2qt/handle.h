@@ -226,6 +226,20 @@ public:
     }
 };
 
+class ReflogHandle : public Handle<git_reflog*>
+{
+public:
+    ReflogHandle() : Handle() {}
+    ReflogHandle(git_reflog* handle) :
+        Handle(handle) {}
+    virtual void dispose() override
+    {
+        if(_handle != nullptr) {
+            git_reflog_free(_handle);
+        }
+    }
+};
+
 } // namespace GIT
 
 #endif // HANDLE_H

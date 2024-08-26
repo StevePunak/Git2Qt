@@ -84,6 +84,18 @@ public:
             }
         }
 
+        Reference findByObjectId(const ObjectId& objectId) const
+        {
+            Reference result;
+            for(const Reference& reference : *this) {
+                if(reference.isDirect() && reference.objectId() == objectId) {
+                    result = reference;
+                    break;
+                }
+            }
+            return result;
+        }
+
         List localBranchReferences() const
         {
             List result;

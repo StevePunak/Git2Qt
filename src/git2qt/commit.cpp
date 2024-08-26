@@ -95,7 +95,7 @@ bool Commit::isReachableFromAny(const List& other) const
     return result == 1;
 }
 
-Commit::List Commit::parents() const
+Commit::List Commit::parents()
 {
     Commit::List result = _parents;
 
@@ -112,6 +112,7 @@ Commit::List Commit::parents() const
             }
             git_commit_free(thisCommit);
         }
+        _parents = result;
     }
     return result;
 }

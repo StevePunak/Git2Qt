@@ -35,6 +35,7 @@ public:
     Reference reference() const { return _reference; }
 
     Commit tip();
+    Commit birth();
 
     bool isHead() const;
     bool isRemote() const;

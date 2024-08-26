@@ -39,10 +39,10 @@ public:
             }
         }
 
-        List findChildren(const GraphedCommit& of) const
+        List findChildren(const GraphedCommit& of)
         {
             List result;
-            for(const GraphedCommit& commit : *this) {
+            for(GraphedCommit& commit : *this) {
                 if(commit.parents().objectIds().contains(of.objectId())) {
                     result.append(commit);
                 }
@@ -50,13 +50,13 @@ public:
             return result;
         }
 
-        bool hasParent(const ObjectId& parentObjectId) const
+        bool hasParent(const ObjectId& parentObjectId)
         {
-            auto it = std::find_if(constBegin(), constEnd(), [parentObjectId](const GraphedCommit& c)
+            auto it = std::find_if(begin(), end(), [parentObjectId](GraphedCommit& c)
             {
                 return c.parents().objectIds().contains(parentObjectId);
             });
-            bool result = it != constEnd();
+            bool result = it != end();
             return result;
         }
 
@@ -78,6 +78,19 @@ public:
                 return c.branchName() == branchName;
             });
             if(it != constEnd()) {
+                result = (*it).level();
+            }
+            return result;
+        }
+
+        int levelForThisParent(const Commit& commit)
+        {
+            int result = -1;
+            auto it = std::find_if(begin(), end(), [commit](GraphedCommit& c)
+            {
+                return c.parents().count() > 0 && c.parents().at(0).objectId() == commit.objectId();
+            });
+            if(it != end()) {
                 result = (*it).level();
             }
             return result;
