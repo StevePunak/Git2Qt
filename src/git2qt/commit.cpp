@@ -56,6 +56,7 @@ Commit Commit::lookup(Repository* repo, const ObjectId& objectId)
     Commit result(repo, objectId);
     git_commit *commit;
     if(git_commit_lookup(&commit, repo->handle().value(), objectId.toNative()) == 0) {
+        const git_oid* oid = git_commit_id(commit);  Q_UNUSED(oid)
         result = createFromNative(repo, commit);
         git_commit_free(commit);
     }
@@ -95,7 +96,7 @@ bool Commit::isReachableFromAny(const List& other) const
     return result == 1;
 }
 
-Commit::List Commit::parents()
+Commit::List Commit::parents() const
 {
     Commit::List result = _parents;
 
@@ -112,7 +113,6 @@ Commit::List Commit::parents()
             }
             git_commit_free(thisCommit);
         }
-        _parents = result;
     }
     return result;
 }
