@@ -822,6 +822,21 @@ enum CommitSortStrategy
 };
 Q_DECLARE_FLAGS(CommitSortStrategies, CommitSortStrategy)
 
+enum MergeBaseFindingStrategy
+{
+    /// <summary>
+    /// Compute the best common ancestor between some commits to use in a three-way merge.
+    /// <para>
+    /// When more than two commits are provided, the computation is performed between the first commit and a hypothetical merge commit across all the remaining commits.
+    /// </para>
+    /// </summary>
+    MergeBaseFindStandard,
+    /// <summary>
+    /// Compute the best common ancestor of all supplied commits, in preparation for an n-way merge.
+    /// </summary>
+    MergeBaseFindOctopus,
+};
+
 QString getFileStatusString(FileStatuses value);
 FileStatus getFileStatus(const QString& value);
 QList<FileStatus> getFileStatusValues();

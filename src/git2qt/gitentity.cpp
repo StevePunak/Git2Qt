@@ -9,13 +9,13 @@ using namespace GIT;
 bool GitEntity::handleError(int value)
 {
     if(value) {
-        setErrorText(git_error_last()->message);
+        repository()->setErrorText(git_error_last()->message);
         return true;
     }
     return false;
 }
 
-void GitEntity::throwOnError(int result, const QString& message)
+void GitEntity::throwOnError(int result, const QString& message) const
 {
     if(result != 0) {
         throwException(message);
@@ -53,7 +53,12 @@ void GitEntity::throwOnError(Repository* repo, int result)
     repo->throwOnError(result);
 }
 
-void GitEntity::throwException(const QString& message)
+void GitEntity::throwIfTrue(Repository* repo, int result)
+{
+    repo->throwIfTrue(result);
+}
+
+void GitEntity::throwException(const QString& message) const
 {
     QString errorText = message;
     if(errorText.isEmpty()) {
@@ -62,13 +67,12 @@ void GitEntity::throwException(const QString& message)
             errorText = err->message;
         }
     }
-    setErrorText(errorText);
+    repository()->setErrorText(errorText);
     throw GitException(errorText);
 }
 
 void GitEntity::setErrorText(const QString& errorText)
 {
-    _errorText = errorText;
     if(_objectType != RepositoryEntity && _repository != nullptr) {
         _repository->setErrorText(errorText);
     }
@@ -78,7 +82,6 @@ GitEntity& GitEntity::operator=(const GitEntity& other)
 {
     _objectType = other._objectType;
     _repository = other._repository;
-    _errorText = other._errorText;
     return *this;
 }
 

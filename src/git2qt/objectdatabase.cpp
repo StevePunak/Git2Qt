@@ -63,3 +63,45 @@ Commit ObjectDatabase::createCommit(const Signature& author, const Signature& co
     }
     return result;
 }
+
+Commit ObjectDatabase::findMergeBase(const Commit& a, const Commit& b, MergeBaseFindingStrategy strategy) const
+{
+    Commit::List commits;
+    commits.append(a);
+    commits.append(b);
+    return findMergeBase(commits, strategy);
+}
+
+Commit ObjectDatabase::findMergeBase(const Commit::List& commits, MergeBaseFindingStrategy strategy) const
+{
+    Commit baseCommit;
+    try
+    {
+        if(commits.count() < 2) {
+            throw GitException("Find merge base must take at least two commits");
+        }
+
+        git_oid oids[commits.count()];
+        for(int i = 0;i < commits.count();i++) {
+            oids[i] = *commits.at(i).objectId().toNative();
+        }
+
+        git_oid base;
+        switch(strategy) {
+        case MergeBaseFindStandard:
+            throwOnError(git_merge_base_many(&base, repository()->handle().value(), commits.count(), oids));
+            break;
+        case MergeBaseFindOctopus:
+            throwOnError(git_merge_base_octopus(&base, repository()->handle().value(), commits.count(), oids));
+            break;
+        default:
+            throw GitException("Invalid parameter");
+        }
+
+        baseCommit = Commit::lookup(repository(), base);
+    }
+    catch(const GitException&)
+    {
+    }
+    return baseCommit;
+}

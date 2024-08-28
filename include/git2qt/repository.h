@@ -16,6 +16,7 @@
 #include <git2qt/branch.h>
 #include <git2qt/diffdelta.h>
 #include <git2qt/commit.h>
+#include <git2qt/graphedcommit.h>
 #include <git2qt/commitoptions.h>
 #include <git2qt/reference.h>
 #include <git2qt/remote.h>
@@ -130,6 +131,7 @@ public:
 
     // Graph
     void commitGraph();
+    GraphedCommit::List commitGraph2();
 
     // Credentials Callback
     void setCredentialResolver(CredentialResolver* value) { _credentialResolver = value; }
@@ -150,6 +152,9 @@ public:
     Diff* diff() const { return _diff; }
     SubmoduleCollection* submodules() const { return _submodules; }
     Tag::ConstPtrList tags() const { return _tags != nullptr ? _tags->tags() : Tag::ConstPtrList();  }
+
+    QString errorText() const { return _errorText; }
+    void setErrorText(const QString& errorText) { _errorText = errorText; }
 
     virtual bool isNull() const override { return _handle.isNull(); }
 
@@ -186,6 +191,7 @@ private:
     QFileSystemWatcher* _fileSystemWatcher;
 
     Commit::List _mergeHeads;
+    QString _errorText;
 
     // callbacks
 public:

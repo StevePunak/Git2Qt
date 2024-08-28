@@ -1,9 +1,15 @@
 #include "graphedcommit.h"
 
 #include <gitexception.h>
+#include <repository.h>
 #include <utility.h>
 
 using namespace GIT;
+
+GraphedCommit::GraphedCommit() :
+    Commit()
+{
+}
 
 GraphedCommit::GraphedCommit(const Commit& other) :
     Commit(GraphedCommitEntity, other.repository(), other.objectId())
@@ -24,6 +30,49 @@ GraphedCommit::GraphedCommit(const Commit& other) :
     }
 }
 
+bool GraphedCommit::operator ==(const GraphedCommit& other) const
+{
+    return Commit::operator ==(other);
+}
+
+int GraphedCommit::distanceAhead(const Commit& other) const
+{
+    int result = 0;
+
+    try
+    {
+        size_t ahead, behind;
+        if(getDistance(repository(), objectId(), other.objectId(), &ahead, &behind) == false) {
+            throw GitException("failed to find distance");
+        }
+        result = ahead;
+    }
+    catch(const GitException& e)
+    {
+        logText(LVL_ERROR, e.message());
+    }
+    return result;
+}
+
+int GraphedCommit::distanceBehind(const Commit& other) const
+{
+    int result = 0;
+
+    try
+    {
+        size_t ahead, behind;
+        if(getDistance(repository(), objectId(), other.objectId(), &ahead, &behind) == false) {
+            throw GitException("failed to find distance");
+        }
+        result = behind;
+    }
+    catch(const GitException& e)
+    {
+        logText(LVL_ERROR, e.message());
+    }
+    return result;
+}
+
 QString GraphedCommit::toString() const
 {
     QString text = QString("[name: %1  lvl: %2  head: %3  parents: %4]")
@@ -32,4 +81,18 @@ QString GraphedCommit::toString() const
                    .arg(Utility::toString(_head))
                    .arg(_parentObjectIds.count());
     return text;
+}
+
+bool GraphedCommit::getDistance(Repository* repo, const ObjectId& local, const ObjectId& upstream, size_t* ahead, size_t* behind)
+{
+    bool result = false;
+    try
+    {
+        throwOnError(repo, git_graph_ahead_behind(ahead, behind, repo->handle().value(), local.toNative(), upstream.toNative()));
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
 }

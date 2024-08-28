@@ -56,7 +56,6 @@ public:
 
     Repository* repository() const { return _repository; }
 
-    QString errorText() const { return _errorText; }
     void setErrorText(const QString& errorText);
 
     bool isBlob() const { return entityType() == BlobEntity; }
@@ -74,7 +73,7 @@ protected:
     GitEntity& operator=(const GitEntity& other);
 
     bool handleError(int value);
-    void throwOnError(int result, const QString& message = QString());
+    void throwOnError(int result, const QString& message = QString()) const;
     void throwIfNull(const void* ptr, const QString& message = QString());
     void throwIfFalse(bool result, const QString& message = QString());
     void throwIfTrue(bool result, const QString& message = QString()) { return throwIfFalse(!result, message); }
@@ -83,16 +82,15 @@ protected:
     void logText(const char* file, int line, Log::LogLevel level, const QString& text) const;
 
     static void throwOnError(Repository* repo, int result);
+    static void throwIfTrue(Repository* repo, int result);
 
     void setRepository(Repository* value) { _repository = value; }
 
 private:
-    void throwException(const QString& message);
+    void throwException(const QString& message) const;
 
     GitEntityType _objectType = UnknownGitEntityType;
     Repository* _repository = nullptr;
-
-    QString _errorText;
 };
 
 } // namespace GIT

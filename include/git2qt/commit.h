@@ -101,7 +101,6 @@ private:
     QString _shortMessage;
     QString _encoding;
     QDateTime _timestamp;
-    Commit::List _parents;
 };
 
 } // namespace GIT

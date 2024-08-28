@@ -1,11 +1,11 @@
-#include "reflogcollection.h"
+#include "reflog.h"
 
 #include <gitexception.h>
 #include <repository.h>
 
 using namespace GIT;
 
-ReflogCollection::ReflogCollection(Repository* repo, const QString& canonicalName) :
+Reflog::Reflog(Repository* repo, const QString& canonicalName) :
     GitEntity(ReflogCollectionEntity, repo),
     _canonicalName(canonicalName)
 {
@@ -27,7 +27,7 @@ ReflogCollection::ReflogCollection(Repository* repo, const QString& canonicalNam
     }
 }
 
-ReflogHandle ReflogCollection::createHandle() const
+ReflogHandle Reflog::createHandle() const
 {
     ReflogHandle result;
     git_reflog* reflog = nullptr;

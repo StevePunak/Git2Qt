@@ -98,21 +98,19 @@ bool Commit::isReachableFromAny(const List& other) const
 
 Commit::List Commit::parents() const
 {
-    Commit::List result = _parents;
+    Commit::List result;
 
-    if(result.count() == 0) {
-        git_commit *thisCommit;
-        if(git_commit_lookup(&thisCommit, repository()->handle().value(), objectId().toNative()) == 0) {
-            int count = git_commit_parentcount(thisCommit);
-            for (int i = 0;i < count;i++) {
-                git_commit *parent;
-                git_commit_parent(&parent, thisCommit, i);
-                Commit commit = createFromNative(repository(), parent);
-                result.append(commit);
-                git_commit_free(parent);
-            }
-            git_commit_free(thisCommit);
+    git_commit *thisCommit;
+    if(git_commit_lookup(&thisCommit, repository()->handle().value(), objectId().toNative()) == 0) {
+        int count = git_commit_parentcount(thisCommit);
+        for (int i = 0;i < count;i++) {
+            git_commit *parent;
+            git_commit_parent(&parent, thisCommit, i);
+            Commit commit = createFromNative(repository(), parent);
+            result.append(commit);
+            git_commit_free(parent);
         }
+        git_commit_free(thisCommit);
     }
     return result;
 }
