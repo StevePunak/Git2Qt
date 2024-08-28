@@ -212,6 +212,34 @@ public:
     }
 };
 
+class RevWalkHandle : public Handle<git_revwalk*>
+{
+public:
+    RevWalkHandle() : Handle() {}
+    RevWalkHandle(git_revwalk* handle) :
+        Handle(handle) {}
+    virtual void dispose() override
+    {
+        if(_handle != nullptr) {
+            git_revwalk_free(_handle);
+        }
+    }
+};
+
+class ReflogHandle : public Handle<git_reflog*>
+{
+public:
+    ReflogHandle() : Handle() {}
+    ReflogHandle(git_reflog* handle) :
+        Handle(handle) {}
+    virtual void dispose() override
+    {
+        if(_handle != nullptr) {
+            git_reflog_free(_handle);
+        }
+    }
+};
+
 } // namespace GIT
 
 #endif // HANDLE_H

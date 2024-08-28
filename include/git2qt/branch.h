@@ -26,7 +26,7 @@ public:
 
     QString name() const;
     QString canonicalName() const;
-    QString friendlyName() const;
+    QString friendlyName(bool trimOrigin = false) const;
     QString upstreamBranchCanonicalName() const;
     QString upstreamBranchCanonicalNameFromLocalBranch() const;
     QString remoteName() const;
@@ -35,6 +35,7 @@ public:
     Reference reference() const { return _reference; }
 
     Commit tip();
+    Commit birth();
 
     bool isHead() const;
     bool isRemote() const;
@@ -89,34 +90,20 @@ public:
         }
     };
 
-    class Map_DEP : public QMap<QString, Branch*>
+    class Map : public QMap<QString, Branch>
     {
     public:
-        Branch* findLocalBranch(const QString& branchName) const
+        Branch findForReferencedObjectId(const ObjectId& objectId) const
         {
-            Branch* result = nullptr;
-            auto it = std::find_if(constBegin(), constEnd(), [branchName](Branch* b)
-                                   {
-                                       return b->branchType() == LocalBranch && b->name() == branchName;
-                                   });
+            Branch branch;
+            auto it = std::find_if(constBegin(), constEnd(), [objectId](const Branch& branch)
+            {
+                return branch.reference().objectId() == objectId;
+            });
             if(it != constEnd()) {
-                result = *it;
+                branch = *it;
             }
-            return result;
-        }
-
-        Branch* findRemoteBranch(const QString& branchName) const
-        {
-            Branch* result = nullptr;
-            QString needle = QString("origin/%1").arg(branchName);
-            auto it = std::find_if(constBegin(), constEnd(), [needle](Branch* b)
-                                   {
-                                       return b->branchType() == RemoteBranch && b->name() == needle;
-                                   });
-            if(it != constEnd()) {
-                result = *it;
-            }
-            return result;
+            return branch;
         }
     };
 

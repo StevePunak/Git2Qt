@@ -40,10 +40,26 @@ Reference& Reference::operator=(const Reference& other)
     _targetIdentifier = other._targetIdentifier;
     _targetOid = other._targetOid;
     _type = other._type;
+    _isBranch = other._isBranch;
+    _isNote = other._isNote;
+    _isRemote = other._isRemote;
+    _isTag = other._isTag;
+
     if(_type == SymbolicReferenceType) {
         resolveTarget();
     }
     return *this;
+}
+
+void Reference::resolveProperties()
+{
+    ReferenceHandle handle = createHandle();
+    if(handle.isNull() == false) {
+        _isBranch = git_reference_is_branch(handle.value());
+        _isNote = git_reference_is_note(handle.value());
+        _isRemote = git_reference_is_remote(handle.value());
+        _isTag = git_reference_is_tag(handle.value());
+    }
 }
 
 void Reference::dispose()
@@ -68,6 +84,7 @@ Reference Reference::createSymbolicReferenceObject(Repository* repo, const QStri
     if(git_reference_lookup(&ref, repo->handle().value(), canonicalName.toUtf8().constData()) == 0) {
         reference = Reference(repo, canonicalName, targetIdentifier, SymbolicReferenceType);
         reference.resolveTarget();
+        reference.resolveProperties();
         ReferenceHandle refHandle(ref);
         if(typeFromHandle(refHandle) != SymbolicReferenceType) {
             Log::logText(LVL_ERROR, "Unmatching reference type");
@@ -79,16 +96,20 @@ Reference Reference::createSymbolicReferenceObject(Repository* repo, const QStri
 
 Reference Reference::createDirectReferenceObject(Repository* repo, const QString& canonicalName, const ObjectId& targetoid)
 {
-    Reference reference;
+    Reference reference(repo, canonicalName, targetoid.sha(), DirectReferenceType);
+    reference._targetOid = targetoid;
     git_reference* ref = nullptr;
     if(git_reference_lookup(&ref, repo->handle().value(), canonicalName.toUtf8().constData()) == 0) {
-        reference = Reference(repo, canonicalName, targetoid.sha(), DirectReferenceType);
-        reference._targetOid = targetoid;
         ReferenceHandle refHandle(ref);
         if(typeFromHandle(refHandle) != DirectReferenceType) {
             Log::logText(LVL_ERROR, "Unmatching reference type");
         }
+        reference.resolveProperties();
+
         git_reference_free(ref);
+    }
+    else {
+        Log::logText(LVL_DEBUG, git_error_last()->message);
     }
     return reference;
 }
@@ -155,13 +176,31 @@ Reference Reference::lookup(Repository* repo, const QString& name)
 
 QString Reference::name() const
 {
-    QString result;
+    QString name;
     ReferenceHandle handle = createHandle();
     if(handle.isNull() == false) {
-        result = nameFromHandle(handle.value());
+        name = nameFromHandle(handle.value());
         handle.dispose();
     }
-    return result;
+    return name;
+}
+
+QString Reference::friendlyName() const
+{
+    QString friendlyName = _canonicalName;
+    if(looksLikeLocalBranch()) {
+        friendlyName = _canonicalName.mid(LocalBranchPrefix.length());
+    }
+    else if(looksLikeRemoteTrackingBranch()) {
+        friendlyName = _canonicalName.mid(RemoteTrackingBranchPrefix.length());
+    }
+    else if(looksLikeNote()) {
+        friendlyName = _canonicalName.mid(NotePrefix.length());
+    }
+    else if(looksLikeTag()) {
+        friendlyName = _canonicalName.mid(TagPrefix.length());
+    }
+    return friendlyName;
 }
 
 #if 0
@@ -202,8 +241,8 @@ void Reference::resolveTarget()
         throwOnError(git_reference_resolve(&targetRef, handle.value()));
         const git_oid* oid = git_reference_target(targetRef);
         if(oid != nullptr) {
-            ObjectId targetObjectId(oid);
-            _target = new Reference(repository(), _targetIdentifier, targetObjectId.toString(), DirectReferenceType);
+            _targetOid = ObjectId(oid);
+            _target = new Reference(repository(), _targetIdentifier, _targetOid.toString(), DirectReferenceType);
             handle.dispose();
         }
     }

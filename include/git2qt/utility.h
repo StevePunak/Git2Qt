@@ -22,6 +22,8 @@ class Utility
 {
 public:
     static QString toString(bool value) { return value ? "true" : "false"; }
+    static QString toString(const QDateTime& date) { return date.toString("yyyy-MM-ddThh:mm:ss.zzzZ"); }
+
     /**
      * @brief combine paths into a normalized path
      */

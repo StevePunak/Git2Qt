@@ -27,8 +27,13 @@ public:
     virtual ~Signature();
 
     QString name() const { return _name; }
+    void setName(const QString& value) { _name = value; }
+
     QString email() const { return _email; }
+    void setEmail(const QString& value) { _email = value; }
+
     QDateTime timestamp() const { return _timestamp; }
+    void setTimestamp(const QDateTime& value) { _timestamp = value; }
 
     virtual bool isNull() const { return _native == nullptr; }
 

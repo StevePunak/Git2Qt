@@ -24,6 +24,9 @@ public:
     Branch::List reloadBranches();
     void append(const Branch& branch) { _cachedBranches.append(branch); }
 
+    Branch::Map localBranches() const;
+    Branch::Map remoteBranches() const;
+
     Branch findLocalBranch(const QString& branchName) const { return _cachedBranches.findLocalBranch(branchName); }
     Branch findRemoteBranch(const QString& branchName) const { return _cachedBranches.findRemoteBranch(branchName); }
 

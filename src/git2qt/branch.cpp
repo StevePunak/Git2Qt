@@ -52,7 +52,7 @@ QString Branch::canonicalName() const
     return _reference.canonicalName();
 }
 
-QString Branch::friendlyName() const
+QString Branch::friendlyName(bool trimOrigin) const
 {
     QString result;
     if(_reference.looksLikeLocalBranch()) {
@@ -60,6 +60,10 @@ QString Branch::friendlyName() const
     }
     else if(_reference.looksLikeRemoteTrackingBranch()) {
         result = _reference.canonicalName().mid(Reference::RemoteTrackingBranchPrefix.length());
+        QString remote = remoteName();
+        if(trimOrigin && result.startsWith(remote) && result.length() > remote.length() + 1) {
+            result = result.mid(remote.length() + 1);
+        }
     }
     else {
         Log::logText(LVL_ERROR, QString("%1 does not look like a valid branch name").arg(_reference.canonicalName()));
@@ -71,8 +75,8 @@ QString Branch::upstreamBranchCanonicalName() const
 {
     QString name;
     if(isRemote()) {
-        Remote* remote = repository()->network()->remoteForName(remoteName());
-        name = remote->fetchSpecTransformToSource(_reference.canonicalName());
+        Remote remote = repository()->network()->remoteForName(remoteName());
+        name = remote.fetchSpecTransformToSource(_reference.canonicalName());
     }
     else {
         name = upstreamBranchCanonicalNameFromLocalBranch();
@@ -113,6 +117,24 @@ Commit Branch::tip()
         if(commit.isValid() == false) {
             throw GitException("Failed to find commit at starting reference");
         }
+    }
+    catch(const GitException&)
+    {
+
+    }
+
+    return commit;
+}
+
+Commit Branch::birth()
+{
+    Commit commit(repository());
+
+    try
+    {
+        Commit tipCommit = tip();
+        Commit::List parents = tipCommit.parents();
+
     }
     catch(const GitException&)
     {

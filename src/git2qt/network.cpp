@@ -20,12 +20,12 @@ Network::~Network()
     }
 }
 
-RemoteCollection* Network::remotes()
+Remote::List Network::remotes()
 {
-    return _remotes;
+    return _remotes->remotes();
 }
 
-Remote* Network::remoteForName(const QString& name) const
+Remote Network::remoteForName(const QString& name) const
 {
     return _remotes->findByName(name);
     // git_remote_lookup()
@@ -41,7 +41,8 @@ void Network::reload()
     git_strarray list;
     if(git_remote_list(&list, repository()->handle().value()) == 0) {
         for(int i = 0;i < (int)list.count;i++) {
-            Remote* remote = new Remote(repository(), list.strings[i]);
+            Remote remote(repository(), list.strings[i]);
+            remote.reloadReferences();
             _remotes->append(remote);
         }
         git_strarray_free(&list);

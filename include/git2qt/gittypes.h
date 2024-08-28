@@ -472,9 +472,10 @@ enum DeltaType
 
 enum ReferenceType
 {
-    UnknownReferenceType,
-    SymbolicReferenceType,
-    DirectReferenceType,
+    UnknownReferenceType    = 0x00,
+    DirectReferenceType     = 0x01,
+    SymbolicReferenceType   = 0x02,
+    AllReferenceTypes = (DirectReferenceType |  SymbolicReferenceType),
 };
 
 enum ObjectType
@@ -789,6 +790,53 @@ enum ResetMode
     ResetHard,
 };
 
+enum CommitSortStrategy
+{
+    /// <summary>
+    /// Sort the commits in no particular ordering;
+    /// this sorting is arbitrary, implementation-specific
+    /// and subject to change at any time.
+    /// </summary>
+    SortStrategyNone = 0,
+
+    /// <summary>
+    /// Sort the commits in topological order
+    /// (parents before children); this sorting mode
+    /// can be combined with time sorting.
+    /// </summary>
+    SortStrategyTopological = (1 << 0),
+
+    /// <summary>
+    /// Sort the commits by commit time;
+    /// this sorting mode can be combined with
+    /// topological sorting.
+    /// </summary>
+    SortStrategyTime = (1 << 1),
+
+    /// <summary>
+    /// Iterate through the commits in reverse
+    /// order; this sorting mode can be combined with
+    /// any of the above.
+    /// </summary>
+    SortStrategyReverse = (1 << 2)
+};
+Q_DECLARE_FLAGS(CommitSortStrategies, CommitSortStrategy)
+
+enum MergeBaseFindingStrategy
+{
+    /// <summary>
+    /// Compute the best common ancestor between some commits to use in a three-way merge.
+    /// <para>
+    /// When more than two commits are provided, the computation is performed between the first commit and a hypothetical merge commit across all the remaining commits.
+    /// </para>
+    /// </summary>
+    MergeBaseFindStandard,
+    /// <summary>
+    /// Compute the best common ancestor of all supplied commits, in preparation for an n-way merge.
+    /// </summary>
+    MergeBaseFindOctopus,
+};
+
 QString getFileStatusString(FileStatuses value);
 FileStatus getFileStatus(const QString& value);
 QList<FileStatus> getFileStatusValues();
@@ -840,5 +888,6 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::FileStatuses)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffModifiers)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::GitDiffFindFlags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffOptionFlags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::CommitSortStrategies)
 
 #endif // GITTYPES_H

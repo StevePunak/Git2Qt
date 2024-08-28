@@ -10,6 +10,7 @@
 
 #include <QString>
 #include <git2.h>
+#include <git2qt/log.h>
 
 namespace GIT {
 
@@ -21,27 +22,31 @@ public:
         UnknownGitEntityType = 0,
 
         BlobEntity,
-        BranchEntity,
         BranchCollectionEntity,
+        BranchEntity,
         CommitEntity,
-        RepositoryEntity,
-        ReferenceEntity,
-        ReferenceCollectionEntity,
-        DiffEntity,
-        TreeEntity,
-        IndexEntity,
+        CommitLogEntity,
         ConfigurationEntity,
-        RepositoryInfoEntity,
-        ObjectDatabaseEntity,
+        DiffEntity,
+        GraphedCommitEntity,
+        IndexEntity,
         NetworkEntity,
-        RemoteEntity,
+        ObjectDatabaseEntity,
+        ReferenceCollectionEntity,
+        ReferenceEntity,
+        ReflogCollectionEntity,
+        ReflogEntity,
         RemoteCollectionEntity,
+        RemoteEntity,
+        RepositoryEntity,
+        RepositoryInfoEntity,
         SignatureEntity,
-        SubmoduleEntity,
         SubmoduleCollectionEntity,
-        TagLightweightEntity,
+        SubmoduleEntity,
         TagAnnotatedEntity,
         TagCollectionEntity,
+        TagLightweightEntity,
+        TreeEntity,
         TreeEntryEntity,
     };
 
@@ -51,7 +56,6 @@ public:
 
     Repository* repository() const { return _repository; }
 
-    QString errorText() const { return _errorText; }
     void setErrorText(const QString& errorText);
 
     bool isBlob() const { return entityType() == BlobEntity; }
@@ -69,23 +73,24 @@ protected:
     GitEntity& operator=(const GitEntity& other);
 
     bool handleError(int value);
-    void throwOnError(int result, const QString& message = QString());
+    void throwOnError(int result, const QString& message = QString()) const;
     void throwIfNull(const void* ptr, const QString& message = QString());
     void throwIfFalse(bool result, const QString& message = QString());
     void throwIfTrue(bool result, const QString& message = QString()) { return throwIfFalse(!result, message); }
     void throwIfEmpty(const QString& value, const QString& message = QString());
 
+    void logText(const char* file, int line, Log::LogLevel level, const QString& text) const;
+
     static void throwOnError(Repository* repo, int result);
+    static void throwIfTrue(Repository* repo, int result);
 
     void setRepository(Repository* value) { _repository = value; }
 
 private:
-    void throwException(const QString& message);
+    void throwException(const QString& message) const;
 
     GitEntityType _objectType = UnknownGitEntityType;
     Repository* _repository = nullptr;
-
-    QString _errorText;
 };
 
 } // namespace GIT

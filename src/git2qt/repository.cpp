@@ -27,6 +27,9 @@
 #include <QFileSystemWatcher>
 #include <utility.h>
 #include <log.h>
+#include <commitlog.h>
+#include <graphedcommit.h>
+#include <reflog.h>
 
 using namespace GIT;
 
@@ -202,8 +205,8 @@ bool Repository::push(const Branch::List& branches)
         }
 
         for(const Branch& branch : branches) {
-            Remote* remote = _network->remoteForName(branch.remoteName());
-            throwIfNull(remote, "remote not found for branch");
+            Remote remote = _network->remoteForName(branch.remoteName());
+            throwIfTrue(remote.isNull(), "remote not found for branch");
             throwIfFalse(push(remote, QString("%1:%2").arg(branch.canonicalName()).arg(branch.upstreamBranchCanonicalName())));
         }
 
@@ -216,14 +219,14 @@ bool Repository::push(const Branch::List& branches)
     return result;
 }
 
-bool Repository::push(Remote* remote, const QString& pushRefSpec)
+bool Repository::push(const Remote& remote, const QString& pushRefSpec)
 {
     QStringList pushRefSpecs;
     pushRefSpecs.append(pushRefSpec);
     return push(remote, pushRefSpecs);
 }
 
-bool Repository::push(Remote* remote, const QStringList& pushRefSpecs)
+bool Repository::push(const Remote& remote, const QStringList& pushRefSpecs)
 {
     bool result = false;
     try
@@ -237,7 +240,9 @@ bool Repository::push(Remote* remote, const QStringList& pushRefSpecs)
         opts.callbacks = callbacks;
 
         StringArray strs(pushRefSpecs);
-        throwOnError(git_remote_push(remote->handle().value(), strs.toNative(), &opts));
+        RemoteHandle remoteHandle = remote.createHandle();
+        throwIfTrue(remoteHandle.isNull());
+        throwOnError(git_remote_push(remote.createHandle().value(), strs.toNative(), &opts));
 
         result = true;
     }
@@ -528,6 +533,18 @@ Commit::List Repository::commitsFromHead()
     return findCommits(head().reference());
 }
 
+Commit::List Repository::allCommits(CommitSortStrategies strategy)
+{
+    // set up a filter to include ALL references in time order
+    CommitFilter filter;
+    filter.setIncludeReachableFrom(references());
+    filter.setSortBy(strategy);
+
+    // Create a commit log with results
+    CommitLog commitLog(this, filter);
+    return commitLog.performLookup();
+}
+
 bool Repository::reset(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions)
 {
     bool result = false;
@@ -791,6 +808,311 @@ Commit Repository::lookupCommit(const QString& revName)
 DiffDelta::List Repository::getDiffDeltas(const CompareOptions& compareOptions, DiffModifiers diffFlags)
 {
     return _diff->listDiffs(compareOptions, diffFlags);
+}
+
+Remote::List Repository::remotes() const
+{
+    return _network->remotes();
+}
+
+Reference::List Repository::remoteReferences(const QString& remoteName)
+{
+    Reference::List references;
+    Remote remote = _network->remoteForName(remoteName);
+    if(remote.isNull() == false) {
+        for(const Reference& reference : remote.references()) {
+            if(reference.isRemote()) {
+                references.append(reference);
+            }
+        }
+    }
+    return references;
+}
+
+void Repository::commitGraph()
+{
+    try
+    {
+        Branch::Map localBranches = _branches->localBranches();
+        Branch::Map remoteBranches = _branches->remoteBranches();
+        QMap<QString, Reflog> reflogs;
+        GraphedCommit::List parsedCommits;
+
+        // Create map of head commits
+        QMap<QString, Commit> headCommits;
+        for(const Branch& branch : branches()) {
+            if(branch.reference().isSymbolic()) {
+                continue;
+            }
+            Commit commit = Commit::lookup(this, branch.reference().objectId());
+            throwIfFalse(commit.isValid());
+            headCommits.insert(branch.friendlyName(), commit);
+        }
+
+        // Create map of branch birth commits
+        QMap<QString, Commit> birthCommits;
+        for(const Branch& branch : branches()) {
+            if(branch.reference().isSymbolic()) {
+                continue;
+            }
+            Reflog reflog(this, branch.canonicalName());
+            if(reflog.entries().count() > 0) {
+                ReflogEntry entry = reflog.entries().at(reflog.entries().count() - 1);
+                Commit commit = Commit::lookup(this, entry.to());
+                throwIfFalse(commit.isValid());
+                birthCommits.insert(branch.friendlyName(), commit);
+            }
+            reflogs.insert(branch.name(), reflog);
+
+            logText(LVL_DEBUG, QString("---------------------------------------- Reflog for %1").arg(branch.friendlyName()));
+            for(const ReflogEntry& entry : reflog.entries()) {
+                logText(LVL_DEBUG, QString("%1 %2").arg(entry.to().toString()).arg(entry.message()));
+            }
+        }
+
+        Branch head_DEP = Repository::head();
+        Commit headCommit_DEP = Commit::lookup(this, head_DEP.reference().objectId());
+        throwIfFalse(headCommit_DEP.isValid());
+
+        QString headName = head_DEP.friendlyName();
+        QString currentBranchName = headName;
+        QStringList branchNameStack;
+        branchNameStack.append(currentBranchName);
+
+        bool currentIsUnmerged = false;     Q_UNUSED(currentIsUnmerged)
+
+        GraphedCommit::List originalCommits(allCommits());
+        for(int i = 0; i < originalCommits.count();i++) {
+            // dereference commit
+            const GraphedCommit commit = originalCommits[i];
+            GraphedCommit parsedCommit = commit;
+
+            // resolve children
+            GraphedCommit::List children = originalCommits.findChildren(commit);
+
+            // Resolve branch for this commit
+            QString branchTag;
+            QString commitBranchName;
+            Branch commitBranch;
+            if((commitBranch = localBranches.findForReferencedObjectId(commit.objectId())).isValid()) {
+                commitBranchName = commitBranch.friendlyName();
+                parsedCommit.setHead(true);
+                branchTag = QString("[%1]").arg(commitBranchName);
+            }
+            else if((commitBranch = remoteBranches.findForReferencedObjectId(commit.objectId())).isValid()) {
+                commitBranchName = commitBranch.friendlyName(true);
+                parsedCommit.setHead(true);
+                branchTag = QString("[%1 (r)]").arg(commitBranch.friendlyName(true));
+            }
+            else {
+                // we remain on the same branch
+            }
+
+            // Process branch change
+            if(commitBranchName.isEmpty() == false && commitBranchName != currentBranchName) {
+                // Push onto stack
+                if(branchNameStack.contains(commitBranchName) == false) {
+                    branchNameStack.append(commitBranchName);
+                }
+
+                if(commit.parentObjectIds().count() > 1) {
+                    // This is a merge or an unmerged branch. Pop the current branch from the stack.
+
+                    // NOT Working as intended
+
+                    // branchNameStack.removeAll(currentBranchName);
+                }
+                currentBranchName = commitBranchName;
+            }
+            else {
+                // Is the current commit reachable from the current branch head
+                Commit previousCommitHead = headCommits.value(currentBranchName);
+                if(previousCommitHead.isReachableFrom(commit) == false) {
+
+                    // Find the relevant head for this commit
+                    QStringList branchNames = headCommits.keys();
+                    for(const QString& branchName : branchNames) {
+                        Commit headCommit = headCommits.value(branchName);
+                        if(commit.isReachableFrom(headCommit)) {
+                            currentBranchName = branchName;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if(currentBranchName.isEmpty()) {
+                currentBranchName = branchNameStack.count() > 0 ? branchNameStack.last() : "";
+                parsedCommit.setHead(false);
+            }
+
+            parsedCommit.setBranchName(currentBranchName);
+
+            // Remove any branches we have reached their birth
+            QStringList branchNames = birthCommits.keys();
+            for(const QString& branchName : branchNames) {
+                Commit birthCommit = birthCommits.value(branchName);
+                if(birthCommit.objectId() == parsedCommit.objectId()) {
+                    branchNameStack.removeAll(branchName);
+                }
+            }
+
+            // Detect merge
+            if(parsedCommit.parents().count() > 1) {
+                parsedCommit.setMerge(true);
+            }
+
+if(parsedCommit.objectId() == ObjectId("8b346920dbfd790a4c293e9993fc76bf3914a30d")) {
+    int x = 1; Q_UNUSED(x)
+}
+
+            // Determine the indent level
+            int level = -1;
+            if((level = parsedCommits.levelForChild(parsedCommit)) > 0) {
+                // do nothing... we found the level
+                int x = 1; Q_UNUSED(x)
+            }
+            else if(currentBranchName.isEmpty() == false) {
+                level = parsedCommits.levelForBranchName(currentBranchName);
+            }
+            if(level <= 0) {
+                level = branchNameStack.count();
+            }
+
+            parsedCommit.setLevel(level);
+            QString tag = "|";
+            if(children.count() == 0) {
+                tag = "*";
+            }
+            if(parsedCommit.parents().count() == 0) {
+                tag = "*";
+            }
+
+            if(level > 0) {
+                QString spaces = QString().leftJustified(level, ' ');
+                tag = QString("%1%2%3").arg('|').arg(spaces).arg(tag);
+            }
+
+            parsedCommits.append(parsedCommit);
+
+            logText(LVL_DEBUG, QString("%1 %2 %3 %4  %5")
+                    .arg(tag)
+                    .arg(parsedCommit.objectId().toString(5))
+                    .arg(branchTag)
+                    .arg(parsedCommit.message())
+                    .arg(parsedCommit.toString()));
+
+            // logText(LVL_DEBUG, QString("%1 has %2 parents [%3]").arg(commit.objectId().toString()).arg(commit.parents().count()).arg(commit.message()));
+        }
+
+    }
+    catch(const GitException&)
+    {
+    }
+}
+
+GraphedCommit::List Repository::commitGraph2()
+{
+    GraphedCommit::List result;
+
+    try
+    {
+        Branch headBranch = Repository::head();
+        Commit headCommit = Commit::lookup(this, headBranch.reference().objectId());
+        throwIfFalse(headCommit.isValid());
+
+        int level = 1;
+
+        GraphedCommit::List allCommits = Repository::allCommits(SortStrategyTime);
+        for(GraphedCommit& commit : allCommits) {
+            if(commit.parents().count() > 1) {
+                // This is a merge
+                commit.setMerge(true);
+
+                // Find the merge-base and the merge-from
+                GraphedCommit::List parents = commit.parents();
+                parents.append(commit);
+
+                Commit mergeBase = _objectDatabase->findMergeBase(parents.toCommitList());
+                throwIfFalse(mergeBase.isValid());
+
+                parents.removeAll(commit);
+
+                commit.setMergeBase(mergeBase.objectId());
+                parents.removeAll(mergeBase);
+
+                throwIfTrue(parents.count() != 1, "Too many merge parents left (bug)");
+
+                commit.setMergeFrom(parents.at(0).objectId());
+
+                // Set the merge-base-of
+                GraphedCommit* mergeBaseCommit = allCommits.getCommit(commit.mergeBase());
+                throwIfNull(mergeBaseCommit);
+                mergeBaseCommit->setMergedInto(commit.objectId());
+
+                GraphedCommit* mergeFromCommit = allCommits.getCommit(commit.mergeFrom());
+                throwIfNull(mergeFromCommit);
+                mergeFromCommit->setMergedInto(commit.objectId());
+            }
+
+            if(commit.mergedInto().isValid()) {
+                // Get the 'upstream' merge target. If we are not the base, increment the level
+                GraphedCommit mergeTarget = allCommits.findCommit(commit.mergedInto());
+                throwIfFalse(mergeTarget.isValid());
+
+                if(mergeTarget.mergeBase() != commit.objectId()) {
+                    ++level;
+                    commit.setLevel(level);
+                }
+                else {
+                    commit.setLevel(mergeTarget.level());
+                }
+            }
+            else {
+                GraphedCommit::List children = allCommits.findChildren(commit);
+                if(children.count() == 0) {
+                    commit.setLevel(level);
+                }
+                else if(children.count() == 1) {
+                    level = children.at(0).level();
+                    commit.setLevel(level);
+                }
+                else {
+                    commit.setLevel(level);
+                }
+            }
+
+#if 0
+            // Build the output
+            GraphedCommit::List children = allCommits.findChildren(commit);
+            QString tag = "|";
+            if(children.count() == 0) {
+                tag = "*";
+            }
+            if(commit.parents().count() == 0) {
+                tag = "*";
+            }
+
+            if(commit.level() > 0) {
+                QString spaces = QString().leftJustified(commit.level(), ' ');
+                tag = QString("%1%2%3").arg('|').arg(spaces).arg(tag);
+            }
+
+            logText(LVL_DEBUG, QString("%1 %2 %3 %4")
+                    .arg(tag)
+                    .arg(commit.objectId().toString(5))
+                    .arg(commit.message())
+                    .arg(commit.toString()));
+
+#endif
+        }
+        result = allCommits;
+    }
+    catch(const GitException&)
+    {
+    }
+
+    return result;
 }
 
 Branch Repository::head() const

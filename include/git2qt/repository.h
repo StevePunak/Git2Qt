@@ -16,10 +16,13 @@
 #include <git2qt/branch.h>
 #include <git2qt/diffdelta.h>
 #include <git2qt/commit.h>
+#include <git2qt/graphedcommit.h>
 #include <git2qt/commitoptions.h>
 #include <git2qt/reference.h>
+#include <git2qt/remote.h>
 #include <git2qt/repositorystatus.h>
 #include <git2qt/checkoutoptions.h>
+#include <git2qt/referencecollection.h>
 #include <git2qt/stageoptions.h>
 
 
@@ -62,8 +65,8 @@ public:
     // Push
     bool push(const Branch& branch);
     bool push(const Branch::List& branches);
-    bool push(Remote* remote, const QString& pushRefSpec);
-    bool push(Remote* remote, const QStringList& pushRefSpecs);
+    bool push(const Remote& remote, const QString& pushRefSpec);
+    bool push(const Remote& remote, const QStringList& pushRefSpecs);
 
     // Checkout
     bool checkoutRemoteBranch(const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
@@ -85,6 +88,7 @@ public:
     Commit::List findCommits(const QRegularExpression& messageRegex);
     Commit::List findCommits(const Reference& from);
     Commit::List commitsFromHead();
+    Commit::List allCommits(CommitSortStrategies strategy = SortStrategyTime);
 
     // Reset
     bool reset(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions = CheckoutOptions());
@@ -121,6 +125,14 @@ public:
     // Diffs
     DiffDelta::List getDiffDeltas(const CompareOptions& compareOptions, DiffModifiers diffFlags = DiffModifier::DiffModNone);
 
+    // Remote
+    Remote::List remotes() const;
+    Reference::List remoteReferences(const QString& remoteName);
+
+    // Graph
+    void commitGraph();
+    GraphedCommit::List commitGraph2();
+
     // Credentials Callback
     void setCredentialResolver(CredentialResolver* value) { _credentialResolver = value; }
 
@@ -131,7 +143,7 @@ public:
     bool isBare() const { return _bare; }
 
     Branch::List branches() const { return _branches->branches(); }
-    ReferenceCollection* references() const { return _references; }
+    Reference::List references() const { return _references->references(); }
     const RepositoryHandle handle() const { return _handle; }
     Index* index() const { return _index; }
     RepositoryInformation* info() const { return _info; }
@@ -140,6 +152,9 @@ public:
     Diff* diff() const { return _diff; }
     SubmoduleCollection* submodules() const { return _submodules; }
     Tag::ConstPtrList tags() const { return _tags != nullptr ? _tags->tags() : Tag::ConstPtrList();  }
+
+    QString errorText() const { return _errorText; }
+    void setErrorText(const QString& errorText) { _errorText = errorText; }
 
     virtual bool isNull() const override { return _handle.isNull(); }
 
@@ -176,6 +191,7 @@ private:
     QFileSystemWatcher* _fileSystemWatcher;
 
     Commit::List _mergeHeads;
+    QString _errorText;
 
     // callbacks
 public:

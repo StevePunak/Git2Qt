@@ -19,6 +19,17 @@ Commit::Commit(Repository* repo) :
 Commit::Commit(Repository* repo, const ObjectId& objectId) :
     GitObject(CommitEntity, repo, objectId)
 {
+    resolve();
+}
+
+Commit::Commit(GitEntityType entityType, Repository* repo, const ObjectId& objectId) :
+    GitObject(entityType, repo, objectId)
+{
+    resolve();
+}
+
+void Commit::resolve()
+{
     CommitHandle handle = createHandle();
     if(handle.isNull() == false) {
         _author = Signature(git_commit_author(handle.value()));
@@ -45,6 +56,7 @@ Commit Commit::lookup(Repository* repo, const ObjectId& objectId)
     Commit result(repo, objectId);
     git_commit *commit;
     if(git_commit_lookup(&commit, repo->handle().value(), objectId.toNative()) == 0) {
+        const git_oid* oid = git_commit_id(commit);  Q_UNUSED(oid)
         result = createFromNative(repo, commit);
         git_commit_free(commit);
     }
@@ -67,23 +79,38 @@ Tree Commit::tree() const
     return repository()->lookupTree(treeId());
 }
 
+bool Commit::isReachableFrom(const Commit& other) const
+{
+    Commit::List commits;
+    commits.append(other);
+    return isReachableFromAny(commits);
+}
+
+bool Commit::isReachableFromAny(const List& other) const
+{
+    git_oid oids[other.count()];
+    for(int i = 0;i < other.count();i++) {
+        oids[i] = *other.at(i).objectId().toNative();
+    }
+    int result = git_graph_reachable_from_any(repository()->handle().value(), objectId().toNative(), oids, other.count());
+    return result == 1;
+}
+
 Commit::List Commit::parents() const
 {
-    Commit::List result = _parents;
+    Commit::List result;
 
-    if(result.count() == 0) {
-        git_commit *thisCommit;
-        if(git_commit_lookup(&thisCommit, repository()->handle().value(), objectId().toNative()) == 0) {
-            int count = git_commit_parentcount(thisCommit);
-            for (int i = 0;i < count;i++) {
-                git_commit *parent;
-                git_commit_parent(&parent, thisCommit, i);
-                Commit commit = createFromNative(repository(), parent);
-                result.append(commit);
-                git_commit_free(parent);
-            }
-            git_commit_free(thisCommit);
+    git_commit *thisCommit;
+    if(git_commit_lookup(&thisCommit, repository()->handle().value(), objectId().toNative()) == 0) {
+        int count = git_commit_parentcount(thisCommit);
+        for (int i = 0;i < count;i++) {
+            git_commit *parent;
+            git_commit_parent(&parent, thisCommit, i);
+            Commit commit = createFromNative(repository(), parent);
+            result.append(commit);
+            git_commit_free(parent);
         }
+        git_commit_free(thisCommit);
     }
     return result;
 }

@@ -22,6 +22,11 @@ public:
     Commit();
     Commit(Repository* repo);
     Commit(Repository* repo, const ObjectId& objectId);
+
+protected:
+    Commit(GitEntityType entityType, Repository* repo, const ObjectId& objectId);
+
+public:
     virtual ~Commit();
 
     bool operator ==(const Commit& other) const;
@@ -30,17 +35,31 @@ public:
     static Commit lookup(Repository* repo, const ObjectId& objectId);
 
     Signature author() const { return _author; }
+    void setAuthor(const Signature& value) { _author = value; }
+
     Signature committer() const { return _committer; }
+    void setCommitter(const Signature& value) { _committer = value; }
+
     QString message() const { return _message; }
+    void setMessage(const QString& value) { _message = value; }
+
     QString shortMessage() const { return _shortMessage; }
+    void setShortMessage(const QString& value) { _shortMessage = value; }
+
     QString encoding() const { return _encoding; }
+    void setEncoding(const QString& value) { _encoding = value; }
+
     QDateTime timestamp() const { return _timestamp; }
+    void setTimestamp(const QDateTime& value) { _timestamp = value; }
+
 
     ObjectId treeId() const;
     Tree tree() const;
 
     QVariant toVariant() const { return QVariant::fromValue<Commit>(*this); }
     static Commit fromVariant(const QVariant& value) { return value.value<Commit>(); }
+
+    CommitHandle createHandle() const;
 
     bool isValid() const { return _timestamp.isValid(); }
 
@@ -68,9 +87,11 @@ public:
     };
 
     Commit::List parents() const;
+    bool isReachableFrom(const Commit& other) const;
+    bool isReachableFromAny(const Commit::List& other) const;
 
 private:
-    CommitHandle createHandle() const;
+    void resolve();
 
     static Commit createFromNative(Repository* repo, git_commit* commit);
 
@@ -80,7 +101,6 @@ private:
     QString _shortMessage;
     QString _encoding;
     QDateTime _timestamp;
-    Commit::List _parents;
 };
 
 } // namespace GIT
