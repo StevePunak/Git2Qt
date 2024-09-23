@@ -12,6 +12,8 @@
 
 namespace GIT {
 
+class Blob;
+
 class ObjectDatabase : public GitEntity
 {
 public:
@@ -20,8 +22,13 @@ public:
     Commit createCommit(const Signature& author, const Signature& committer, const QString& message, const Tree& tree, const Commit::List& parents, bool prettifyMessage, const QChar& commentChar = QChar('#'));
     Commit findMergeBase(const Commit& a, const Commit& b, MergeBaseFindingStrategy strategy = MergeBaseFindStandard) const;
     Commit findMergeBase(const Commit::List& commits, MergeBaseFindingStrategy strategy = MergeBaseFindStandard) const;
+    Commit findMergeBase(const ObjectId::List& objectIds, MergeBaseFindingStrategy strategy = MergeBaseFindStandard) const;
+
+    QByteArray readBlobData(const Blob& blob);
 
     virtual bool isNull() const { return false; }
+
+    ObjectDatabaseHandle createHandle() const;
 };
 
 } // namespace GIT

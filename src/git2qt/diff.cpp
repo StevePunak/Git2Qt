@@ -24,13 +24,8 @@ TreeChanges Diff::compare(DiffModifiers diffModifiers, const QStringList& paths,
     try
     {
         git_diff* diff = nullptr;
-        git_diff_options options = GIT_DIFF_OPTIONS_INIT;
-        throwIfTrue(indexHandle.isNull());
-        throwOnError(git_diff_index_to_workdir(&diff, repository()->handle().value(), indexHandle.value(), &options));
-        git_diff_free(diff);
-        diff = nullptr;
 
-        // Build options (
+        // Build options
         DiffOptions diffOptions = buildDiffOptions(diffModifiers, paths, compareOptions);
         throwOnError(git_diff_index_to_workdir(&diff, repository()->handle().value(), indexHandle.value(), diffOptions.toNative()));
         DiffHandle diffHandle(diff);
@@ -55,6 +50,7 @@ TreeChanges Diff::compare(const Tree& fromTree, const Tree& toTree, DiffModifier
 
     TreeHandle fromHandle = fromTree.createTreeHandle();
     TreeHandle toHandle = toTree.createTreeHandle();
+    DiffHandle diffHandle;
 
     try
     {
@@ -66,9 +62,8 @@ TreeChanges Diff::compare(const Tree& fromTree, const Tree& toTree, DiffModifier
         throwIfTrue(toHandle.isNull());
         throwOnError(git_diff_tree_to_tree(&diff, repository()->handle().value(), fromHandle.value(), toHandle.value(), options.toNative()));
 
-        DiffHandle handle(diff);
-        result = buildTreeChanges(handle);
-        handle.dispose();
+        diffHandle = DiffHandle(diff);
+        result = buildTreeChanges(diffHandle);
     }
     catch(const GitException&)
     {
@@ -76,6 +71,7 @@ TreeChanges Diff::compare(const Tree& fromTree, const Tree& toTree, DiffModifier
 
     fromHandle.dispose();
     toHandle.dispose();
+    diffHandle.dispose();
     return result;
 }
 
@@ -84,44 +80,133 @@ TreeChanges Diff::compare(const Tree& oldTree, DiffTargets diffTargets, const QS
     TreeChanges changes;
     ObjectId oldTreeId = oldTree.objectId();
     DiffModifiers diffOptions = diffTargets == DiffTargetWorkingDirectory ? DiffModIncludeUntracked : DiffModNone;
-    DiffHandle handle = buildDiffList(oldTreeId, diffOptions, paths, compareOptions);
-    if(handle.isNull() == false) {
-        changes = buildTreeChanges(handle);
-        handle.dispose();
+    DiffHandle diffHandle = buildDiffList(oldTreeId, diffOptions, paths, compareOptions);
+    if(diffHandle.isNull() == false) {
+        changes = buildTreeChanges(diffHandle);
+        diffHandle.dispose();
     }
     return changes;
 }
 
-DiffDelta::List Diff::listDiffs(const CompareOptions& compareOptions, DiffModifiers diffFlags)
+DiffDelta::List Diff::diffIndexToWorkDir(const QString& path, bool includeUntracked, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
+{
+    QStringList paths;
+    paths.append(path);
+    return diffIndexToWorkDir(paths, includeUntracked, compareOptions, diffFlags);
+}
+
+DiffDelta::List Diff::diffIndexToWorkDir(const QStringList& paths, bool includeUntracked, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
 {
     DiffDelta::List collection;
     git_diff* diff = nullptr;
 
     IndexHandle indexHandle = repository()->index()->createHandle();
+    DiffHandle diffHandle;
     try
     {
-        DiffOptions options = buildDiffOptions(diffFlags, QStringList() << "*", compareOptions);
+        if(includeUntracked) {
+            diffFlags |= DiffModIncludeUntracked;
+        }
+
+        DiffOptions options = buildDiffOptions(diffFlags, paths, compareOptions);
 
         throwIfTrue(indexHandle.isNull());
 
         throwOnError(git_diff_index_to_workdir(&diff, repository()->handle().value(), indexHandle.value(), options.toNative()));
-        int count = git_diff_num_deltas(diff);
-        if(count > 0) {
-            git_diff_foreach(diff, fileCallback, binaryCallback, hunkCallback, lineCallback, &collection);
-        }
+
+        diffHandle = DiffHandle(diff);
+        collection = loadDiffs(diffHandle, compareOptions);
     }
     catch(const GitException&)
     {
     }
 
-    if(diff != nullptr) {
-        git_diff_free(diff);
+    diffHandle.dispose();
+    indexHandle.dispose();
+
+    return collection;
+}
+
+DiffDelta::List Diff::diffTreeToWorkDir(const Tree& oldTree, const QStringList& paths, bool includeUntracked, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
+{
+    DiffDelta::List collection;
+    git_diff* diff = nullptr;
+
+    IndexHandle indexHandle = repository()->index()->createHandle();
+    TreeHandle oldTreeHandle = oldTree.createTreeHandle();
+    DiffHandle diffHandle;
+    try
+    {
+        if(includeUntracked) {
+            diffFlags |= DiffModIncludeUntracked;
+        }
+
+        DiffOptions options = buildDiffOptions(diffFlags, paths, compareOptions);
+
+        throwIfTrue(indexHandle.isNull());
+        throwIfTrue(oldTreeHandle.isNull());
+
+        throwOnError(git_diff_tree_to_workdir(&diff, repository()->handle().value(), oldTreeHandle.value(), options.toNative()));
+
+        diffHandle = DiffHandle(diff);
+        collection = loadDiffs(diffHandle, compareOptions);
     }
+    catch(const GitException&)
+    {
+    }
+
+    diffHandle.dispose();
+    indexHandle.dispose();
+    oldTreeHandle.dispose();
+
+    return collection;
+}
+
+DiffDelta::List Diff::diffTreeToTree(const Tree& oldTree, const Tree& newTree, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
+{
+    DiffDelta::List collection;
+    git_diff* diff = nullptr;
+
+    IndexHandle indexHandle = repository()->index()->createHandle();
+    TreeHandle oldTreeHandle = oldTree.createTreeHandle();
+    TreeHandle newTreeHandle = newTree.createTreeHandle();
+    DiffHandle diffHandle;
+
+    try
+    {
+        DiffOptions options = buildDiffOptions(diffFlags, QStringList(), compareOptions);
+
+        throwIfTrue(indexHandle.isNull());
+        throwIfTrue(oldTreeHandle.isNull());
+        throwIfTrue(newTreeHandle.isNull());
+
+        throwOnError(git_diff_tree_to_tree(&diff, repository()->handle().value(), oldTreeHandle.value(), newTreeHandle.value(), options.toNative()));
+
+        diffHandle = DiffHandle(diff);
+        collection = loadDiffs(diffHandle, compareOptions);
+    }
+    catch(const GitException&)
+    {
+    }
+
+    diffHandle.dispose();
     indexHandle.dispose();
     return collection;
 }
 
-DiffOptions Diff::buildDiffOptions(DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions)
+DiffDelta::List Diff::loadDiffs(const DiffHandle& handle, const CompareOptions& compareOptions) const
+{
+    DiffDelta::List collection;
+    detectRenames(handle, compareOptions);
+
+    int count = git_diff_num_deltas(handle.value());
+    if(count > 0) {
+        git_diff_foreach(handle.value(), fileCallback, binaryCallback, hunkCallback, lineCallback, &collection);
+    }
+    return collection;
+}
+
+DiffOptions Diff::buildDiffOptions(DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions) const
 {
     DiffOptions options;
 
@@ -156,7 +241,9 @@ DiffOptions Diff::buildDiffOptions(DiffModifiers diffOptions, const QStringList&
         options.setFlags(DiffOptionIndentHeuristic);
     }
 
-    options.setPaths(paths);
+    if(paths.count() > 0) {
+        options.setPaths(paths);
+    }
 
     return options;
 }
@@ -185,7 +272,7 @@ DiffHandle Diff::buildDiffList(const ObjectId& oldTreeId, DiffModifiers diffOpti
     return result;
 }
 
-void Diff::detectRenames(const DiffHandle& handle, const CompareOptions& compareOptions)
+void Diff::detectRenames(const DiffHandle& handle, const CompareOptions& compareOptions) const
 {
     SimilarityOptions similarityOptions = compareOptions.similarity();
     if(similarityOptions.renameDetectionMode() == SimilarityOptions::RenameDetectionDefault) {
@@ -198,7 +285,7 @@ void Diff::detectRenames(const DiffHandle& handle, const CompareOptions& compare
     }
 
     git_diff_find_options opts = similarityOptions.toNativeDiffFindOptions();
-    if(compareOptions.includeUnmodified()) {
+    if(!compareOptions.includeUnmodified()) {
         opts.flags |= DiffFindRemoveUnmodified;
     }
 

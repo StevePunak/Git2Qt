@@ -7,7 +7,6 @@
 */
 #ifndef SIGNATURE_H
 #define SIGNATURE_H
-
 #include <git2qt/gitentity.h>
 
 #include <QDateTime>

@@ -22,6 +22,9 @@ class Branch : public GitEntity
 public:
     explicit Branch() : GitEntity(BranchEntity) {}
     explicit Branch(Repository* repo, const Reference& reference, git_branch_t type);
+    Branch(const Branch& other);
+    Branch& operator=(const Branch& other);
+
     virtual ~Branch();
 
     QString name() const;

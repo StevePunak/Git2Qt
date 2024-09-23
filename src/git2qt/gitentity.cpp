@@ -22,21 +22,21 @@ void GitEntity::throwOnError(int result, const QString& message) const
     }
 }
 
-void GitEntity::throwIfNull(const void* ptr, const QString& message)
+void GitEntity::throwIfNull(const void* ptr, const QString& message) const
 {
     if(ptr == nullptr) {
         throwException(message);
     }
 }
 
-void GitEntity::throwIfFalse(bool result, const QString& message)
+void GitEntity::throwIfFalse(bool result, const QString& message) const
 {
     if(result == false) {
         throwException(message);
     }
 }
 
-void GitEntity::throwIfEmpty(const QString& value, const QString& message)
+void GitEntity::throwIfEmpty(const QString& value, const QString& message) const
 {
     if(value.isEmpty()) {
         throwException(message);
@@ -56,6 +56,11 @@ void GitEntity::throwOnError(Repository* repo, int result)
 void GitEntity::throwIfTrue(Repository* repo, int result)
 {
     repo->throwIfTrue(result);
+}
+
+void GitEntity::throwIfNull(Repository* repo, const void* ptr)
+{
+    repo->throwIfNull(ptr);
 }
 
 void GitEntity::throwException(const QString& message) const

@@ -90,6 +90,48 @@ enum FileStatus
 };
 Q_DECLARE_FLAGS(FileStatuses, FileStatus)
 
+enum StashModifier
+{
+    /// <summary>
+    /// Default
+    /// </summary>
+    StashModifierDefault = 0,
+
+    /// <summary>
+    /// All changes already added to the index
+    /// are left intact in the working directory
+    /// </summary>
+    StashModifierKeepIndex = (1 << 0),
+
+    /// <summary>
+    /// All untracked files are also stashed and then
+    /// cleaned up from the working directory
+    /// </summary>
+    StashModifierIncludeUntracked = (1 << 1),
+
+    /// <summary>
+    /// All ignored files are also stashed and then
+    /// cleaned up from the working directory
+    /// </summary>
+    StashModifierIncludeIgnored = (1 << 2),
+};
+Q_DECLARE_FLAGS(StashModifiers, StashModifier)
+
+enum StashApplyModifier
+{
+    /// <summary>
+    /// Default. Will apply the stash and result in an index with conflicts
+    /// if any arise.
+    /// </summary>
+    StashApplyDefault = 0,
+
+    /// <summary>
+    /// In case any conflicts arise, this will not apply the stash.
+    /// </summary>
+    StashApplyReinstateIndex = (1 << 0),
+};
+Q_DECLARE_FLAGS(StashApplyModifiers, StashApplyModifier)
+
 enum Direction
 {
     DirectionFetch = 0,
@@ -490,6 +532,41 @@ enum ObjectType
     ObjectTypeRefDelta =    7  /**< A delta, base is given by object id. */
 };
 
+enum GitEntityType {
+    UnknownGitEntityType = 0,
+
+    BlobEntity,
+    BranchCollectionEntity,
+    BranchEntity,
+    CommitEntity,
+    CommitLogEntity,
+    ConfigurationEntity,
+    DiffEntity,
+    GraphBuilderEntity,
+    GraphedCommitEntity,
+    IndexEntity,
+    NetworkEntity,
+    ObjectDatabaseEntity,
+    ReferenceCollectionEntity,
+    ReferenceEntity,
+    ReflogCollectionEntity,
+    ReflogEntity,
+    RemoteCollectionEntity,
+    RemoteEntity,
+    RepositoryEntity,
+    RepositoryInfoEntity,
+    SignatureEntity,
+    StashCollectionEntity,
+    StashEntity,
+    SubmoduleCollectionEntity,
+    SubmoduleEntity,
+    TagAnnotatedEntity,
+    TagCollectionEntity,
+    TagLightweightEntity,
+    TreeEntity,
+    TreeEntryEntity,
+};
+
 enum TreeEntryTargetType
 {
     /// <summary>
@@ -837,6 +914,35 @@ enum MergeBaseFindingStrategy
     MergeBaseFindOctopus,
 };
 
+enum GraphItemType
+{
+    NoGraphItem         = 0x00000000,
+    VerticalUp          = 0x00000001,
+    VerticalDown        = 0x00000002,
+    TopTermination      = 0x00000004,
+    BottomTermination   = 0x00000008,
+    CommitDot           = 0x00000010,
+    MergeDot            = 0x00000020,
+    UpToRight           = 0x00000040,
+    UpToLeft            = 0x00000080,
+    DownToRight         = 0x00000100,
+    DownToLeft          = 0x00000200,
+    RightThenUp         = 0x00000400,
+    RightThenDown       = 0x00000800,
+    LeftThenUp          = 0x00001000,
+    LeftThenDown        = 0x00002000,
+    HorizontalLeft      = 0x00004000,
+    HorizontalRight     = 0x00008000,
+
+    AnyHorizontal       =   (UpToRight | UpToLeft |
+                            DownToRight | DownToLeft |
+                            RightThenUp | RightThenDown |
+                            LeftThenUp | LeftThenDown |
+                            HorizontalLeft | HorizontalRight),
+
+};
+Q_DECLARE_FLAGS(GraphItemTypes, GraphItemType)
+
 QString getFileStatusString(FileStatuses value);
 FileStatus getFileStatus(const QString& value);
 QList<FileStatus> getFileStatusValues();
@@ -881,13 +987,20 @@ QString getChangeKindString(ChangeKind value);
 ChangeKind getChangeKind(const QString& value);
 QList<ChangeKind> getChangeKindValues();
 
+QString getGitEntityTypeString(GitEntityType value);
+GitEntityType getGitEntityType(const QString& value);
+QList<GitEntityType> getGitEntityTypeValues();
+
 } // namespace GIT
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffDeltaFlags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::FileStatuses)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::StashModifiers)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::StashApplyModifiers)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffModifiers)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::GitDiffFindFlags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffOptionFlags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::CommitSortStrategies)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::GraphItemTypes)
 
 #endif // GITTYPES_H

@@ -45,7 +45,7 @@ Reference& Reference::operator=(const Reference& other)
     _isRemote = other._isRemote;
     _isTag = other._isTag;
 
-    if(_type == SymbolicReferenceType) {
+    if(_type == SymbolicReferenceType && repository() != nullptr) {
         resolveTarget();
     }
     return *this;

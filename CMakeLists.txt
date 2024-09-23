@@ -28,7 +28,12 @@ target_include_directories(${PROJ} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/git2qt)
 
-target_link_libraries(${PROJ} PRIVATE Qt6::Network git2)
+# Temp include Kanoop
+get_directory_property(PARENT_DIR PARENT_DIRECTORY)
+target_include_directories(${PROJ} PRIVATE ${PARENT_DIR}/KanoopCommon/include)
+
+target_link_libraries(${PROJ} PRIVATE Qt6::Network git2 KanoopCommon)
+# end temp Kanoop
 
 add_compile_definitions(KANOOP_GIT)
 add_compile_definitions(QT_DEPRECATED_WARNINGS)

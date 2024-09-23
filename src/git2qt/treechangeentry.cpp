@@ -17,6 +17,8 @@ TreeChangeEntry::TreeChangeEntry(const git_diff_delta* delta)
     _oldExists = (delta->old_file.flags & GIT_DIFF_FLAG_EXISTS) != 0;
 
     _changeKind = getStatusFromChangeKind((ChangeKind)delta->status);
+
+    _delta = DiffDelta(delta);
 }
 
 ChangeKind TreeChangeEntry::getStatusFromChangeKind(ChangeKind changeKind)

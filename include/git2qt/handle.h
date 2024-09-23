@@ -240,6 +240,34 @@ public:
     }
 };
 
+class BlobHandle : public Handle<git_blob*>
+{
+public:
+    BlobHandle() : Handle() {}
+    BlobHandle(git_blob* handle) :
+        Handle(handle) {}
+    virtual void dispose() override
+    {
+        if(_handle != nullptr) {
+            git_blob_free(_handle);
+        }
+    }
+};
+
+class ObjectDatabaseHandle : public Handle<git_odb*>
+{
+public:
+    ObjectDatabaseHandle() : Handle() {}
+    ObjectDatabaseHandle(git_odb* handle) :
+        Handle(handle) {}
+    virtual void dispose() override
+    {
+        if(_handle != nullptr) {
+            git_odb_free(_handle);
+        }
+    }
+};
+
 } // namespace GIT
 
 #endif // HANDLE_H

@@ -11,6 +11,7 @@
 #include <git2qt/kanoopgit.h>
 #include <git2.h>
 #include <git2qt/branchcollection.h>
+#include <git2qt/commitlog.h>
 #include <git2qt/compareoptions.h>
 #include <git2qt/configuration.h>
 #include <git2qt/diff.h>

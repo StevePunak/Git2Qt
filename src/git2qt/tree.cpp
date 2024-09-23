@@ -7,8 +7,9 @@
 
 using namespace GIT;
 
-Tree::Tree(Repository* repo, const ObjectId& objectId) :
-    GitObject(TreeEntity, repo, objectId)
+Tree::Tree(Repository* repo, const ObjectId& objectId, const QString& path) :
+    GitObject(TreeEntity, repo, objectId),
+    _path(path)
 {
     try
     {
@@ -23,7 +24,7 @@ Tree::Tree(Repository* repo, const ObjectId& objectId) :
             const git_tree_entry* nativeEntry = git_tree_entry_byindex(handle.value(), i);
             throwIfNull(nativeEntry);
             ObjectId entryId = git_tree_entry_id(nativeEntry);
-            TreeEntry entry(repository(), objectId, entryId);
+            TreeEntry entry(repository(), objectId, entryId, path);
             _entries.append(entry);
         }
     }
@@ -45,6 +46,34 @@ Tree Tree::createFromBranchName(Repository* repo, const QString& branchName)
     }
     git_object_free(treeish);
     return result;
+}
+
+Tree Tree::createFromCommit(Repository* repo, const Commit& commit)
+{
+    Tree result;
+    CommitHandle commitHandle = commit.createHandle();
+    git_tree *tree = nullptr;
+    try
+    {
+        throwIfTrue(repo, commitHandle.isNull());
+        throwOnError(repo, git_commit_tree(&tree, commitHandle.value()));
+        const git_oid* oid = git_tree_id(tree);
+        throwIfNull(repo, oid);
+        result = Tree(repo, ObjectId(oid));
+    }
+    catch(const GitException&)
+    {
+    }
+
+    if(tree != nullptr) {
+        git_tree_free(tree);
+    }
+    return result;
+}
+
+TreeEntry Tree::findEntryByPath(const QString& path) const
+{
+    return _entries.findByPath(path);
 }
 
 ObjectHandle Tree::createObjectHandle() const

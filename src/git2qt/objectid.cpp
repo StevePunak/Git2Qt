@@ -34,6 +34,11 @@ ObjectId::ObjectId(const git_object* obj)
 ObjectId::ObjectId(const QString& sha) :
     _oid(sha), _sha(sha)
 {
+    QByteArray buf = QByteArray::fromHex(sha.toUtf8());
+    if(buf.length() != GitOid::Size) {
+        _oid = GitOid();
+        _sha = QString();
+    }
 }
 
 ObjectId ObjectId::createFromHandle(git_reference* handle)

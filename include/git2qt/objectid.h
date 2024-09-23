@@ -30,6 +30,8 @@ public:
 
     bool operator ==(const ObjectId& other) const { return _sha == other._sha; }
     bool operator !=(const ObjectId& other) const { return !(*this == other); }
+    bool operator <(const ObjectId& other) const { return _sha < other._sha; }
+    bool operator >(const ObjectId& other) const { return _sha > other._sha; }
 
     bool operator ==(const QString& sha) const { return _sha == sha; }
     bool operator !=(const QString& other) const { return !(*this == other); }

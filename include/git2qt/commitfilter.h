@@ -13,13 +13,15 @@ public:
 
     void setIncludeReachableFrom(const QString value) { _includeReachableFromStr = value; }
 
-    Reference::List includeReachableFromRefs() const { return _includeReachableFromRefs; }
-    void setIncludeReachableFrom(const Reference::List& value) { _includeReachableFromRefs = value; }
-    void setIncludeReachableFrom(const Reference& value) { _includeReachableFromRefs.append(value); }
+    ObjectId::List includeReachableFromRefs() const { return _includeReachableFromRefs; }
+    void setIncludeReachableFrom(const Reference::List& value) { _includeReachableFromRefs.append(value.objectIds()); }
+    void setIncludeReachableFrom(const Reference& value) { _includeReachableFromRefs.append(value.objectId()); }
+    void setIncludeReachableFrom(const ObjectId& value) { _includeReachableFromRefs.append(value); }
+    void setIncludeReachableFrom(const ObjectId::List& value) { _includeReachableFromRefs.append(value); }
 
-    Reference::List excludeReachableFromRefs() const { return _excludeReachableFromRefs; }
-    void setExcludeReachableFromRefs(const Reference::List& value) { _excludeReachableFromRefs = value; }
-    void setExcludeReachableFromRefs(const Reference& value) { _excludeReachableFromRefs.append(value); }
+    ObjectId::List excludeReachableFromRefs() const { return _excludeReachableFromRefs; }
+    void setExcludeReachableFromRefs(const ObjectId::List& value) { _excludeReachableFromRefs.append(value); }
+    void setExcludeReachableFromRefs(const ObjectId& value) { _excludeReachableFromRefs.append(value); }
 
     CommitSortStrategies sortBy() const { return _sortBy; }
     void setSortBy(CommitSortStrategies value) { _sortBy = value; }
@@ -27,12 +29,16 @@ public:
     bool firstParentOnly() const { return _firstParentOnly; }
     void setFirstParentOnly(bool value) { _firstParentOnly = value; }
 
+    int maxResults() const { return _maxResults; }
+    void setMaxResults(int value) { _maxResults = value; }
+
 private:
     CommitSortStrategies _sortBy;
     QString _includeReachableFromStr;
-    Reference::List _includeReachableFromRefs;
-    Reference::List _excludeReachableFromRefs;
-    bool _firstParentOnly;
+    ObjectId::List _includeReachableFromRefs;
+    ObjectId::List _excludeReachableFromRefs;
+    bool _firstParentOnly = false;
+    int _maxResults = 0;
 };
 
 

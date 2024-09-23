@@ -10,6 +10,7 @@
 
 #include <git2qt/gittypes.h>
 #include <git2qt/objectid.h>
+#include <git2qt/diffdelta.h>
 
 #include <QList>
 #include <QString>
@@ -20,6 +21,7 @@ namespace GIT {
 class TreeChangeEntry
 {
 public:
+    TreeChangeEntry() {}
     TreeChangeEntry(const git_diff_delta* delta);
 
     QString path() const { return _path; }
@@ -31,6 +33,13 @@ public:
     bool exists() const { return _exists; }
     bool oldExists() const { return _oldExists; }
     ChangeKind changeKind() const { return _changeKind; }
+
+    DiffDelta delta() const { return _delta; }
+
+    QVariant toVariant() const { return QVariant::fromValue<TreeChangeEntry>(*this); }
+    static TreeChangeEntry fromVariant(const QVariant& value) { return value.value<TreeChangeEntry>(); }
+
+    bool isValid() const { return _path.isEmpty() == false || _oldPath.isEmpty() == false; }
 
     class List : public QList<TreeChangeEntry>
     {
@@ -63,15 +72,18 @@ private:
 
     QString _path;
     QString _oldPath;
-    Mode _mode;
-    Mode _oldMode;
+    Mode _mode = NonexistentFile;
+    Mode _oldMode = NonexistentFile;
     ObjectId _oid;
     ObjectId _oldOid;
-    bool _exists;
-    bool _oldExists;
-    ChangeKind _changeKind;
+    bool _exists = false;
+    bool _oldExists = false;
+    DiffDelta _delta;
+    ChangeKind _changeKind = ChangeKindUnmodified;
 };
 
 } // namespace GIT
+
+Q_DECLARE_METATYPE(GIT::TreeChangeEntry)
 
 #endif // TREEENTRYCHANGES_H

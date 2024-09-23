@@ -16,13 +16,16 @@ namespace GIT {
 class DiffFile
 {
 public:
+    DiffFile() {}
     DiffFile(const git_diff_file* file);
 
-    ObjectId oid() const { return _oid; }
+    ObjectId objectId() const { return _oid; }
     QString path() const { return _path; }
     int size() const { return _size; }
     DiffDeltaFlags flags() const { return _flags; }
     uint16_t mode() const { return _mode; }
+
+    bool isValid() const { return _path.isEmpty() == false; }
 
 private:
     ObjectId _oid;

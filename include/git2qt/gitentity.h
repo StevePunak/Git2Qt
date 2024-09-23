@@ -11,6 +11,7 @@
 #include <QString>
 #include <git2.h>
 #include <git2qt/log.h>
+#include "gittypes.h"
 
 namespace GIT {
 
@@ -18,38 +19,6 @@ class Repository;
 class GitEntity
 {
 public:
-    enum GitEntityType {
-        UnknownGitEntityType = 0,
-
-        BlobEntity,
-        BranchCollectionEntity,
-        BranchEntity,
-        CommitEntity,
-        CommitLogEntity,
-        ConfigurationEntity,
-        DiffEntity,
-        GraphedCommitEntity,
-        IndexEntity,
-        NetworkEntity,
-        ObjectDatabaseEntity,
-        ReferenceCollectionEntity,
-        ReferenceEntity,
-        ReflogCollectionEntity,
-        ReflogEntity,
-        RemoteCollectionEntity,
-        RemoteEntity,
-        RepositoryEntity,
-        RepositoryInfoEntity,
-        SignatureEntity,
-        SubmoduleCollectionEntity,
-        SubmoduleEntity,
-        TagAnnotatedEntity,
-        TagCollectionEntity,
-        TagLightweightEntity,
-        TreeEntity,
-        TreeEntryEntity,
-    };
-
     virtual ~GitEntity() {}
 
     GitEntityType entityType() const { return _objectType; }
@@ -74,15 +43,16 @@ protected:
 
     bool handleError(int value);
     void throwOnError(int result, const QString& message = QString()) const;
-    void throwIfNull(const void* ptr, const QString& message = QString());
-    void throwIfFalse(bool result, const QString& message = QString());
-    void throwIfTrue(bool result, const QString& message = QString()) { return throwIfFalse(!result, message); }
-    void throwIfEmpty(const QString& value, const QString& message = QString());
+    void throwIfNull(const void* ptr, const QString& message = QString()) const;
+    void throwIfFalse(bool result, const QString& message = QString()) const;
+    void throwIfTrue(bool result, const QString& message = QString()) const { return throwIfFalse(!result, message); }
+    void throwIfEmpty(const QString& value, const QString& message = QString()) const;
 
     void logText(const char* file, int line, Log::LogLevel level, const QString& text) const;
 
     static void throwOnError(Repository* repo, int result);
     static void throwIfTrue(Repository* repo, int result);
+    static void throwIfNull(Repository* repo, const void* ptr);
 
     void setRepository(Repository* value) { _repository = value; }
 

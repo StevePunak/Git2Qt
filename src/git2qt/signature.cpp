@@ -25,7 +25,7 @@ const git_signature* Signature::toNative()
     try
     {
         if(_native == nullptr) {
-            throwOnError(git_signature_new(&_native, _name.toUtf8().constData(), _email.toUtf8().constData(), (git_time_t)_timestamp.toMSecsSinceEpoch(), 0));
+            throwOnError(git_signature_new(&_native, _name.toUtf8().constData(), _email.toUtf8().constData(), (git_time_t)_timestamp.toSecsSinceEpoch(), 0));
         }
     }
     catch(const GitException&) {}

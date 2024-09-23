@@ -19,7 +19,7 @@ public:
     RepositoryStatus() :
         _dirty(false) {}
 
-    void addStatusEntryForDelta(FileStatus fileStatus, git_diff_delta* deltaHeadToIndex, git_diff_delta* deltaIndexToWorkDir);
+    StatusEntry addStatusEntryForDelta(FileStatus fileStatus, git_diff_delta* deltaHeadToIndex, git_diff_delta* deltaIndexToWorkDir);
 
     StatusEntry::List entries() const { return _statusEntries; }
     StatusEntry::List added() const { return _statusEntries.findByStatus(NewInIndex); }

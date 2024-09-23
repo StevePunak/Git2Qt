@@ -29,7 +29,7 @@ public:
     static QList<DeltaType> getDeltaTypeValues() { return _DeltaTypeToStringMap.getTypes(); }
 
     static QString getDiffDeltaFlagString(DiffDeltaFlag value) { return _DiffDeltaFlagToStringMap.getString(value); }
-    static DiffDeltaFlag getDiffDeltaFlag(const QString& value) { return _DiffDeltaFlagToStringMap.getType(value, (DiffDeltaFlag)0); }
+    static DiffDeltaFlag getDiffDeltaFlag(const QString& value) { return _DiffDeltaFlagToStringMap.getType(value, GIT_DIFF_FLAG_BINARY); }
     static QList<DiffDeltaFlag> getDiffDeltaFlagValues() { return _DiffDeltaFlagToStringMap.getTypes(); }
 
     static QString getReferenceTypeString(ReferenceType value) { return _ReferenceTypeToStringMap.getString(value); }
@@ -59,6 +59,10 @@ public:
     static QString getChangeKindString(ChangeKind value) { return _ChangeKindToStringMap.getString(value); }
     static ChangeKind getChangeKind(const QString& value) { return _ChangeKindToStringMap.getType(value); }
     static QList<ChangeKind> getChangeKindValues() { return _ChangeKindToStringMap.getTypes(); }
+
+    static QString getGitEntityTypeString(GitEntityType value) { return _GitEntityTypeToStringMap.getString(value); }
+    static GitEntityType getGitEntityType(const QString& value) { return _GitEntityTypeToStringMap.getType(value); }
+    static QList<GitEntityType> getGitEntityTypeValues() { return _GitEntityTypeToStringMap.getTypes(); }
 
 private:
     class FileStatusToStringMap : public GIT::EnumToStringMap<FileStatus>
@@ -224,6 +228,44 @@ private:
         }
     };
 
+    class GitEntityTypeToStringMap : public EnumToStringMap<GitEntityType>
+    {
+    public:
+        GitEntityTypeToStringMap()
+        {
+            insert(UnknownGitEntityType,            "UnknownGitEntityType");
+            insert(BlobEntity,                      "Blob");
+            insert(BranchCollectionEntity,          "BranchCollection");
+            insert(BranchEntity,                    "Branch");
+            insert(CommitEntity,                    "Commit");
+            insert(CommitLogEntity,                 "CommitLog");
+            insert(ConfigurationEntity,             "Configuration");
+            insert(DiffEntity,                      "Diff");
+            insert(GraphedCommitEntity,             "GraphedCommit");
+            insert(IndexEntity,                     "Index");
+            insert(NetworkEntity,                   "Network");
+            insert(ObjectDatabaseEntity,            "ObjectDatabase");
+            insert(ReferenceCollectionEntity,       "ReferenceCollection");
+            insert(ReferenceEntity,                 "Reference");
+            insert(ReflogCollectionEntity,          "ReflogCollection");
+            insert(ReflogEntity,                    "Reflog");
+            insert(RemoteCollectionEntity,          "RemoteCollection");
+            insert(RemoteEntity,                    "Remote");
+            insert(RepositoryEntity,                "Repository");
+            insert(RepositoryInfoEntity,            "RepositoryInfo");
+            insert(SignatureEntity,                 "Signature");
+            insert(StashCollectionEntity,           "StashCollection");
+            insert(StashEntity,                     "Stash");
+            insert(SubmoduleCollectionEntity,       "SubmoduleCollection");
+            insert(SubmoduleEntity,                 "Submodule");
+            insert(TagAnnotatedEntity,              "TagAnnotated");
+            insert(TagCollectionEntity,             "TagCollection");
+            insert(TagLightweightEntity,            "TagLightweight");
+            insert(TreeEntity,                      "Tree");
+            insert(TreeEntryEntity,                 "TreeEntry");
+        }
+    };
+
     static const FileStatusToStringMap _FileStatusToStringMap;
     static const ConfigurationLevelToStringMap _ConfigurationLevelToStringMap;
     static const DeltaTypeToStringMap _DeltaTypeToStringMap;
@@ -235,6 +277,7 @@ private:
     static const TreeEntryTargetTypeToStringMap _TreeEntryTargetTypeToStringMap;
     static const BranchTypeToStringMap _BranchTypeToStringMap;
     static const ChangeKindToStringMap _ChangeKindToStringMap;
+    static const GitEntityTypeToStringMap _GitEntityTypeToStringMap;
 };
 
 } // namespace GIT

@@ -31,14 +31,18 @@ public:
     TreeChanges compare(const Tree& fromTree, const Tree& toTree);
     TreeChanges compare(const Tree& fromTree, const Tree& toTree, DiffModifiers diffOptions, const CompareOptions& compareOptions);
     TreeChanges compare(const Tree& oldTree, DiffTargets diffTargets, const QStringList& paths, const CompareOptions& compareOptions);
-    GIT::DiffDelta::List listDiffs(const CompareOptions& compareOptions, DiffModifiers diffFlags = DiffModifier::DiffModNone);
+    GIT::DiffDelta::List diffIndexToWorkDir(const QString& path, bool includeUntracked, const CompareOptions& compareOptions, DiffModifiers diffFlags = DiffModifier::DiffModNone) const;
+    GIT::DiffDelta::List diffIndexToWorkDir(const QStringList& paths, bool includeUntracked, const CompareOptions& compareOptions, DiffModifiers diffFlags = DiffModifier::DiffModNone) const;
+    GIT::DiffDelta::List diffTreeToWorkDir(const Tree& oldTree, const QStringList& paths, bool includeUntracked, const CompareOptions& compareOptions, DiffModifiers diffFlags = DiffModifier::DiffModNone) const;
+    GIT::DiffDelta::List diffTreeToTree(const Tree& oldTree, const Tree& newTree, const CompareOptions& compareOptions, DiffModifiers diffFlags = DiffModifier::DiffModNone) const;
 
     virtual bool isNull() const override { return false; }
 
 private:
-    DiffOptions buildDiffOptions(DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions);
+    DiffDelta::List loadDiffs(const DiffHandle& handle, const CompareOptions& compareOptions) const;
+    DiffOptions buildDiffOptions(DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions) const;
     DiffHandle buildDiffList(const ObjectId& oldTreeId, DiffModifiers diffOptions, const QStringList& paths, const CompareOptions& compareOptions);
-    void detectRenames(const DiffHandle& handle, const CompareOptions& compareOptions);
+    void detectRenames(const DiffHandle& handle, const CompareOptions& compareOptions) const;
     TreeChanges buildTreeChanges(const DiffHandle& handle);
 
     // Callbacks

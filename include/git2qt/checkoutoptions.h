@@ -42,8 +42,6 @@ public:
     const git_checkout_options* toNative();
 
 private:
-    bool _force;
-
     CheckoutModifiers _modifiers;
 
     QStringList _paths;

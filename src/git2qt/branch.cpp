@@ -14,7 +14,7 @@
 using namespace GIT;
 
 Branch::Branch(Repository* repo, const Reference& reference, git_branch_t type) :
-    GitEntity(GitEntity::BranchEntity, repo),
+    GitEntity(BranchEntity, repo),
     _reference(reference)
 {
     switch(type) {
@@ -27,6 +27,20 @@ Branch::Branch(Repository* repo, const Reference& reference, git_branch_t type) 
     default:
         break;
     }
+}
+
+Branch::Branch(const Branch& other) :
+    GitEntity(BranchEntity, nullptr)
+{
+    *this = other;
+}
+
+Branch& Branch::operator=(const Branch& other)
+{
+    GitEntity::operator =(other);
+    _reference = other._reference;
+    _branchType = other._branchType;
+    return *this;
 }
 
 Branch::~Branch()
