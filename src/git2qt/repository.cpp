@@ -334,13 +334,19 @@ bool Repository::checkoutLocalBranch(const QString& branchName, const CheckoutOp
     {
         throwIfTrue(_handle.isNull(), "Repository is not initialized");
         throwIfTrue(head().isNull(), "No HEAD found");
-        throwIfTrue(_branches->findLocalBranch(branchName).isNull(), "Failed to find local branch");
+        Branch branch = _branches->findLocalBranch(branchName);
+        throwIfTrue(branch.isNull(), "Failed to find local branch");
+        throwIfTrue(branch.tip().isNull(), "The tip is null. There is nothing to check out.");
 
+        // TODO: Need to handle detached head
+
+#if 0
         // Create and checkout tree
         Tree tree = Tree::createFromBranchName(this, branchName);
         throwIfTrue(tree.isNull(), "Failed to create tree");
+#endif
 
-        result = checkoutTree(tree, branchName, options);
+        result = checkoutTree(branch.tip().tree(), branchName, options);
     }
     catch(const GitException&)
     {
