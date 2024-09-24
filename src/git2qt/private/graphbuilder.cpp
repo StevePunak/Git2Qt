@@ -33,6 +33,9 @@ bool GraphBuilder::calculateGraph()
     try
     {
         Branch headBranch = repository()->head();
+        if(headBranch.isNull()) {
+            logText(LVL_ERROR, "Ref is null");
+        }
         Commit headCommit = Commit::lookup(repository(), headBranch.reference().objectId());
         throwIfFalse(headCommit.isValid());
 
@@ -154,10 +157,6 @@ void GraphBuilder::resolveGraphLevels()
 {
     for(int index = 0;index < _allCommits.count();index++) {
         GraphBuilderCommit* commit = _allCommits.at(index);
-
-if(commit->objectId().sha().startsWith("0304")) {
-    logText(LVL_DEBUG, "Ehere");
-}
 
         // clean up levels that are no longer needed
         ObjectId::List mergeIds = _levelMap.mergeIds();
@@ -341,8 +340,6 @@ void GraphBuilder::buildBranchFromCommitIndex()
 
 void GraphBuilder::resolveMergeBirths()
 {
-    QElapsedTimer t;
-    t.start();
     for(GraphBuilderCommit* commit : _allCommits) {
         // Detect Merge Births
         if(commit->isMerge()) {
@@ -354,7 +351,6 @@ void GraphBuilder::resolveMergeBirths()
 
         }
     }
-    logText(LVL_DEBUG, QString("Done in %1").arg(t.elapsed()));
 }
 
 void GraphBuilder::buildGraphLines()
@@ -398,9 +394,6 @@ if(commit->objectId().sha().startsWith("e067")) {
                     nextCommit->graphLineRef().setGraphItem(lineLevel, VerticalUp | VerticalDown);
                 }
 
-    if(parent->objectId().sha().startsWith("03044e")) {
-        logText(LVL_DEBUG, "Here");
-    }
                 // draw curves and horizontals at the parent
                 if(commit->isMerge() == false) {
                     if(parent->level() == commit->level()) {

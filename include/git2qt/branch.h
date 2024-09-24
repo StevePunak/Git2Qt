@@ -21,11 +21,11 @@ class Branch : public GitEntity
 {
 public:
     explicit Branch() : GitEntity(BranchEntity) {}
-    explicit Branch(Repository* repo, const Reference& reference, git_branch_t type);
+    explicit Branch(Repository* repo, const Reference& reference);
     Branch(const Branch& other);
     Branch& operator=(const Branch& other);
 
-    virtual ~Branch();
+    virtual ~Branch() {}
 
     QString name() const;
     QString canonicalName() const;
@@ -42,6 +42,8 @@ public:
 
     bool isHead() const;
     bool isRemote() const;
+    bool isDetachedHead() const { return _detachedHead; }
+    void setDetachedHead(bool value) { _detachedHead = value; }
 
     bool isValid() const { return canonicalName().isEmpty() == false; }
     virtual bool isNull() const override { return _reference.isNull(); }
@@ -116,6 +118,7 @@ private:
 
     Reference _reference;
     BranchType _branchType = LocalBranch;
+    bool _detachedHead = false;
 };
 
 } // namespace GIT

@@ -164,7 +164,7 @@ public:
     // Credentials Callback
     void setCredentialResolver(CredentialResolver* value) { _credentialResolver = value; }
 
-    Branch head() const;
+    Branch head();
     bool setHead(const QString& referenceName);
 
     QString localPath() const { return _localPath; }
@@ -201,7 +201,7 @@ private:
     void commonInit();
     void postInitializationLookups();
     void commonDestroy();
-    void startFileSystemWatcher();
+    void restartFileSystemWatcher();
 
     void emitProgress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects);
 

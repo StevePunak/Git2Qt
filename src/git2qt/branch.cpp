@@ -13,20 +13,19 @@
 
 using namespace GIT;
 
-Branch::Branch(Repository* repo, const Reference& reference, git_branch_t type) :
+Branch::Branch(Repository* repo, const Reference& reference) :
     GitEntity(BranchEntity, repo),
     _reference(reference)
 {
-    switch(type) {
-    case GIT_BRANCH_LOCAL:
-        _branchType = LocalBranch;
-        break;
-    case GIT_BRANCH_REMOTE:
-        _branchType = RemoteBranch;
-        break;
-    default:
-        break;
+    ReferenceHandle refHandle = reference.createHandle();
+    try
+    {
+        throwIfTrue(refHandle.isNull());
+        _branchType = git_reference_is_remote(refHandle.value()) == 1 ? RemoteBranch : LocalBranch;
     }
+    catch(const GitException&)
+    {}
+    refHandle.dispose();
 }
 
 Branch::Branch(const Branch& other) :
@@ -41,10 +40,6 @@ Branch& Branch::operator=(const Branch& other)
     _reference = other._reference;
     _branchType = other._branchType;
     return *this;
-}
-
-Branch::~Branch()
-{
 }
 
 QString Branch::name() const

@@ -22,7 +22,7 @@ Branch::List BranchCollection::reloadBranches()
         git_reference* reference;
         git_branch_t type;
         while(!git_branch_next(&reference, &type, it)) {
-            Branch branch(repository(), Reference::create(repository(), reference), type);
+            Branch branch(repository(), Reference::create(repository(), reference));
             _cachedBranches.append(branch);
             git_reference_free(reference);
         }

@@ -587,9 +587,10 @@ enum TreeEntryTargetType
 
 enum BranchType
 {
-    UnknownBranchType = 0,
-    LocalBranch,
-    RemoteBranch
+    UnknownBranchType   = 0x0,
+    LocalBranch         = 0x1,
+    RemoteBranch        = 0x2,
+    BranchTypeAll = LocalBranch | RemoteBranch
 };
 
 enum DiffTargets

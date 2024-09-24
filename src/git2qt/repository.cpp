@@ -96,15 +96,16 @@ void Repository::commonInit()
         }
         _handle = RepositoryHandle(repo);
 
-        // inotify etc
-        startFileSystemWatcher();
-
         // initialize all objects
         postInitializationLookups();
 
         // connect notify timer
         connect(&_notifyChangeTimer, &QTimer::timeout, this, &Repository::onNotifyTimerElapsed);
         _notifyChangeTimer.setSingleShot(true);
+
+        // inotify etc
+        restartFileSystemWatcher();
+
     }
     catch(const GitException&) {}
 }
@@ -190,22 +191,27 @@ void Repository::commonDestroy()
     delete _fileSystemWatcher;
 }
 
-void Repository::startFileSystemWatcher()
+void Repository::restartFileSystemWatcher()
 {
     QStringList dirsToWatch;
-    QDirIterator it(_localPath, QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
-    dirsToWatch.append(_localPath);
-    while(it.hasNext()) {
-        QDir dir(it.next());
-        dirsToWatch.append(dir.absolutePath());
-        // logText(LVL_DEBUG, QString("Watching %1").arg(dir.absolutePath()));
+    QStringList filesToWatch;
+    IndexEntry::List entries = _index->entries();
+    for(const IndexEntry& entry : entries) {
+        QString fullPath = Utility::combine(_localPath, entry.path());
+        QFileInfo fileInfo(fullPath);
+        if(dirsToWatch.contains(fileInfo.absolutePath()) == false) {
+            dirsToWatch.append(fileInfo.absolutePath());
+            logText(LVL_DEBUG, QString("Watch dir %1").arg(fileInfo.absolutePath()));
+        }
+        filesToWatch.append(fullPath);
+        logText(LVL_DEBUG, QString("Watch file %1").arg(fullPath));
     }
-    dirsToWatch.append(".git");
 
     if(_fileSystemWatcher != nullptr) {
         delete _fileSystemWatcher;
     }
-    _fileSystemWatcher = new QFileSystemWatcher(dirsToWatch);
+    filesToWatch.append(dirsToWatch);
+    _fileSystemWatcher = new QFileSystemWatcher(filesToWatch);
     connect(_fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, &Repository::onFileSystemChanged);
     connect(_fileSystemWatcher, &QFileSystemWatcher::fileChanged, this, &Repository::onFileSystemChanged);
 }
@@ -456,7 +462,7 @@ Branch Repository::createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& 
     int rc = git_branch_create_from_annotated(&newBranch, _handle.value(), branchName.toUtf8().constData(), annotatedCommit.value(), false);
     if(rc == 0) {
         Reference reference = Reference::create(this, newBranch);
-        result = Branch(this, reference, GIT_BRANCH_LOCAL);
+        result = Branch(this, reference);
         _branches->append(result);
     }
     return result;
@@ -1036,9 +1042,21 @@ GraphedCommit::List Repository::commitGraph()
     return result;
 }
 
-Branch Repository::head() const
+Branch Repository::head()
 {
-    return _branches->head();
+    Branch branch;
+    Reference ref = _references->head();
+    if(ref.isNull()) {
+        logText(LVL_ERROR, "Corrupt repository. The 'HEAD' reference is missing.");
+    }
+    else if(ref.isSymbolic()) {
+        branch = Branch(this, ref);
+    }
+    else {
+        branch = Branch(this, ref);
+        branch.setDetachedHead(true);
+    }
+    return branch;
 }
 
 bool Repository::setHead(const QString& referenceName)
@@ -1273,6 +1291,7 @@ void Repository::onFileSystemChanged(const QString&)
 
 void Repository::onNotifyTimerElapsed()
 {
+    logText(LVL_DEBUG, __FUNCTION__);
     loadReferences();
     emit repositoryChanged();
 }
