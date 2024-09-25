@@ -19,7 +19,7 @@ namespace GIT {
 class Repository;
 class Signature;
 
-class StashCollection : public GitEntity
+class GIT2QT_EXPORT StashCollection : public GitEntity
 {
 public:
     StashCollection(Repository* repo);

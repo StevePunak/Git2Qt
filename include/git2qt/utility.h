@@ -15,10 +15,11 @@
 
 #include <QDir>
 #include <QString>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
-class Utility
+class GIT2QT_EXPORT Utility
 {
 public:
     static QString toString(bool value) { return value ? "true" : "false"; }

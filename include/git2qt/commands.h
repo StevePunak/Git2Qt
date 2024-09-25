@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <git2.h>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
@@ -11,7 +12,7 @@ class ProgressCallback;
 class CredentialResolver;
 class Repository;
 
-class Commands
+class GIT2QT_EXPORT Commands
 {
 public:
     static Repository* clone(const QString& remoteUrl, const QString& localPath, CredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);

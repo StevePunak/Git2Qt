@@ -23,7 +23,7 @@ namespace GIT {
 class AnnotatedTag;
 class LightweightTag;
 class Repository;
-class Tag : public GitObject
+class GIT2QT_EXPORT Tag : public GitObject
 {
 public:
     Tag();

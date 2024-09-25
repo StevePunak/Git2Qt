@@ -14,7 +14,7 @@
 namespace GIT {
 
 class Repository;
-class Signature : public GitEntity
+class GIT2QT_EXPORT Signature : public GitEntity
 {
 public:
     Signature() :

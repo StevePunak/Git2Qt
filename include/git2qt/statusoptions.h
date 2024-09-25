@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class StatusOptions
+class GIT2QT_EXPORT StatusOptions
 {
 public:
     StatusOptions() {}

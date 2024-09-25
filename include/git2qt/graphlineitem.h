@@ -4,7 +4,7 @@
 
 namespace GIT {
 
-class GraphLineItem
+class GIT2QT_EXPORT GraphLineItem
 {
 public:
     GraphLineItem() :

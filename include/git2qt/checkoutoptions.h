@@ -10,10 +10,11 @@
 #include <QStringList>
 #include <git2.h>
 #include <git2qt/stringarray.h>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
-class CheckoutOptions
+class GIT2QT_EXPORT CheckoutOptions
 {
 public:
     enum CheckoutModifiers

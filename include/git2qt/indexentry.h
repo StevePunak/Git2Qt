@@ -16,7 +16,7 @@
 
 namespace GIT {
 
-class IndexEntry
+class GIT2QT_EXPORT IndexEntry
 {
 public:
     IndexEntry() :

@@ -13,7 +13,7 @@
 namespace GIT {
 class Repository;
 
-class Blob : public GitObject
+class GIT2QT_EXPORT Blob : public GitObject
 {
 public:
     Blob(Repository* repo, const ObjectId& objectId);

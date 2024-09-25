@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class RepositoryStatus
+class GIT2QT_EXPORT RepositoryStatus
 {
 public:
     RepositoryStatus() :

@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class ReflogEntry
+class GIT2QT_EXPORT ReflogEntry
 {
 public:
     ReflogEntry(const git_reflog_entry* entry);

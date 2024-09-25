@@ -10,10 +10,11 @@
 #define CREDENTIALRESOLVER_H
 #include <git2qt/kanoopgit.h>
 #include <QObject>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
-class KANOOPGIT_EXPORT CredentialResolver
+class GIT2QT_EXPORT CredentialResolver
 {
 public:
     CredentialResolver() {}

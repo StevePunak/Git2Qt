@@ -12,7 +12,7 @@
 
 namespace GIT {
 
-class GraphedCommit : public Commit
+class GIT2QT_EXPORT GraphedCommit : public Commit
 {
 public:
     GraphedCommit();

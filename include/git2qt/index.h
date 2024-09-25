@@ -17,8 +17,8 @@ namespace GIT {
 class TreeChanges;
 
 class Commit;
-class Index : public QObject,
-              public GitEntity
+class GIT2QT_EXPORT Index : public QObject,
+                            public GitEntity
 
 {
     Q_OBJECT

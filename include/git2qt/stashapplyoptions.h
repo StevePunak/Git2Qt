@@ -5,7 +5,7 @@
 
 namespace GIT {
 
-class StashApplyOptions
+class GIT2QT_EXPORT StashApplyOptions
 {
 public:
     StashApplyOptions() {}

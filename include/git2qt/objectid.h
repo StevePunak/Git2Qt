@@ -13,12 +13,13 @@
 #include <QString>
 #include <QList>
 #include <QVariant>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
 class Reference;
 
-class ObjectId
+class GIT2QT_EXPORT ObjectId
 {
 public:
     ObjectId() {}

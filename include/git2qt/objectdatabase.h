@@ -14,7 +14,7 @@ namespace GIT {
 
 class Blob;
 
-class ObjectDatabase : public GitEntity
+class GIT2QT_EXPORT ObjectDatabase : public GitEntity
 {
 public:
     explicit ObjectDatabase(Repository* repo);

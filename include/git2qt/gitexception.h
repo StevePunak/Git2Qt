@@ -10,10 +10,11 @@
 
 #include <QException>
 #include <QString>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
-class GitException : public QException
+class GIT2QT_EXPORT GitException : public QException
 {
 public:
     GitException(const QString& message, qint32 code = 0) :

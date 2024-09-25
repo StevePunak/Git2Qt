@@ -18,7 +18,7 @@ namespace GIT {
 class Commit;
 class Repository;
 
-class Tree : public GitObject
+class GIT2QT_EXPORT Tree : public GitObject
 {
 public:
     Tree() :

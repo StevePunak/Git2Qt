@@ -16,7 +16,7 @@ namespace GIT {
 
 class Repository;
 class ReferenceCollection;
-class Remote : public GitEntity
+class GIT2QT_EXPORT Remote : public GitEntity
 {
 public:
     Remote();

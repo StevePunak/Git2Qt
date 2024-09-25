@@ -31,9 +31,10 @@
 #include <git2qt/commands.h>
 #include <git2qt/credentialresolver.h>
 #include <git2qt/progresscallback.h>
+#include <git2qt/declspec.h>
 
 class CredentialResolver;
-class KANOOPGIT_EXPORT Git2Qt : public QObject
+class GIT2QT_EXPORT Git2Qt : public QObject
 {
     Q_OBJECT
 public:

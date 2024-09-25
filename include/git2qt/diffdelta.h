@@ -16,7 +16,7 @@
 
 namespace GIT {
 
-class DiffDelta
+class GIT2QT_EXPORT DiffDelta
 {
 public:
     DiffDelta() {}

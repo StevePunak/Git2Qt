@@ -15,7 +15,7 @@ namespace GIT {
 
 class Repository;
 class Tree;
-class TreeEntry : public GitEntity
+class GIT2QT_EXPORT TreeEntry : public GitEntity
 {
 public:
     TreeEntry();
@@ -36,7 +36,7 @@ public:
     bool isValid() const { return _name.isEmpty() == false; }
     virtual bool isNull() const override { return _name.isEmpty(); }
 
-    class List : public QList<TreeEntry>
+    class GIT2QT_EXPORT List : public QList<TreeEntry>
     {
     public:
         TreeEntry findByPath(const QString& path) const;

@@ -18,7 +18,7 @@
 
 namespace GIT {
 
-class TreeChangeEntry
+class GIT2QT_EXPORT TreeChangeEntry
 {
 public:
     TreeChangeEntry() {}

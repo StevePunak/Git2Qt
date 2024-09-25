@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class DiffFile
+class GIT2QT_EXPORT DiffFile
 {
 public:
     DiffFile() {}

@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class DiffHunk
+class GIT2QT_EXPORT DiffHunk
 {
 public:
     DiffHunk() {}
