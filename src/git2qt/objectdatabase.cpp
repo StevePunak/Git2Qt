@@ -29,7 +29,7 @@ Commit ObjectDatabase::createCommit(const Signature& author, const Signature& co
             }
         }
 
-        const git_commit* parentCommits[parents.count()] = { 0 };
+        const git_commit* parentCommits[parents.count()];
         for(int i = 0;i < parents.count();i++) {
             git_commit* commit = nullptr;
             if(git_commit_lookup(&commit, repository()->handle().value(), parents.at(i).objectId().toNative()) == 0) {

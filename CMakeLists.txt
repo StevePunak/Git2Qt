@@ -18,7 +18,7 @@ qt_add_library(
     ${PROJ} ${KANOOP_GIT_SOURCES} ${KANOOP_GIT_HEADERS}
 )
 
-target_compile_options(${PROJ} PRIVATE -Wextra -Wall -Werror)
+target_compile_options(${PROJ} PRIVATE -Wextra -Wall -Werror -Wno-missing-field-initializers)
 
 set_target_properties(${PROJ} PROPERTIES VERSION "${KANOOP_GIT_VERSION}")
 set_target_properties(${PROJ} PROPERTIES SOVERSION 1)
@@ -28,10 +28,13 @@ target_include_directories(${PROJ} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/git2qt)
 
+target_include_directories(${PROJ} PRIVATE "C:/Program Files (x86)/libgit2/include/")
+
 # Temp include Kanoop
 get_directory_property(PARENT_DIR PARENT_DIRECTORY)
 target_include_directories(${PROJ} PRIVATE ${PARENT_DIR}/KanoopCommon/include)
 
+target_link_directories(${PROJ} PRIVATE "C:/Program Files (x86)/libgit2/lib/")
 target_link_libraries(${PROJ} PRIVATE Qt6::Network git2 KanoopCommon)
 # end temp Kanoop
 
