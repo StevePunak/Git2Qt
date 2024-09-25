@@ -45,7 +45,7 @@ public:
     ObjectId objectId() const;
 
     Reference* target() const { return _target; }
-    ObjectId targetOid() const { return _targetOid; }
+    ObjectId targetObjectId() const { return _targetOid; }
 
     void resolveTarget();
 
@@ -115,7 +115,7 @@ public:
                     result.append(reference.objectId());
                 }
                 else {
-                    result.append(reference.targetOid());
+                    result.append(reference.targetObjectId());
                 }
             }
             return result;

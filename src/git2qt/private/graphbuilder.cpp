@@ -36,7 +36,7 @@ bool GraphBuilder::calculateGraph()
         if(headBranch.isNull()) {
             logText(LVL_ERROR, "Ref is null");
         }
-        Commit headCommit = Commit::lookup(repository(), headBranch.reference().objectId());
+        Commit headCommit = Commit::lookup(repository(), headBranch.reference().targetObjectId());
         throwIfFalse(headCommit.isValid());
 
         // Create the list of all commits in time-order
