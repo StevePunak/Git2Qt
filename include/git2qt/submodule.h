@@ -15,7 +15,7 @@
 namespace GIT {
 
 class Repository;
-class Submodule : public GitEntity
+class GIT2QT_EXPORT Submodule : public GitEntity
 {
 public:
     Submodule() :

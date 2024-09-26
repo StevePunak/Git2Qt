@@ -23,7 +23,7 @@ namespace GIT {
 class AnnotatedTag;
 class LightweightTag;
 class Repository;
-class Tag : public GitObject
+class GIT2QT_EXPORT Tag : public GitObject
 {
 public:
     Tag();
@@ -49,7 +49,7 @@ public:
     public:
         Tag* findByName(const QString& name) const
         {
-            Tag* result;
+            Tag* result = nullptr;
             auto it = std::find_if(constBegin(), constEnd(), [name](const Tag* t)
             {
                 return t->name() == name || t->shortName() == name;
@@ -62,7 +62,7 @@ public:
 
         Tag* findByObjectId(const ObjectId& objectId) const
         {
-            Tag* result;
+            Tag* result = nullptr;
             auto it = std::find_if(constBegin(), constEnd(), [objectId](const Tag* t)
             {
                 return t->objectId() == objectId;
@@ -87,7 +87,7 @@ public:
 
         const Tag* findByName(const QString& name) const
         {
-            const Tag* result;
+            const Tag* result = nullptr;
             auto it = std::find_if(constBegin(), constEnd(), [name](const Tag* t)
                                    {
                                        return t->name() == name || t->shortName() == name;

@@ -8,10 +8,11 @@
 */
 #ifndef EXPLICITPATHSOPTIONS_H
 #define EXPLICITPATHSOPTIONS_H
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
-class ExplicitPathsOptions
+class GIT2QT_EXPORT ExplicitPathsOptions
 {
 public:
     ExplicitPathsOptions();

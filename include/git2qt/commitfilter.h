@@ -6,7 +6,7 @@
 namespace GIT {
 
 class Repository;
-class CommitFilter
+class GIT2QT_EXPORT CommitFilter
 {
 public:
     CommitFilter();

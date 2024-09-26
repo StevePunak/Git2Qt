@@ -8,6 +8,7 @@
 #ifndef GITTYPES_H
 #define GITTYPES_H
 #include <Qt>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
@@ -944,53 +945,53 @@ enum GraphItemType
 };
 Q_DECLARE_FLAGS(GraphItemTypes, GraphItemType)
 
-QString getFileStatusString(FileStatuses value);
-FileStatus getFileStatus(const QString& value);
-QList<FileStatus> getFileStatusValues();
+GIT2QT_EXPORT QString getFileStatusString(FileStatuses value);
+GIT2QT_EXPORT FileStatus getFileStatus(const QString& value);
+GIT2QT_EXPORT QList<FileStatus> getFileStatusValues();
 
-QString getConfigurationLevelString(ConfigurationLevel value);
-ConfigurationLevel getConfigurationLevel(const QString& value);
-QList<ConfigurationLevel> getConfigurationLevelValues();
+GIT2QT_EXPORT QString getConfigurationLevelString(ConfigurationLevel value);
+GIT2QT_EXPORT ConfigurationLevel getConfigurationLevel(const QString& value);
+GIT2QT_EXPORT QList<ConfigurationLevel> getConfigurationLevelValues();
 
-QString getDeltaTypeString(DeltaType value);
-DeltaType getDeltaType(const QString& value);
-QList<DeltaType> getDeltaTypeValues();
+GIT2QT_EXPORT QString getDeltaTypeString(DeltaType value);
+GIT2QT_EXPORT DeltaType getDeltaType(const QString& value);
+GIT2QT_EXPORT QList<DeltaType> getDeltaTypeValues();
 
-QString getDiffDeltaFlagString(DiffDeltaFlag value);
-DiffDeltaFlag getDiffDeltaFlag(const QString& value);
-QList<DiffDeltaFlag> getDiffDeltaFlagValues();
+GIT2QT_EXPORT QString getDiffDeltaFlagString(DiffDeltaFlag value);
+GIT2QT_EXPORT DiffDeltaFlag getDiffDeltaFlag(const QString& value);
+GIT2QT_EXPORT QList<DiffDeltaFlag> getDiffDeltaFlagValues();
 
-QString getReferenceTypeString(ReferenceType value);
-ReferenceType getReferenceType(const QString& value);
-QList<ReferenceType> getReferenceTypeValues();
+GIT2QT_EXPORT QString getReferenceTypeString(ReferenceType value);
+GIT2QT_EXPORT ReferenceType getReferenceType(const QString& value);
+GIT2QT_EXPORT QList<ReferenceType> getReferenceTypeValues();
 
-QString getObjectTypeString(ObjectType value);
-ObjectType getObjectType(const QString& value);
-QList<ObjectType> getObjectTypeValues();
+GIT2QT_EXPORT QString getObjectTypeString(ObjectType value);
+GIT2QT_EXPORT ObjectType getObjectType(const QString& value);
+GIT2QT_EXPORT QList<ObjectType> getObjectTypeValues();
 
-QString getModeString(Mode value);
-Mode getMode(const QString& value);
-QList<Mode> getModeValues();
+GIT2QT_EXPORT QString getModeString(Mode value);
+GIT2QT_EXPORT Mode getMode(const QString& value);
+GIT2QT_EXPORT QList<Mode> getModeValues();
 
-QString getStageLevelString(StageLevel value);
-StageLevel getStageLevel(const QString& value);
-QList<StageLevel> getStageLevelValues();
+GIT2QT_EXPORT QString getStageLevelString(StageLevel value);
+GIT2QT_EXPORT StageLevel getStageLevel(const QString& value);
+GIT2QT_EXPORT QList<StageLevel> getStageLevelValues();
 
-QString getTreeEntryTargetTypeString(TreeEntryTargetType value);
-TreeEntryTargetType getTreeEntryTargetType(const QString& value);
-QList<TreeEntryTargetType> getTreeEntryTargetTypeValues();
+GIT2QT_EXPORT QString getTreeEntryTargetTypeString(TreeEntryTargetType value);
+GIT2QT_EXPORT TreeEntryTargetType getTreeEntryTargetType(const QString& value);
+GIT2QT_EXPORT QList<TreeEntryTargetType> getTreeEntryTargetTypeValues();
 
-QString getBranchTypeString(BranchType value);
-BranchType getBranchType(const QString& value);
-QList<BranchType> getBranchTypeValues();
+GIT2QT_EXPORT QString getBranchTypeString(BranchType value);
+GIT2QT_EXPORT BranchType getBranchType(const QString& value);
+GIT2QT_EXPORT QList<BranchType> getBranchTypeValues();
 
-QString getChangeKindString(ChangeKind value);
-ChangeKind getChangeKind(const QString& value);
-QList<ChangeKind> getChangeKindValues();
+GIT2QT_EXPORT QString getChangeKindString(ChangeKind value);
+GIT2QT_EXPORT ChangeKind getChangeKind(const QString& value);
+GIT2QT_EXPORT QList<ChangeKind> getChangeKindValues();
 
-QString getGitEntityTypeString(GitEntityType value);
-GitEntityType getGitEntityType(const QString& value);
-QList<GitEntityType> getGitEntityTypeValues();
+GIT2QT_EXPORT QString getGitEntityTypeString(GitEntityType value);
+GIT2QT_EXPORT GitEntityType getGitEntityType(const QString& value);
+GIT2QT_EXPORT QList<GitEntityType> getGitEntityTypeValues();
 
 } // namespace GIT
 

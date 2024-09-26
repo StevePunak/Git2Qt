@@ -17,7 +17,7 @@ namespace GIT {
 class Commit;
 class Reference;
 class Repository;
-class Branch : public GitEntity
+class GIT2QT_EXPORT Branch : public GitEntity
 {
 public:
     explicit Branch() : GitEntity(BranchEntity) {}

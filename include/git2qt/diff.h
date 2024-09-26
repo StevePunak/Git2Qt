@@ -20,7 +20,7 @@ class TreeChanges;
 class CompareOptions;
 class StageOptions;
 class Repository;
-class Diff : public GitEntity
+class GIT2QT_EXPORT Diff : public GitEntity
 {
 public:
     Diff(Repository* repo) :

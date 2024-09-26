@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class EnumStrings
+class GIT2QT_EXPORT EnumStrings
 {
 public:
     static QString getFileStatusString(FileStatuses value);

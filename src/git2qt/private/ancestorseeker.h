@@ -26,6 +26,7 @@ public:
     MergeTip(GraphBuilderCommit* head) :
         _head(head) {}
 
+    GraphBuilderCommit* head() const { return _head; }
 
 private:
     GraphBuilderCommit* _head;

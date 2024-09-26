@@ -12,6 +12,7 @@
 #ifndef HANDLE_H
 #define HANDLE_H
 #include <git2.h>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
@@ -20,7 +21,7 @@ class Branch;
 class Repository;
 
 template <typename T>
-class Handle
+class GIT2QT_EXPORT Handle
 {
 public:
     Handle() :
@@ -40,7 +41,7 @@ protected:
     T _handle;
 };
 
-class ReferenceHandle : public Handle<git_reference*>
+class GIT2QT_EXPORT ReferenceHandle : public Handle<git_reference*>
 {
 public:
     ReferenceHandle() : Handle() {}
@@ -54,7 +55,7 @@ public:
     }
 };
 
-class AnnotatedCommitHandle : public Handle<git_annotated_commit*>
+class GIT2QT_EXPORT AnnotatedCommitHandle : public Handle<git_annotated_commit*>
 {
 public:
     AnnotatedCommitHandle() : Handle() {}
@@ -70,7 +71,7 @@ public:
     static AnnotatedCommitHandle fromRef(Repository* repo, const Branch& branch);
 };
 
-class CommitHandle : public Handle<git_commit*>
+class GIT2QT_EXPORT CommitHandle : public Handle<git_commit*>
 {
 public:
     CommitHandle() : Handle() {}
@@ -86,7 +87,7 @@ public:
     static AnnotatedCommitHandle fromRef(Repository* repo, const Branch& branch);
 };
 
-class ConfigurationHandle : public Handle<git_config*>
+class GIT2QT_EXPORT ConfigurationHandle : public Handle<git_config*>
 {
 public:
     ConfigurationHandle() : Handle() {}
@@ -100,7 +101,7 @@ public:
     }
 };
 
-class IndexHandle : public Handle<git_index*>
+class GIT2QT_EXPORT IndexHandle : public Handle<git_index*>
 {
 public:
     IndexHandle() : Handle() {}
@@ -114,7 +115,7 @@ public:
     }
 };
 
-class RemoteHandle : public Handle<git_remote*>
+class GIT2QT_EXPORT RemoteHandle : public Handle<git_remote*>
 {
 public:
     RemoteHandle() : Handle() {}
@@ -128,7 +129,7 @@ public:
     }
 };
 
-class RepositoryHandle : public Handle<git_repository*>
+class GIT2QT_EXPORT RepositoryHandle : public Handle<git_repository*>
 {
 public:
     RepositoryHandle() : Handle() {}
@@ -142,7 +143,7 @@ public:
     }
 };
 
-class TreeHandle : public Handle<git_tree*>
+class GIT2QT_EXPORT TreeHandle : public Handle<git_tree*>
 {
 public:
     TreeHandle() : Handle() {}
@@ -156,7 +157,7 @@ public:
     }
 };
 
-class ObjectHandle : public Handle<git_object*>
+class GIT2QT_EXPORT ObjectHandle : public Handle<git_object*>
 {
 public:
     ObjectHandle() : Handle() {}
@@ -170,7 +171,7 @@ public:
     }
 };
 
-class SubmoudleHandle : public Handle<git_submodule*>
+class GIT2QT_EXPORT SubmoudleHandle : public Handle<git_submodule*>
 {
 public:
     SubmoudleHandle() : Handle() {}
@@ -184,7 +185,7 @@ public:
     }
 };
 
-class TagHandle : public Handle<git_tag*>
+class GIT2QT_EXPORT TagHandle : public Handle<git_tag*>
 {
 public:
     TagHandle() : Handle() {}
@@ -198,7 +199,7 @@ public:
     }
 };
 
-class DiffHandle : public Handle<git_diff*>
+class GIT2QT_EXPORT DiffHandle : public Handle<git_diff*>
 {
 public:
     DiffHandle() : Handle() {}
@@ -212,7 +213,7 @@ public:
     }
 };
 
-class RevWalkHandle : public Handle<git_revwalk*>
+class GIT2QT_EXPORT RevWalkHandle : public Handle<git_revwalk*>
 {
 public:
     RevWalkHandle() : Handle() {}
@@ -226,7 +227,7 @@ public:
     }
 };
 
-class ReflogHandle : public Handle<git_reflog*>
+class GIT2QT_EXPORT ReflogHandle : public Handle<git_reflog*>
 {
 public:
     ReflogHandle() : Handle() {}
@@ -240,7 +241,7 @@ public:
     }
 };
 
-class BlobHandle : public Handle<git_blob*>
+class GIT2QT_EXPORT BlobHandle : public Handle<git_blob*>
 {
 public:
     BlobHandle() : Handle() {}
@@ -254,7 +255,7 @@ public:
     }
 };
 
-class ObjectDatabaseHandle : public Handle<git_odb*>
+class GIT2QT_EXPORT ObjectDatabaseHandle : public Handle<git_odb*>
 {
 public:
     ObjectDatabaseHandle() : Handle() {}

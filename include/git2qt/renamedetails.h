@@ -9,11 +9,12 @@
 #define RENAMEDETAILS_H
 
 #include <QString>
+#include <git2qt/declspec.h>
 
 
 namespace GIT {
 
-class RenameDetails
+class GIT2QT_EXPORT RenameDetails
 {
 public:
     RenameDetails() {}

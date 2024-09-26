@@ -13,7 +13,7 @@
 namespace GIT {
 
 class Repository;
-class Stash : public GitEntity
+class GIT2QT_EXPORT Stash : public GitEntity
 {
 public:
     Stash();

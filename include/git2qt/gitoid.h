@@ -10,10 +10,11 @@
 
 #include <QByteArray>
 #include <git2.h>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
-class GitOid
+class GIT2QT_EXPORT GitOid
 {
 public:
     GitOid();

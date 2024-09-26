@@ -17,7 +17,7 @@
 namespace GIT {
 
 class Repository;
-class Reference : public GitEntity
+class GIT2QT_EXPORT Reference : public GitEntity
 {
 public:
     Reference() :

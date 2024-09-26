@@ -18,8 +18,8 @@ namespace GIT {
 class CredentialResolver;
 class RemoteCollection;
 class Repository;
-class Network : public QObject,
-                public GitEntity
+class GIT2QT_EXPORT Network : public QObject,
+                              public GitEntity
 {
     Q_OBJECT
 public:

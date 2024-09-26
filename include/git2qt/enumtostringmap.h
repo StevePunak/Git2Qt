@@ -13,13 +13,12 @@
 #define ENUMTOSTRINGMAP_H
 
 #include <QMap>
-
-
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
 template <class T>
-class EnumToStringMap : public QMap<T, QString>
+class GIT2QT_EXPORT EnumToStringMap : public QMap<T, QString>
 {
 public:
     QString getString(T type, const QString& defaultValue = QString()) const

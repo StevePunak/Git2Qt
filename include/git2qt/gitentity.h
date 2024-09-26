@@ -11,12 +11,13 @@
 #include <QString>
 #include <git2.h>
 #include <git2qt/log.h>
-#include "gittypes.h"
+#include <git2qt/gittypes.h>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
 class Repository;
-class GitEntity
+class GIT2QT_EXPORT GitEntity
 {
 public:
     virtual ~GitEntity() {}

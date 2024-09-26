@@ -10,10 +10,11 @@
 
 #include <QStringList>
 #include <git2.h>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
-class StringArray
+class GIT2QT_EXPORT StringArray
 {
 public:
     StringArray();

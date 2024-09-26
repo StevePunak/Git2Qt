@@ -9,12 +9,13 @@
 #ifndef COMMITOPTIONS_H
 #define COMMITOPTIONS_H
 #include <git2qt/gittypes.h>
+#include <git2qt/declspec.h>
 
 #include <QChar>
 
 namespace GIT {
 
-class CommitOptions
+class GIT2QT_EXPORT CommitOptions
 {
 public:
     CommitOptions() {}

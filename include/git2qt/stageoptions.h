@@ -7,10 +7,11 @@
 */
 #ifndef STAGEOPTIONS_H
 #define STAGEOPTIONS_H
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
-class StageOptions
+class GIT2QT_EXPORT StageOptions
 {
 public:
     StageOptions() :

@@ -16,7 +16,7 @@
 
 namespace GIT {
 
-class StatusEntry
+class GIT2QT_EXPORT StatusEntry
 {
 public:
     StatusEntry() {}
