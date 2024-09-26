@@ -82,10 +82,11 @@ public:
     bool checkoutTree(const Tree& tree, const QStringList& paths, const CheckoutOptions& options = CheckoutOptions());
     bool checkoutPaths(const QString& branchName, const QStringList& paths, const CheckoutOptions& options = CheckoutOptions());
 
-    // Branch creation
+    // Branches
     Branch createBranch(const QString& branchName, bool switchToNewBranch = false);
     Branch createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& annotatedCommit, const QString& branchName);
     Branch findLocalBranch(const QString& branchName) const;
+    bool deleteLocalBranch(const Reference& reference);
 
     Branch::Map localBranches() const;
     Branch::Map remoteBranches() const;
@@ -205,7 +206,7 @@ private:
 
     void emitProgress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects);
 
-    bool loadReferences();
+    bool reloadReferences();
     Commit::List retrieveParentsOfTheCommitBeingCreated(bool amendPreviousCommit);
     Commit::List mergeHeads();
 

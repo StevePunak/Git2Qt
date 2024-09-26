@@ -135,7 +135,7 @@ void Repository::postInitializationLookups()
 
     _branches->reloadBranches();
 
-    loadReferences();
+    reloadReferences();
 }
 
 void Repository::commonDestroy()
@@ -201,10 +201,10 @@ void Repository::restartFileSystemWatcher()
         QFileInfo fileInfo(fullPath);
         if(dirsToWatch.contains(fileInfo.absolutePath()) == false) {
             dirsToWatch.append(fileInfo.absolutePath());
-            logText(LVL_DEBUG, QString("Watch dir %1").arg(fileInfo.absolutePath()));
+            // logText(LVL_DEBUG, QString("Watch dir %1").arg(fileInfo.absolutePath()));
         }
         filesToWatch.append(fullPath);
-        logText(LVL_DEBUG, QString("Watch file %1").arg(fullPath));
+        // logText(LVL_DEBUG, QString("Watch file %1").arg(fullPath));
     }
 
     if(_fileSystemWatcher != nullptr) {
@@ -447,6 +447,7 @@ Branch Repository::createBranch(const QString& branchName, bool switchToNewBranc
             throwIfTrue(tree.isNull(), "Failed to create tree");
             throwIfFalse(checkoutTree(tree, branchName));
         }
+        reloadReferences();
         result = newBranch;
     }
     catch(const GitException&)
@@ -464,6 +465,7 @@ Branch Repository::createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& 
         Reference reference = Reference::create(this, newBranch);
         result = Branch(this, reference);
         _branches->append(result);
+        reloadReferences();
     }
     return result;
 }
@@ -471,6 +473,24 @@ Branch Repository::createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& 
 Branch Repository::findLocalBranch(const QString& branchName) const
 {
     return _branches->findLocalBranch(branchName);
+}
+
+bool Repository::deleteLocalBranch(const Reference &reference)
+{
+    bool result = false;
+    ReferenceHandle refHandle = reference.createHandle();
+    try
+    {
+        throwOnError(refHandle.isNull(), "Invalid reference");
+        throwIfTrue(git_branch_is_checked_out(refHandle.value()) == 1, "Can't delete the checked out branch");
+        throwOnError(git_branch_delete(refHandle.value()));
+        reloadReferences();
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
 }
 
 Branch::Map Repository::localBranches() const
@@ -633,9 +653,11 @@ Commit::List Repository::allCommits(CommitSortStrategies strategy)
 {
     // set up a filter to include ALL references in time order
     CommitFilter filter;
-    filter.setIncludeReachableFrom(headCommit().objectId());
-    filter.setIncludeReachableFrom(mostRecentCommit().objectId());
-    filter.setIncludeReachableFrom(references().objectIds());
+    ObjectId::List oids;
+    oids.append(headCommit().objectId());
+    oids.append(mostRecentCommit().objectId());
+    oids.append(references().objectIds());
+    filter.setIncludeReachableFrom(oids);
     filter.setSortBy(strategy);
 
     // Create a commit log with results
@@ -1097,7 +1119,7 @@ void Repository::emitProgress(uint32_t receivedBytes, uint32_t receivedObjects, 
     emit progress(receivedBytes, receivedObjects, totalObjects);
 }
 
-bool Repository::loadReferences()
+bool Repository::reloadReferences()
 {
     bool result = false;
 
@@ -1292,6 +1314,6 @@ void Repository::onFileSystemChanged(const QString&)
 void Repository::onNotifyTimerElapsed()
 {
     logText(LVL_DEBUG, __FUNCTION__);
-    loadReferences();
+    reloadReferences();
     emit repositoryChanged();
 }

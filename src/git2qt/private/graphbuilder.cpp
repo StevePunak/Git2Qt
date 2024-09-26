@@ -33,9 +33,8 @@ bool GraphBuilder::calculateGraph()
     try
     {
         Branch headBranch = repository()->head();
-        if(headBranch.isNull()) {
-            logText(LVL_ERROR, "Ref is null");
-        }
+        throwIfTrue(headBranch.isNull(), "Head branch has a null reference");
+
         Commit headCommit = Commit::lookup(repository(), headBranch.reference().targetObjectId());
         throwIfFalse(headCommit.isValid());
 
