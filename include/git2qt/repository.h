@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2024 Stephen Punak
  *
- * This class represents a git repository. All interfacces to the
+ * This class represents a git repository. All interfaces to the
  * repository should got through an instance of this object.
  *
  * Stephen Punak, August 1, 2024
@@ -87,6 +87,7 @@ public:
     Branch createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& annotatedCommit, const QString& branchName);
     Branch findLocalBranch(const QString& branchName) const;
     bool deleteLocalBranch(const Reference& reference);
+    Branch currentBranch();
 
     Branch::Map localBranches() const;
     Branch::Map remoteBranches() const;

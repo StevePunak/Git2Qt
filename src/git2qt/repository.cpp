@@ -493,6 +493,22 @@ bool Repository::deleteLocalBranch(const Reference &reference)
     return result;
 }
 
+Branch Repository::currentBranch()
+{
+    Branch result;
+    try
+    {
+        Reference head = _references->head();
+        throwIfTrue(head.isNull());
+        Reference resolved = *head.target();
+        result = Branch(this, resolved);
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
 Branch::Map Repository::localBranches() const
 {
     return _branches->localBranches();

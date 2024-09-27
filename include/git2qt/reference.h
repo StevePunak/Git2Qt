@@ -96,6 +96,17 @@ public:
             return result;
         }
 
+        List findByTargetObjectId(const ObjectId& objectId) const
+        {
+            List result;
+            for(const Reference& reference : *this) {
+                if(reference.targetObjectId() == objectId) {
+                    result.append(reference);
+                }
+            }
+            return result;
+        }
+
         List localBranchReferences() const
         {
             List result;
