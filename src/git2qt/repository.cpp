@@ -268,6 +268,15 @@ bool Repository::push(const Branch::List& branches)
     return result;
 }
 
+bool Repository::push(const Remote& remote, const QString& objectish, const QString& destinationRefSpec)
+{
+    // This signature pushes the remote for a local branch which does
+    // not yet have a branch on the remote/
+    // Taken from libgit2sharp
+    QString refspecs = QString("%1:%2").arg(objectish).arg(destinationRefSpec);
+    return push(remote, refspecs);
+}
+
 bool Repository::push(const Remote& remote, const QString& pushRefSpec)
 {
     QStringList pushRefSpecs;
@@ -278,8 +287,10 @@ bool Repository::push(const Remote& remote, const QString& pushRefSpec)
 bool Repository::push(const Remote& remote, const QStringList& pushRefSpecs)
 {
     bool result = false;
+    RemoteHandle remoteHandle = remote.createHandle();
     try
     {
+        throwIfTrue(remoteHandle.isNull());
         git_remote_callbacks callbacks = GIT_REMOTE_CALLBACKS_INIT;
         callbacks.credentials = credentialsCallback;
         callbacks.payload = this;
@@ -289,9 +300,7 @@ bool Repository::push(const Remote& remote, const QStringList& pushRefSpecs)
         opts.callbacks = callbacks;
 
         StringArray strs(pushRefSpecs);
-        RemoteHandle remoteHandle = remote.createHandle();
-        throwIfTrue(remoteHandle.isNull());
-        throwOnError(git_remote_push(remote.createHandle().value(), strs.toNative(), &opts));
+        throwOnError(git_remote_push(remoteHandle.value(), strs.toNative(), &opts));
 
         result = true;
     }
@@ -299,6 +308,8 @@ bool Repository::push(const Remote& remote, const QStringList& pushRefSpecs)
     {
         result = false;
     }
+    remoteHandle.dispose();
+    reloadReferences();
     return result;
 }
 
@@ -679,6 +690,24 @@ Commit::List Repository::allCommits(CommitSortStrategies strategy)
     // Create a commit log with results
     CommitLog commitLog(this, filter);
     return commitLog.performLookup();
+}
+
+Commit Repository::initialCommit()
+{
+    // set up a filter to include ALL references in time order
+    CommitFilter filter;
+    filter.setSortBy(SortStrategyTime | SortStrategyReverse);
+    filter.setIncludeReachableFrom(headCommit().objectId());
+    filter.setMaxResults(1);
+
+    // Create a commit log with results
+    CommitLog commitLog(this, filter);
+    Commit::List results = commitLog.performLookup();
+    Commit result;
+    if(results.count() > 0) {
+        result = results.at(0);
+    }
+    return result;
 }
 
 Commit Repository::mostRecentCommit()
@@ -1145,6 +1174,7 @@ bool Repository::reloadReferences()
 
     try
     {
+        // iterate through local references
         throwOnError(git_reference_iterator_new(&it, _handle.value()));
         git_reference* ref;
         while(!git_reference_next(&ref, it)) {
@@ -1155,6 +1185,9 @@ bool Repository::reloadReferences()
         }
 
         _references->resolveSymbolicTargets();
+
+        // reload remotes
+        _network->reload();
 
         result = true;
     }

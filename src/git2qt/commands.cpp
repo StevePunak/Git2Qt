@@ -111,7 +111,7 @@ int Commands::transferProgressCallback(const git_transfer_progress* stats, void*
 
     CloneParameters* parms = static_cast<CloneParameters*>(payload);
     if(parms != nullptr && parms->progressCallback() != nullptr) {
-        parms->progressCallback()->progress(stats->received_bytes, stats->received_objects, stats->total_objects);
+        parms->progressCallback()->progressCallback(stats->received_bytes, stats->received_objects, stats->total_objects);
     }
 
     return 0;

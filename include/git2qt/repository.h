@@ -72,6 +72,7 @@ public:
     // Push
     bool push(const Branch& branch);
     bool push(const Branch::List& branches);
+    bool push(const Remote& remote, const QString& objectish, const QString& destinationRefSpec);
     bool push(const Remote& remote, const QString& pushRefSpec);
     bool push(const Remote& remote, const QStringList& pushRefSpecs);
 
@@ -103,6 +104,7 @@ public:
     Commit::List findCommits(const Reference& from);
     Commit::List commitsFromHead();
     Commit::List allCommits(CommitSortStrategies strategy = SortStrategyTime | SortStrategyTopological);
+    Commit initialCommit();
     Commit mostRecentCommit();
 
     // Blobs

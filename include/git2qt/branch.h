@@ -14,6 +14,8 @@
 
 namespace GIT {
 
+class Remote;
+
 class Commit;
 class Reference;
 class Repository;
@@ -33,6 +35,7 @@ public:
     QString upstreamBranchCanonicalName() const;
     QString upstreamBranchCanonicalNameFromLocalBranch() const;
     QString remoteName() const;
+    QString createRemoteName(const Remote& remote);
     BranchType branchType() const { return _branchType; }
 
     Reference reference() const { return _reference; }

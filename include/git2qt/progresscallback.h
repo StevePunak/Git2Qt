@@ -8,7 +8,7 @@ namespace GIT {
 class GIT2QT_EXPORT ProgressCallback
 {
 public:
-    virtual void progress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects) = 0;
+    virtual void progressCallback(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects) = 0;
 };
 
 } // namespace GIT

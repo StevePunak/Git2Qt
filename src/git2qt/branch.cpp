@@ -10,6 +10,7 @@
 #include <network.h>
 #include <remote.h>
 #include <repository.h>
+#include <utility.h>
 
 using namespace GIT;
 
@@ -103,6 +104,8 @@ QString Branch::upstreamBranchCanonicalNameFromLocalBranch() const
     return result;
 }
 
+// "refs/heads/feature/test-branch:refs/remotes/origin/feature/feature/test-branch"
+
 QString Branch::remoteName() const
 {
     QString result;
@@ -115,13 +118,19 @@ QString Branch::remoteName() const
     return result;
 }
 
+QString Branch::createRemoteName(const Remote& remote)
+{
+    QString result = Utility::combine(Reference::RemoteTrackingBranchPrefix, remote.name(), friendlyName());
+    return result;
+}
+
 Commit Branch::tip()
 {
     Commit commit(repository());
 
     try
     {
-        ObjectId objid = ObjectId::createFromReference(_reference);
+        ObjectId objid = _reference.targetObjectId();
         commit = Commit::lookup(repository(), objid);
         if(commit.isValid() == false) {
             throw GitException("Failed to find commit at starting reference");
