@@ -15,6 +15,7 @@ public:
     virtual ~GraphBuilder();
 
     bool calculateGraph();
+    void ancestorTest(const ObjectId& commitId);
 
     GraphedCommit::List graphedCommits() const { return _graphedCommits; }
     Branch findBranchForReferencedObjectId(const ObjectId& objectId) const;

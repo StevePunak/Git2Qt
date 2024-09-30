@@ -1159,6 +1159,12 @@ void Repository::walkerTest(const ObjectId &commitId)
 
 }
 
+void Repository::ancestorTest(const ObjectId &commitId)
+{
+    GraphBuilder builder(this);
+    builder.ancestorTest(commitId);
+}
+
 void Repository::emitProgress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects)
 {
     emit progress(receivedBytes, receivedObjects, totalObjects);

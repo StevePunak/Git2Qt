@@ -1,7 +1,9 @@
 #include "ancestorseeker.h"
 
+#include <QElapsedTimer>
 #include <gitexception.h>
 #include <repository.h>
+#include <utility.h>
 
 using namespace GIT;
 
@@ -13,57 +15,18 @@ MergeBaseSeeker::MergeBaseSeeker(GraphBuilderCommit *mergeCommit, const GraphBui
 
 void MergeBaseSeeker::resolve1()
 {
-#if 0
-    MergeTipIndex tips;
-    for(GraphBuilderCommit* parent : _mergeCommit->parentCommitsRef()) {
-        tips.insert(parent->objectId(), new MergeTip(parent));
-    }
-
-    _birthCommit = nullptr;
-    while(_birthCommit == nullptr) {
-        for(MergeTip* mergeTip : tips) {
-
-        }
-    }
-
-
-
-
-    Repository* repo = _mergeCommit->repository();
-
-    git_revwalk *walker = nullptr;
-
-    Commit::List commits;
-    try
-    {
-        git_revwalk_new(&walker, repo->handle().value());
-        git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
-        git_revwalk_push(walker, _mergeCommit->objectId().toNative());
-
-        git_oid oid;
-        while(git_revwalk_next(&oid, walker) == 0) {
-            Commit commit = Commit::lookup(this, ObjectId(oid));
-            if(commit.isValid() == false) {
-                throw GitException("Failed to lookup the next object");
-            }
-            commits.append(commit);
-        }
-    }
-    catch(const GitException&)
-    {
-
-    }
-
-    if(walker != nullptr) {
-        git_revwalk_free(walker);
-    }
-#endif
 }
 
 void MergeBaseSeeker::resolve2()
 {
+#define PERF_TEST
+#ifdef PERF_TEST
+    static TimeSpan longest;
+    QElapsedTimer timer;
+    timer.start();
+#endif
     // we will find a common ancestor to all parents
-    QList<AncestorSeeker*> seekers;
+    SeekerSet seekers;
     for(GraphBuilderCommit* parent : _mergeCommit->parentCommitsRef()) {
         seekers.append(new AncestorSeeker(parent));
     }
@@ -71,17 +34,17 @@ void MergeBaseSeeker::resolve2()
     _birthCommit = nullptr;
     while(_birthCommit == nullptr) {
         for(AncestorSeeker* seeker : seekers) {
-            seeker->produceAncestors(1);
+            seeker->produceAncestors(10);
         }
 
         AncestorSeeker* first = seekers.at(0);
-        ObjectId::List firstSeekerIds = first->ancestors();
+        ObjectId::Set& firstSeekerIds = first->ancestors();
 
         for(const ObjectId& firstId : firstSeekerIds) {
             int foundCount = 1;
             for(int i = 1;i < seekers.count();i++) {
                 AncestorSeeker* other = seekers.at(i);
-                ObjectId::List otherSeekerIds = other->ancestors();
+                ObjectId::Set& otherSeekerIds = other->ancestors();
                 if(otherSeekerIds.contains(firstId)) {
                     foundCount++;
                 }
@@ -93,35 +56,57 @@ void MergeBaseSeeker::resolve2()
         }
     }
 
+#ifdef PERF_TEST
+    TimeSpan elapsed = TimeSpan::fromNanoseconds(timer.nsecsElapsed());
+    if(elapsed > longest) {
+        longest = elapsed;
+        Log::logText(LVL_DEBUG, QString("Seeker for %1 took %2").arg(_mergeCommit->objectId().toString()).arg(longest.toString(true)));
+    }
+#endif
     qDeleteAll(seekers);
 }
 
 
 AncestorSeeker::AncestorSeeker(GraphBuilderCommit *commit) :
-    _commit(commit)
+    _commit(commit), _oldestAncestor(commit->timestamp())
 {
-    _ancestors.append(commit->objectId());
+    _ancestors.insert(commit->objectId());
     for(GraphBuilderCommit* parent : commit->parentCommitsRef()) {
-        _tips.append(parent);
+        _tips.insert(parent);
     }
 }
 
-ObjectId::List AncestorSeeker::produceAncestors(int count)
+void AncestorSeeker::produceAncestors(int count)
 {
-    ObjectId::List result;
-    while(result.count() < count && _tips.count() > 0) {
-        GraphBuilderCommit::PtrList tips = _tips;
+    // Log::logText(LVL_DEBUG, QString("Produce ancestors for %1 (tips: %2  ancestors: %3  oldest: %4)")
+    //              .arg(_commit->objectId().toString())
+    //              .arg(_tips.count())
+    //              .arg(_ancestors.count())
+    //              .arg(Utility::toString(_oldestAncestor)));
+    int resultCount = 0;
+    while((resultCount < count) && _tips.count() > 0) {
+        GraphBuilderCommit::Set tips = _tips;
         for(GraphBuilderCommit* tip : tips) {
-            result.append(tip->objectId());
-            _ancestors.append(tip->objectId());
-            _tips.removeAll(tip);
+            resultCount++;
+            _ancestors.insert(tip->objectId());
+            if(tip->timestamp() < _oldestAncestor) {
+                _oldestAncestor = tip->timestamp();
+            }
+            _tips.remove(tip);
             for(GraphBuilderCommit* parent : tip->parentCommitsRef()) {
-                _tips.append(parent);
+                _tips.insert(parent);
             }
         }
     }
-    return result;
 }
 
 
+// ---------------------------------- SeekerSet ----------------------------------
 
+void SeekerSet::produceAncestors()
+{
+    static const int QUANTA = 10;
+    for(AncestorSeeker* seeker : *this) {
+        seeker->produceAncestors(QUANTA);
+    }
+}

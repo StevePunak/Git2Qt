@@ -32,42 +32,55 @@ bool GraphBuilder::calculateGraph()
 
     try
     {
+logText(LVL_DEBUG, "Point 01");
         Branch headBranch = repository()->head();
         throwIfTrue(headBranch.isNull(), "Head branch has a null reference");
 
+logText(LVL_DEBUG, "Point 02");
         Commit headCommit = Commit::lookup(repository(), headBranch.reference().targetObjectId());
         throwIfFalse(headCommit.isValid());
 
+logText(LVL_DEBUG, "Point 03");
         // Create the list of all commits in time-order
         _allCommits = GraphBuilderCommit::PtrList(repository()->allCommits());
 
+logText(LVL_DEBUG, "Point 04");
         // Create a map for quick lookup
         _commitIndex = GraphBuilderCommit::Map(_allCommits);
 
+logText(LVL_DEBUG, "Point 05");
         // detect stashes and remove their unwanted children from the graph
         _allCommits.detectStashes(repository());
 
+logText(LVL_DEBUG, "Point 06");
         // resolve commit relationships
         _allCommits.resolveParentsAndChildren();
 
+logText(LVL_DEBUG, "Point 07");
         // resolve merges and stashes
         _allCommits.resolveMergesAndStashes(repository());
 
+logText(LVL_DEBUG, "Point 08");
         // resolve branch names
         _allCommits.resolveBranchNames(this);
 
+logText(LVL_DEBUG, "Point 09");
         // resolve the earliest commit for each branch
         buildBranchFromCommitIndex();
 
+logText(LVL_DEBUG, "Point 10");
         // resolve merge births
         resolveMergeBirths();
 
+logText(LVL_DEBUG, "Point 11");
         // Resolve the levels
         resolveGraphLevels();
 
+logText(LVL_DEBUG, "Point 12");
         // Do the graphics stuff
         buildGraphLines();
 
+logText(LVL_DEBUG, "Point 13");
         // create the result
         _graphedCommits = _allCommits.toGraphedCommitList();
 
@@ -83,6 +96,58 @@ bool GraphBuilder::calculateGraph()
     }
 
     return result;
+}
+
+void GraphBuilder::ancestorTest(const ObjectId &commitId)
+{
+    reset();
+
+    try
+    {
+        logText(LVL_DEBUG, "Point 01");
+        Branch headBranch = repository()->head();
+        throwIfTrue(headBranch.isNull(), "Head branch has a null reference");
+
+        logText(LVL_DEBUG, "Point 02");
+        Commit headCommit = Commit::lookup(repository(), headBranch.reference().targetObjectId());
+        throwIfFalse(headCommit.isValid());
+
+        logText(LVL_DEBUG, "Point 03");
+        // Create the list of all commits in time-order
+        _allCommits = GraphBuilderCommit::PtrList(repository()->allCommits());
+
+        logText(LVL_DEBUG, "Point 04");
+        // Create a map for quick lookup
+        _commitIndex = GraphBuilderCommit::Map(_allCommits);
+
+        logText(LVL_DEBUG, "Point 05");
+        // detect stashes and remove their unwanted children from the graph
+        _allCommits.detectStashes(repository());
+
+        logText(LVL_DEBUG, "Point 06");
+        // resolve commit relationships
+        _allCommits.resolveParentsAndChildren();
+
+        logText(LVL_DEBUG, "Point 07");
+        // resolve merges and stashes
+        _allCommits.resolveMergesAndStashes(repository());
+
+
+        GraphBuilderCommit* mergeCommit = _commitIndex.value(commitId);
+        if(mergeCommit == nullptr) {
+            throw GitException("No commit");
+        }
+        MergeBaseSeeker seeker(mergeCommit, _commitIndex);
+        Q_UNUSED(seeker)
+        logText(LVL_DEBUG, QString("Seeker for %1 found birth commit %2").arg(mergeCommit->objectId().toString()).arg(seeker.birthCommit()->objectId().toString()));
+
+        // clean up
+        qDeleteAll(_allCommits);
+        _allCommits.clear();
+    }
+    catch(const GitException&)
+    {
+    }
 }
 
 Branch GraphBuilder::findBranchForReferencedObjectId(const ObjectId& objectId) const

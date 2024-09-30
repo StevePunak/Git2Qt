@@ -47,15 +47,23 @@ public:
 
     GraphBuilderCommit* commit() const { return _commit; }
 
-    ObjectId::List produceAncestors(int count);
+    void produceAncestors(int count);
     int minLevel() const;
 
-    ObjectId::List ancestors() const { return _ancestors; }
+    ObjectId::Set& ancestors() { return _ancestors; }
+    QDateTime oldestAncestor() const { return _oldestAncestor; }
 
 private:
     GraphBuilderCommit* _commit;
-    GraphBuilderCommit::PtrList _tips;
-    ObjectId::List _ancestors;
+    GraphBuilderCommit::Set _tips;
+    ObjectId::Set _ancestors;
+    QDateTime _oldestAncestor;
+};
+
+class SeekerSet : public QList<AncestorSeeker*>
+{
+public:
+    void produceAncestors();
 };
 
 } // namespace GIT

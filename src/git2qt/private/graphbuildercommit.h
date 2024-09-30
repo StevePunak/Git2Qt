@@ -51,6 +51,11 @@ public:
         }
     };
 
+    class Set : public QSet<GraphBuilderCommit*>
+    {
+
+    };
+
     class Map : public QMap<ObjectId, GraphBuilderCommit*>
     {
     public:

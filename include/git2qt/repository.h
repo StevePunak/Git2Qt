@@ -186,6 +186,7 @@ public:
     Tag::ConstPtrList tags() const { return _tags != nullptr ? _tags->tags() : Tag::ConstPtrList();  }
 
     void walkerTest(const ObjectId& commitId);
+    void ancestorTest(const ObjectId& commitId);
 
     QString errorText() const { return _errorText; }
     void setErrorText(const QString& errorText) { _errorText = errorText; }
