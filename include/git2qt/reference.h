@@ -52,6 +52,7 @@ public:
     bool isBranch() const { return _isBranch; }
     bool isNote() const { return _isNote; }
     bool isRemote() const { return _isRemote; }
+    bool isLocal() const { return !_isRemote; }
     bool isTag() const { return _isTag; }
 
     virtual bool isDirect() const { return type() == DirectReferenceType; }

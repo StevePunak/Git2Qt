@@ -202,15 +202,41 @@ public:
     SubmoduleIgnore ignoreRule() const { return _ignoreRule; }
     SubmoduleUpdate updateRule() const { return _updateRule; }
 
+    bool isWorkdirInitialized() const;
+
+    bool initialize(bool overwrite = false);
     Repository* open();
-    SubmoduleStatuses retrieveStatus();
+    Repository* clone();
+    bool update(bool initialize = false);
+
+    SubmoduleStatuses status() const;
+
+    QVariant toVariant() const { return QVariant::fromValue<Submodule>(*this); }
+    static Submodule fromVariant(const QVariant& value) { return value.value<Submodule>(); }
 
     virtual bool isNull() const override { return _name.isEmpty(); }
 
     class Map : public QMap<QString, Submodule> {};
+    class List : public QList<Submodule>
+    {
+    public:
+        List() {}
+        List(const QList<Submodule>& other)
+        {
+            for(const Submodule& s : other) {
+                append(s);
+            }
+        }
+
+        int countWithStatus(SubmoduleStatuses statuses) const
+        {
+            int result = std::count_if(constBegin(), constEnd(), [statuses] (const Submodule& submodule) { return (submodule.status() & statuses) != 0; } );
+            return result;
+        }
+    };
 
 private:
-    SubmoudleHandle createhandle() const;
+    SubmoduleHandle createHandle() const;
 
     QString _name;
     QString _path;
@@ -224,5 +250,7 @@ private:
 };
 
 } // namespace GIT
+
+Q_DECLARE_METATYPE(GIT::Submodule)
 
 #endif // SUBMODULE_H

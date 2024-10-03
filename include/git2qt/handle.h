@@ -171,11 +171,11 @@ public:
     }
 };
 
-class GIT2QT_EXPORT SubmoudleHandle : public Handle<git_submodule*>
+class GIT2QT_EXPORT SubmoduleHandle : public Handle<git_submodule*>
 {
 public:
-    SubmoudleHandle() : Handle() {}
-    SubmoudleHandle(git_submodule* handle) :
+    SubmoduleHandle() : Handle() {}
+    SubmoduleHandle(git_submodule* handle) :
         Handle(handle) {}
     virtual void dispose() override
     {

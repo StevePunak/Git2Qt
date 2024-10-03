@@ -1,4 +1,4 @@
-#include "submodulecollection.h"
+#include "private/submodulecollection.h"
 
 #include <gitexception.h>
 #include <repository.h>

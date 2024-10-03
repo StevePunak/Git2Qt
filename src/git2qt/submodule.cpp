@@ -11,7 +11,7 @@ Submodule::Submodule(Repository* repo, const QString& name, const QString& path,
 {
     try
     {
-        SubmoudleHandle handle = createhandle();
+        SubmoduleHandle handle = createHandle();
         throwIfTrue(handle.isNull());
         _headCommitId = ObjectId(git_submodule_head_id(handle.value()));
         _indexCommitId = ObjectId(git_submodule_index_id(handle.value()));
@@ -26,12 +26,33 @@ Submodule::Submodule(Repository* repo, const QString& name, const QString& path,
     }
 }
 
+bool Submodule::isWorkdirInitialized() const
+{
+    return (status() & WorkDirUninitialized) == 0;
+}
+
+bool Submodule::initialize(bool overwrite)
+{
+    bool result = false;
+    try
+    {
+        SubmoduleHandle handle = createHandle();
+        throwIfTrue(handle.isNull());
+        throwOnError(git_submodule_init(handle.value(), overwrite));
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
 Repository* Submodule::open()
 {
     Repository* repo = nullptr;
     try
     {
-        SubmoudleHandle handle = createhandle();
+        SubmoduleHandle handle = createHandle();
         throwIfTrue(handle.isNull());
         git_repository* repoHandle = nullptr;
         throwOnError(git_submodule_open(&repoHandle, handle.value()));
@@ -43,7 +64,42 @@ Repository* Submodule::open()
     return repo;
 }
 
-Submodule::SubmoduleStatuses Submodule::retrieveStatus()
+Repository* Submodule::clone()
+{
+    Repository* repo = nullptr;
+    try
+    {
+        SubmoduleHandle handle = createHandle();
+        throwIfTrue(handle.isNull());
+        git_repository* repoHandle = nullptr;
+        git_submodule_update_options options = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
+        throwOnError(git_submodule_clone(&repoHandle, handle.value(), &options));
+        repo = new Repository(repoHandle);
+    }
+    catch(const GitException&)
+    {
+    }
+    return repo;
+}
+
+bool Submodule::update(bool initialize)
+{
+    bool result = false;
+    try
+    {
+        SubmoduleHandle handle = createHandle();
+        throwIfTrue(handle.isNull());
+        git_submodule_update_options options = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
+        throwOnError(git_submodule_update(handle.value(), initialize, &options));
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
+Submodule::SubmoduleStatuses Submodule::status() const
 {
     SubmoduleStatuses status = Unmodified;
     unsigned int stat;
@@ -53,12 +109,12 @@ Submodule::SubmoduleStatuses Submodule::retrieveStatus()
     return status;
 }
 
-SubmoudleHandle Submodule::createhandle() const
+SubmoduleHandle Submodule::createHandle() const
 {
-    SubmoudleHandle handle;
+    SubmoduleHandle handle;
     git_submodule* sub = nullptr;
     if(git_submodule_lookup(&sub, repository()->handle().value(), _name.toUtf8().constData()) == 0) {
-        handle = SubmoudleHandle(sub);
+        handle = SubmoduleHandle(sub);
     }
     return handle;
 }

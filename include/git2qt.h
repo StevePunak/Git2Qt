@@ -19,7 +19,6 @@
 #include <git2qt/remote.h>
 #include <git2qt/remotecollection.h>
 #include <git2qt/repository.h>
-#include <git2qt/submodulecollection.h>
 #include <git2qt/tagcollection.h>
 #include <git2qt/annotatedtag.h>
 #include <git2qt/lightweighttag.h>

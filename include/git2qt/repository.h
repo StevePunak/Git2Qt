@@ -26,6 +26,7 @@
 #include <git2qt/referencecollection.h>
 #include <git2qt/stashcollection.h>
 #include <git2qt/stageoptions.h>
+#include <git2qt/submodule.h>
 #include <git2qt/objectdatabase.h>
 #include <git2qt/blob.h>
 
@@ -159,6 +160,7 @@ public:
     // Remote
     Remote::List remotes() const;
     Reference::List remoteReferences(const QString& remoteName);
+    QString firstRemoteUrl() const;
 
     // Graph
     GraphedCommit::List commitGraph();
@@ -182,7 +184,7 @@ public:
     Configuration* config() const { return _config; }
     Network* network() const { return _network; }
     Diff* diff() const { return _diff; }
-    SubmoduleCollection* submodules() const { return _submodules; }
+    Submodule::List submodules() const;
     Tag::ConstPtrList tags() const { return _tags != nullptr ? _tags->tags() : Tag::ConstPtrList();  }
 
     void walkerTest(const ObjectId& commitId);

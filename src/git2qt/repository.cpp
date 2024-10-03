@@ -21,7 +21,7 @@
 #include <network.h>
 #include <remote.h>
 #include <stringarray.h>
-#include <submodulecollection.h>
+#include <git2qt/private/submodulecollection.h>
 #include <QRegularExpression>
 #include <gitexception.h>
 #include <QFileSystemWatcher>
@@ -511,6 +511,9 @@ Branch Repository::currentBranch()
     {
         Reference head = _references->head();
         throwIfTrue(head.isNull());
+        if(head.target() == nullptr) {
+            logText(LVL_DEBUG, "Here");
+        }
         Reference resolved = *head.target();
         result = Branch(this, resolved);
     }
@@ -1092,6 +1095,15 @@ Reference::List Repository::remoteReferences(const QString& remoteName)
     return references;
 }
 
+QString Repository::firstRemoteUrl() const
+{
+    QString result;
+    if(remotes().count() > 0) {
+        result = remotes().at(0).url();
+    }
+    return result;
+}
+
 GraphedCommit::List Repository::commitGraph()
 {
     GraphedCommit::List result;
@@ -1129,6 +1141,11 @@ Branch Repository::head()
 bool Repository::setHead(const QString& referenceName)
 {
     return git_repository_set_head(_handle.value(), referenceName.toUtf8().constData()) == 0;
+}
+
+Submodule::List Repository::submodules() const
+{
+    return _submodules->values().values();
 }
 
 void Repository::walkerTest(const ObjectId &commitId)
