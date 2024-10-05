@@ -25,6 +25,8 @@ public:
     Submodule value(const QString& name);
     Submodule::Map values();
 
+    void reload();
+
     virtual bool isNull() const override;
 
 private:
@@ -32,7 +34,7 @@ private:
     // Callbacks
     static int submoduleCallback(git_submodule *sm, const char *name, void *payload);
 
-    Submodule::Map _loadingSubmodules;
+    Submodule::Map _cachedSubmodules;
 };
 
 } // namespace GIT

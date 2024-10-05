@@ -14,6 +14,10 @@
 
 namespace GIT {
 
+class ProgressCallback;
+
+class CredentialResolver;
+
 class Repository;
 class GIT2QT_EXPORT Submodule : public GitEntity
 {
@@ -206,8 +210,8 @@ public:
 
     bool initialize(bool overwrite = false);
     Repository* open();
-    Repository* clone();
-    bool update(bool initialize = false);
+    Repository* clone(CredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
+    bool update(bool initialize = false, CredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
 
     SubmoduleStatuses status() const;
 
@@ -228,6 +232,16 @@ public:
             }
         }
 
+        Submodule findByName(const QString& name) const
+        {
+            Submodule result;
+            auto it = std::find_if(constBegin(), constEnd(), [name](const Submodule& submodule) { return submodule.name() == name; });
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
+
         int countWithStatus(SubmoduleStatuses statuses) const
         {
             int result = std::count_if(constBegin(), constEnd(), [statuses] (const Submodule& submodule) { return (submodule.status() & statuses) != 0; } );
@@ -235,9 +249,9 @@ public:
         }
     };
 
-private:
     SubmoduleHandle createHandle() const;
 
+private:
     QString _name;
     QString _path;
     QString _url;

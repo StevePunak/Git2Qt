@@ -511,11 +511,17 @@ Branch Repository::currentBranch()
     {
         Reference head = _references->head();
         throwIfTrue(head.isNull());
-        if(head.target() == nullptr) {
-            logText(LVL_DEBUG, "Here");
+        if(head.isSymbolic()) {
+            if(head.target() == nullptr) {
+                logText(LVL_DEBUG, "Periodic crash.... Figure this out when it becomes reproducible (10/4/24)");
+            }
+            Reference resolved = *head.target();
+            result = Branch(this, resolved);
         }
-        Reference resolved = *head.target();
-        result = Branch(this, resolved);
+        else {
+            result = Branch(this, head);
+            result.setDetachedHead(true);
+        }
     }
     catch(const GitException&)
     {

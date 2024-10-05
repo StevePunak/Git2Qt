@@ -193,6 +193,9 @@ public:
     QString errorText() const { return _errorText; }
     void setErrorText(const QString& errorText) { _errorText = errorText; }
 
+    git_error_code errorCode() const { return (git_error_code)_errorCode; }
+    void setErrorCode(int value) { _errorCode = value; }
+
     virtual bool isNull() const override { return _handle.isNull(); }
 
 private:
@@ -245,6 +248,7 @@ private:
 
     Commit::List _mergeHeads;
     QString _errorText;
+    int _errorCode = 0;
 
     // callbacks
 public:

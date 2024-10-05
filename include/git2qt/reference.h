@@ -26,8 +26,6 @@ public:
     Reference(const Reference& other);
     Reference& operator=(const Reference& other);
 
-    void dispose();
-
     ReferenceHandle createHandle() const;
 
     static Reference create(Repository* repo, git_reference* handle);

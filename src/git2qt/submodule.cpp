@@ -1,5 +1,6 @@
 #include "submodule.h"
 
+#include <commands.h>
 #include <gitexception.h>
 #include <repository.h>
 
@@ -28,7 +29,7 @@ Submodule::Submodule(Repository* repo, const QString& name, const QString& path,
 
 bool Submodule::isWorkdirInitialized() const
 {
-    return (status() & WorkDirUninitialized) == 0;
+    return (status() & (WorkDirUninitialized | WorkDirDeleted)) == 0;
 }
 
 bool Submodule::initialize(bool overwrite)
@@ -64,38 +65,15 @@ Repository* Submodule::open()
     return repo;
 }
 
-Repository* Submodule::clone()
+Repository* Submodule::clone(CredentialResolver* credentialResolver, ProgressCallback* progressCallback)
 {
-    Repository* repo = nullptr;
-    try
-    {
-        SubmoduleHandle handle = createHandle();
-        throwIfTrue(handle.isNull());
-        git_repository* repoHandle = nullptr;
-        git_submodule_update_options options = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
-        throwOnError(git_submodule_clone(&repoHandle, handle.value(), &options));
-        repo = new Repository(repoHandle);
-    }
-    catch(const GitException&)
-    {
-    }
+    Repository* repo = Commands::cloneSubmodule(repository(), *this, credentialResolver, progressCallback);
     return repo;
 }
 
-bool Submodule::update(bool initialize)
+bool Submodule::update(bool initialize, CredentialResolver* credentialResolver, ProgressCallback* progressCallback)
 {
-    bool result = false;
-    try
-    {
-        SubmoduleHandle handle = createHandle();
-        throwIfTrue(handle.isNull());
-        git_submodule_update_options options = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
-        throwOnError(git_submodule_update(handle.value(), initialize, &options));
-        result = true;
-    }
-    catch(const GitException&)
-    {
-    }
+    bool result = Commands::updateSubmodule(repository(), *this, initialize, credentialResolver, progressCallback);
     return result;
 }
 

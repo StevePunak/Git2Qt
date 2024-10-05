@@ -6,19 +6,10 @@
 
 using namespace GIT;
 
-bool GitEntity::handleError(int value)
-{
-    if(value) {
-        repository()->setErrorText(git_error_last()->message);
-        return true;
-    }
-    return false;
-}
-
 void GitEntity::throwOnError(int result, const QString& message) const
 {
     if(result != 0) {
-        throwException(message);
+        throwException(message, result);
     }
 }
 
@@ -63,7 +54,7 @@ void GitEntity::throwIfNull(Repository* repo, const void* ptr)
     repo->throwIfNull(ptr);
 }
 
-void GitEntity::throwException(const QString& message) const
+void GitEntity::throwException(const QString& message, int errorCode) const
 {
     QString errorText = message;
     if(errorText.isEmpty()) {
@@ -73,6 +64,7 @@ void GitEntity::throwException(const QString& message) const
         }
     }
     repository()->setErrorText(errorText);
+    repository()->setErrorCode(errorCode);
     throw GitException(errorText);
 }
 

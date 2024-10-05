@@ -9,6 +9,7 @@ using namespace GIT;
 SubmoduleCollection::SubmoduleCollection(Repository* repo) :
     GitEntity(SubmoduleCollectionEntity, repo)
 {
+    reload();
 }
 
 Submodule SubmoduleCollection::lookup(const QString& name)
@@ -22,6 +23,7 @@ Submodule SubmoduleCollection::lookup(const QString& name)
         QString path = git_submodule_path(sub);
         QString url = git_submodule_url(sub);
         result = Submodule(repository(), name, path, url);
+        _cachedSubmodules[name] = result;
     }
     catch(const GitException&)
     {
@@ -31,12 +33,17 @@ Submodule SubmoduleCollection::lookup(const QString& name)
 
 Submodule SubmoduleCollection::value(const QString& name)
 {
-    return lookup(name);
+    return _cachedSubmodules.value(name);
 }
 
 Submodule::Map SubmoduleCollection::values()
 {
-    _loadingSubmodules.clear();
+    return _cachedSubmodules;
+}
+
+void SubmoduleCollection::reload()
+{
+    _cachedSubmodules.clear();
     try
     {
         throwOnError(git_submodule_foreach(repository()->handle().value(), submoduleCallback, this));
@@ -44,9 +51,6 @@ Submodule::Map SubmoduleCollection::values()
     catch(const GitException&)
     {
     }
-    Submodule::Map result = _loadingSubmodules;
-    _loadingSubmodules.clear();
-    return result;
 }
 
 bool SubmoduleCollection::isNull() const
@@ -61,7 +65,7 @@ int SubmoduleCollection::submoduleCallback(git_submodule* sm, const char* name, 
     QString url = git_submodule_url(sm);
     Submodule submodule(collection->repository(), name, path, url);
     if(submodule.isNull() == false) {
-        collection->_loadingSubmodules.insert(name, submodule);
+        collection->_cachedSubmodules.insert(name, submodule);
         return 0;
     }
     return 1;

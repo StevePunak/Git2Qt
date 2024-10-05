@@ -28,7 +28,6 @@ Reference::Reference(const Reference& other) :
 Reference::~Reference()
 {
     if(_target != nullptr) {
-        _target->dispose();
         delete _target;
     }
 }
@@ -60,11 +59,6 @@ void Reference::resolveProperties()
         _isRemote = git_reference_is_remote(handle.value());
         _isTag = git_reference_is_tag(handle.value());
     }
-}
-
-void Reference::dispose()
-{
-    createHandle().dispose();
 }
 
 ReferenceHandle Reference::createHandle() const

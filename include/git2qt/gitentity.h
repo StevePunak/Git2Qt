@@ -42,7 +42,6 @@ protected:
 
     GitEntity& operator=(const GitEntity& other);
 
-    bool handleError(int value);
     void throwOnError(int result, const QString& message = QString()) const;
     void throwIfNull(const void* ptr, const QString& message = QString()) const;
     void throwIfFalse(bool result, const QString& message = QString()) const;
@@ -58,7 +57,7 @@ protected:
     void setRepository(Repository* value) { _repository = value; }
 
 private:
-    void throwException(const QString& message) const;
+    void throwException(const QString& message, int errorCode = 0) const;
 
     GitEntityType _objectType = UnknownGitEntityType;
     Repository* _repository = nullptr;

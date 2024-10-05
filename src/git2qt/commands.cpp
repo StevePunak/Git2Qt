@@ -1,6 +1,7 @@
 #include "commands.h"
 
 #include <QDir>
+#include <cloneparameters.h>
 #include <credentialresolver.h>
 #include <git2qt.h>
 #include <gitexception.h>
@@ -52,6 +53,68 @@ Repository* Commands::clone(const QString& remoteUrl, const QString& localPath, 
         result = nullptr;
     }
     return result;
+}
+
+Repository* Commands::cloneSubmodule(Repository* superRepo, const Submodule& submodule, CredentialResolver* credentialResolver, ProgressCallback* progressCallback)
+{
+    Git2Qt::ensureInitialized();
+
+    Repository* result = nullptr;
+    try
+    {
+        CloneParameters callbacks(credentialResolver, progressCallback);
+        git_submodule_update_options clone_opts = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
+
+        clone_opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+
+        clone_opts.fetch_opts.callbacks.payload = &callbacks;
+        clone_opts.fetch_opts.callbacks.credentials = credentialsCallback;
+        clone_opts.fetch_opts.callbacks.transfer_progress = transferProgressCallback;
+
+        SubmoduleHandle submoduleHandle = submodule.createHandle();
+        throwIfTrue(superRepo, submoduleHandle.isNull());
+
+        git_repository* repoHandle = nullptr;
+        throwOnError(superRepo, git_submodule_clone(&repoHandle, submoduleHandle.value(), &clone_opts));
+        result = new Repository(repoHandle);
+    }
+    catch(const GitException& e)
+    {
+        _errorText = e.message();
+        superRepo->setErrorText(e.message());
+        if(result != nullptr) {
+            delete result;
+        }
+        result = nullptr;
+    }
+    return result;
+}
+
+bool Commands::updateSubmodule(Repository* superRepo, const Submodule& submodule, bool initialize, CredentialResolver* credentialResolver, ProgressCallback* progressCallback)
+{
+    bool result = false;
+    try
+    {
+        CloneParameters callbacks(credentialResolver, progressCallback);
+
+        git_submodule_update_options options = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
+
+        options.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+
+        options.fetch_opts.callbacks.payload = &callbacks;
+        options.fetch_opts.callbacks.credentials = credentialsCallback;
+        options.fetch_opts.callbacks.transfer_progress = transferProgressCallback;
+
+        SubmoduleHandle submoduleHandle = submodule.createHandle();
+        throwIfTrue(superRepo, submoduleHandle.isNull());
+        throwOnError(superRepo, git_submodule_update(submoduleHandle.value(), initialize, &options));
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+
 }
 
 int Commands::credentialsCallback(git_cred** cred, const char* url, const char* username, unsigned int allowed_types, void* payload)
