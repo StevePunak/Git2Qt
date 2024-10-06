@@ -781,6 +781,25 @@ Commit Repository::mostRecentCommit()
     return result;
 }
 
+int Repository::commitDistance(const Commit& a, const Commit& b)
+{
+    CommitFilter filter;
+    filter.setIncludeReachableFrom(a.objectId());
+    filter.setIncludeReachableFrom(b.objectId());
+    filter.setSortBy(SortStrategyTime);
+
+    // Create a commit log with results
+    CommitLog commitLog(this, filter);
+    Commit::List results = commitLog.performLookup();
+    int idx1 = results.indexOfObjectId(a.objectId());
+    int idx2 = results.indexOfObjectId(b.objectId());
+    int result = -1;
+    if(idx1 >= 0 && idx2 >= 0) {
+        result = std::abs(idx1 - idx2);
+    }
+    return result;
+}
+
 Blob Repository::findBlob(const ObjectId& objectId)
 {
     Blob result(this, objectId);

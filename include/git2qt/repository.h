@@ -111,6 +111,7 @@ public:
     Commit::List allCommits(CommitSortStrategies strategy = SortStrategyTime | SortStrategyTopological);
     Commit initialCommit();
     Commit mostRecentCommit();
+    int commitDistance(const Commit& a, const Commit& b);
 
     // Blobs
     Blob findBlob(const ObjectId& objectId);
