@@ -166,6 +166,7 @@ public:
     // Remote
     Remote::List remotes() const;
     Reference::List remoteReferences(const QString& remoteName);
+    Reference::List localReferences() const;
     QString firstRemoteUrl() const;
 
     // Graph

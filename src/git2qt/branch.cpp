@@ -132,7 +132,7 @@ Branch Branch::trackedBranch() const
     Branch result;
     try
     {
-        git_buf buf;
+        git_buf buf = GIT_BUF_INIT;
         QString myName = canonicalName();
         throwOnError(git_branch_upstream_name(&buf, repository()->handle().value(), myName.toUtf8().constData()));
 

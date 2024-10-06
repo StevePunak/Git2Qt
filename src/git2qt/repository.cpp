@@ -260,6 +260,8 @@ bool Repository::push(const Branch::List& branches)
             throwIfFalse(push(remote, QString("%1:%2").arg(branch.canonicalName()).arg(branch.upstreamBranchCanonicalName())));
         }
 
+        reloadReferences();
+
         result = true;
     }
     catch(const GitException&)
@@ -1169,6 +1171,17 @@ Reference::List Repository::remoteReferences(const QString& remoteName)
     return references;
 }
 
+Reference::List Repository::localReferences() const
+{
+    Reference::List references;
+    for(const Reference& reference : _references->references()) {
+        if(reference.isRemote() == false) {
+            references.append(reference);
+        }
+    }
+    return references;
+}
+
 QString Repository::firstRemoteUrl() const
 {
     QString result;
@@ -1469,7 +1482,7 @@ void Repository::onFileSystemChanged(const QString&)
 
 void Repository::onNotifyTimerElapsed()
 {
-    logText(LVL_DEBUG, __FUNCTION__);
+    // logText(LVL_DEBUG, __FUNCTION__);
     reloadReferences();
     emit repositoryChanged();
 }
