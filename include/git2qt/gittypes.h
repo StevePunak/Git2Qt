@@ -945,6 +945,49 @@ enum GraphItemType
 };
 Q_DECLARE_FLAGS(GraphItemTypes, GraphItemType)
 
+enum TagFetchMode {
+    /**
+     * Use the setting from the configuration.
+     */
+    RemoteDownloadTagsUnspecified = 0,
+    /**
+     * Ask the server for tags pointing to objects we're already
+     * downloading.
+     */
+    RemoteDownloadTagsAuto,
+    /**
+     * Don't ask for any tags beyond the refspecs.
+     */
+    RemoteDownloadTagsNone,
+    /**
+     * Ask for the all the tags.
+     */
+    RemoteDownloadTagsAll
+};
+
+enum FastForwardStrategy
+{
+    /**
+     * No configuration was found that suggests a preferred behavior for
+     * merge.
+     */
+    FastForwardDefault = 0,
+
+    /**
+     * There is a `merge.ff=false` configuration setting, suggesting that
+     * the user does not want to allow a fast-forward merge.
+     */
+    NoFastForward = (1 << 0),
+
+    /**
+     * There is a `merge.ff=only` configuration setting, suggesting that
+     * the user only wants fast-forward merges.
+     */
+    FastForwardOnly = (1 << 1)
+};
+Q_DECLARE_FLAGS(FastForwardStrategies, FastForwardStrategy)
+
+
 GIT2QT_EXPORT QString getFileStatusString(FileStatuses value);
 GIT2QT_EXPORT FileStatus getFileStatus(const QString& value);
 GIT2QT_EXPORT QList<FileStatus> getFileStatusValues();
@@ -1004,5 +1047,6 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::GitDiffFindFlags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffOptionFlags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::CommitSortStrategies)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::GraphItemTypes)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::FastForwardStrategies)
 
 #endif // GITTYPES_H

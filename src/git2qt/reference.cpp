@@ -50,6 +50,20 @@ Reference& Reference::operator=(const Reference& other)
     return *this;
 }
 
+bool Reference::operator ==(const Reference& other) const
+{
+    bool result = GitEntity::operator ==(other) &&
+                  _canonicalName == other._canonicalName &&
+                  _targetIdentifier == other._targetIdentifier &&
+                  _targetOid == other._targetOid &&
+                  _type == other._type &&
+                  _isBranch == other._isBranch &&
+                  _isNote == other._isNote &&
+                  _isRemote == other._isRemote &&
+                  _isTag == other._isTag;
+    return result;
+}
+
 void Reference::resolveProperties()
 {
     ReferenceHandle handle = createHandle();

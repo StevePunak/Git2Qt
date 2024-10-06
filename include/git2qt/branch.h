@@ -54,6 +54,8 @@ public:
     QVariant toVariant() const { return QVariant::fromValue<Branch>(*this); }
     static Branch fromVariant(const QVariant& value) { return value.value<Branch>(); }
 
+    static QString removeOrigin(const QString& branchName);
+
     class List : public QList<Branch>
     {
     public:
@@ -86,7 +88,10 @@ public:
         Branch findRemoteBranch(const QString& branchName) const
         {
             Branch result;
-            QString needle = QString("origin/%1").arg(branchName);
+            QString needle = branchName;
+            if(needle.startsWith("origin/") == false) {
+                needle.prepend("origin/");
+            }
              auto it = std::find_if(constBegin(), constEnd(), [needle](const Branch& b)
             {
                 return b.branchType() == RemoteBranch && b.name() == needle;

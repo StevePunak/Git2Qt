@@ -29,6 +29,7 @@
 #include <git2qt/submodule.h>
 #include <git2qt/objectdatabase.h>
 #include <git2qt/blob.h>
+#include <git2qt/pulloptions.h>
 
 #include <Kanoop/timespan.h>
 
@@ -68,7 +69,7 @@ public:
     static bool isRepository(const QString& path);
 
     // Fetch
-    bool fetch();
+    bool fetch(const FetchOptions& options = FetchOptions());
 
     // Push
     bool push(const Branch& branch);
@@ -76,6 +77,9 @@ public:
     bool push(const Remote& remote, const QString& objectish, const QString& destinationRefSpec);
     bool push(const Remote& remote, const QString& pushRefSpec);
     bool push(const Remote& remote, const QStringList& pushRefSpecs);
+
+    // Pull
+    bool pull(const PullOptions& options = PullOptions());
 
     // Checkout
     bool checkoutRemoteBranch(const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
@@ -177,7 +181,7 @@ public:
     bool isBare() const { return _bare; }
 
     Branch::List branches() const { return _branches->branches(); }
-    Reference::List references() const { return _references->references(); }
+    Reference::List references() const;
     const RepositoryHandle handle() const { return _handle; }
     Index* index() const { return _index; }
     RepositoryInformation* info() const { return _info; }

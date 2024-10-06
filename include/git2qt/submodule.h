@@ -220,6 +220,10 @@ public:
 
     virtual bool isNull() const override { return _name.isEmpty(); }
 
+    static QString getSubmoduleStatusString(SubmoduleStatus value) { return _SubmoduleStatusToStringMap.getString(value); }
+    static SubmoduleStatus getSubmoduleStatus(const QString& value) { return _SubmoduleStatusToStringMap.getType(value); }
+    static QList<SubmoduleStatus> getSubmoduleStatusValues() { return _SubmoduleStatusToStringMap.getTypes(); }
+
     class Map : public QMap<QString, Submodule> {};
     class List : public QList<Submodule>
     {
@@ -261,7 +265,37 @@ private:
     SubmoduleRecurse _fetchRecurseSumbmodulesRule = RecurseReset;
     SubmoduleIgnore _ignoreRule = IgnoreReset;
     SubmoduleUpdate _updateRule = UpdateReset;
+
+    class SubmoduleStatusToStringMap : public EnumToStringMap<SubmoduleStatus>
+    {
+    public:
+        SubmoduleStatusToStringMap()
+        {
+            insert(Unmodified,                  "Unmodified");
+            insert(InHead,                      "InHead");
+            insert(InIndex,                     "InIndex");
+            insert(InConfig,                    "InConfig");
+            insert(InWorkDir,                   "InWorkDir");
+            insert(IndexAdded,                  "IndexAdded");
+            insert(IndexDeleted,                "IndexDeleted");
+            insert(IndexModified,               "IndexModified");
+            insert(WorkDirUninitialized,        "WorkDirUninitialized");
+            insert(WorkDirAdded,                "WorkDirAdded");
+            insert(WorkDirDeleted,              "WorkDirDeleted");
+            insert(WorkDirModified,             "WorkDirModified");
+            insert(WorkDirFilesIndexDirty,      "WorkDirFilesIndexDirty");
+            insert(WorkDirFilesModified,        "WorkDirFilesModified");
+            insert(WorkDirFilesUntracked,       "WorkDirFilesUntracked");
+        }
+    };
+
+    static const SubmoduleStatusToStringMap _SubmoduleStatusToStringMap;
 };
+
+GIT2QT_EXPORT QString getSubmoduleStatusString(Submodule::SubmoduleStatus value);
+GIT2QT_EXPORT Submodule::SubmoduleStatus getSubmoduleStatus(const QString& value);
+GIT2QT_EXPORT QList<Submodule::SubmoduleStatus> getSubmoduleStatusValues();
+
 
 } // namespace GIT
 

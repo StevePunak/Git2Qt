@@ -75,6 +75,9 @@ QString Branch::friendlyName(bool trimOrigin) const
             result = result.mid(remote.length() + 1);
         }
     }
+    else if(_reference.canonicalName() == "HEAD") {
+        result = _reference.canonicalName();
+    }
     else {
         Log::logText(LVL_ERROR, QString("%1 does not look like a valid branch name").arg(_reference.canonicalName()));
     }
@@ -176,6 +179,16 @@ bool Branch::isHead() const
 bool Branch::isRemote() const
 {
     return _reference.looksLikeRemoteTrackingBranch();
+}
+
+QString Branch::removeOrigin(const QString& branchName)
+{
+    static const QString NEEDLE = "origin/";
+    QString result = branchName;
+    if(result.startsWith(NEEDLE)) {
+        result = result.mid(NEEDLE.length());
+    }
+    return result;
 }
 
 QString Branch::remoteNameFromRemoteTrackingBranch() const

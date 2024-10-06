@@ -21,6 +21,7 @@ class GIT2QT_EXPORT GitEntity
 {
 public:
     virtual ~GitEntity() {}
+    bool operator ==(const GitEntity& other) const;
 
     GitEntityType entityType() const { return _objectType; }
 

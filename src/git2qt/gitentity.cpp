@@ -68,6 +68,11 @@ void GitEntity::throwException(const QString& message, int errorCode) const
     throw GitException(errorText);
 }
 
+bool GitEntity::operator ==(const GitEntity& other) const
+{
+    return _objectType == other._objectType;
+}
+
 void GitEntity::setErrorText(const QString& errorText)
 {
     if(_objectType != RepositoryEntity && _repository != nullptr) {

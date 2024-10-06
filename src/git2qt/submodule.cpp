@@ -6,6 +6,8 @@
 
 using namespace GIT;
 
+const Submodule::SubmoduleStatusToStringMap Submodule::_SubmoduleStatusToStringMap;
+
 Submodule::Submodule(Repository* repo, const QString& name, const QString& path, const QString& url) :
     GitEntity(SubmoduleEntity, repo),
     _name(name), _path(path), _url(url)
@@ -95,4 +97,19 @@ SubmoduleHandle Submodule::createHandle() const
         handle = SubmoduleHandle(sub);
     }
     return handle;
+}
+
+QString GIT::getSubmoduleStatusString(Submodule::SubmoduleStatus value)
+{
+    return Submodule::getSubmoduleStatusString(value);
+}
+
+Submodule::SubmoduleStatus GIT::getSubmoduleStatus(const QString& value)
+{
+    return Submodule::getSubmoduleStatus(value);
+}
+
+QList<Submodule::SubmoduleStatus> GIT::getSubmoduleStatusValues()
+{
+    return Submodule::getSubmoduleStatusValues();
 }

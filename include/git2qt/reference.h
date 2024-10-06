@@ -25,6 +25,7 @@ public:
 
     Reference(const Reference& other);
     Reference& operator=(const Reference& other);
+    bool operator ==(const Reference& other) const;
 
     ReferenceHandle createHandle() const;
 

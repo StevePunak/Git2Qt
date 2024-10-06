@@ -19,7 +19,7 @@ void MergeBaseSeeker::resolve1()
 
 void MergeBaseSeeker::resolve2()
 {
-#define PERF_TEST
+#undef PERF_TEST
 #ifdef PERF_TEST
     static TimeSpan longest;
     QElapsedTimer timer;

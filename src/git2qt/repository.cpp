@@ -216,7 +216,7 @@ void Repository::restartFileSystemWatcher()
     connect(_fileSystemWatcher, &QFileSystemWatcher::fileChanged, this, &Repository::onFileSystemChanged);
 }
 
-bool Repository::fetch()
+bool Repository::fetch(const FetchOptions& options)
 {
     bool result = false;
     try
@@ -225,7 +225,8 @@ bool Repository::fetch()
         if(_remote == nullptr) {
             throwOnError(git_remote_lookup(&_remote, _handle.value(), "origin"));
         }
-        throwOnError(git_remote_fetch(_remote, nullptr, nullptr, nullptr));
+        FetchOptions opts = options;
+        throwOnError(git_remote_fetch(_remote, nullptr, opts.toNative(), nullptr));
 
         result = true;
     }
@@ -313,29 +314,72 @@ bool Repository::push(const Remote& remote, const QStringList& pushRefSpecs)
     return result;
 }
 
+bool Repository::pull(const PullOptions& options)
+{
+    // NOT SURE THIS IS RIGHT - Git2Sharp is quite different
+
+    bool result = false;
+    git_annotated_commit* theirHead = nullptr;
+    try
+    {
+        // Fetch
+        throwIfFalse(fetch(options.fetchOptions()));
+
+        // Get the remotes HEAD
+        throwOnError(git_annotated_commit_from_revspec(&theirHead, _handle.value(), "FETCH_HEAD"));
+
+        git_merge_analysis_t analysis;
+        git_merge_preference_t preference;
+        throwOnError(git_merge_analysis(&analysis, &preference, _handle.value(), (const git_annotated_commit**)&theirHead, 1));
+
+        // Merge the remote's HEAD into the current branch
+        MergeOptions mergeOpts = options.mergeOptions();
+        CheckoutOptions checkoutOpts;
+        throwOnError(git_merge(_handle.value(), (const git_annotated_commit**)&theirHead, 1, mergeOpts.toNative(), checkoutOpts.toNative()));
+
+        // Checkout the changes
+        throwOnError(git_checkout_head(_handle.value(), checkoutOpts.toNative()));
+
+        reloadReferences();
+
+        result = true;
+    }
+    catch(const GitException&)
+    {
+        result = false;
+    }
+
+    if(theirHead != nullptr) {
+        git_annotated_commit_free(theirHead);
+    }
+    return result;
+}
+
 bool Repository::checkoutRemoteBranch(const QString& branchName, const CheckoutOptions& options)
 {
     bool result = false;
+    QString name = Branch::removeOrigin(branchName);
+
     try
     {
         throwIfTrue(_handle.isNull(), "Repository is not initialized");
         throwIfTrue(head().isNull(), "No HEAD found");
-        throwIfTrue(_branches->findRemoteBranch(branchName).isNull(), "Failed to find remote branch");
+        throwIfTrue(_branches->findRemoteBranch(name).isNull(), "Failed to find remote branch");
 
         // create new branch from head
         AnnotatedCommitHandle headAnnotatedCommit = AnnotatedCommitHandle::fromRef(this, head());
         throwIfTrue(headAnnotatedCommit.isNull(), "Failed to find annotated commit for HEAD");
 
-        if(_branches->findLocalBranch(branchName).isNull()) {
-            Branch newBranch = createBranchFromAnnotatedCommit(headAnnotatedCommit, branchName);
+        if(_branches->findLocalBranch(name).isNull()) {
+            Branch newBranch = createBranchFromAnnotatedCommit(headAnnotatedCommit, name);
             throwIfTrue(newBranch.isNull());
         }
 
         // Create and checkout tree
-        Tree tree = Tree::createFromBranchName(this, branchName);
+        Tree tree = Tree::createFromBranchName(this, name);
         throwIfTrue(tree.isNull(), "Failed to create tree");
 
-        result = checkoutTree(tree, branchName, options);
+        result = checkoutTree(tree, name, options);
     }
     catch(const GitException&)
     {
@@ -1147,6 +1191,16 @@ Branch Repository::head()
 bool Repository::setHead(const QString& referenceName)
 {
     return git_repository_set_head(_handle.value(), referenceName.toUtf8().constData()) == 0;
+}
+
+Reference::List Repository::references() const
+{
+    Reference::List references = _references->references();
+    Reference head = _references->head();
+    if(head.isNull() == false && references.contains(head) == false) {
+        references.prepend(head);
+    }
+    return references;
 }
 
 Submodule::List Repository::submodules() const
