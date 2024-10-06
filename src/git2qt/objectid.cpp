@@ -68,6 +68,12 @@ ObjectId ObjectId::createFromReference(const Reference& reference)
     return result;
 }
 
+bool ObjectId::isValid(const QString& sha)
+{
+    QByteArray data = QByteArray::fromHex(sha.toUtf8());
+    return data.length() == _rawSize;
+}
+
 void ObjectId::calculateParts()
 {
     if(_sha.length() == HexSize) {

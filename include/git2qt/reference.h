@@ -96,6 +96,16 @@ public:
             return result;
         }
 
+        Reference findByCanonicalName(const QString& canonicalName) const
+        {
+            Reference result;
+            auto it = std::find_if(constBegin(), constEnd(), [canonicalName](const Reference& r) { return r.canonicalName() == canonicalName; });
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
+
         List findByTargetObjectId(const ObjectId& objectId) const
         {
             List result;

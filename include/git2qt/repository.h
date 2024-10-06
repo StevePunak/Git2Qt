@@ -92,6 +92,7 @@ public:
     Branch createBranch(const QString& branchName, bool switchToNewBranch = false);
     Branch createBranchFromAnnotatedCommit(const AnnotatedCommitHandle& annotatedCommit, const QString& branchName);
     Branch findLocalBranch(const QString& branchName) const;
+    Branch findRemoteBranch(const QString& branchName) const;
     bool deleteLocalBranch(const Reference& reference);
     Branch currentBranch();
 

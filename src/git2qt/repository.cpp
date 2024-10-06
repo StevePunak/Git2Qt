@@ -530,6 +530,11 @@ Branch Repository::findLocalBranch(const QString& branchName) const
     return _branches->findLocalBranch(branchName);
 }
 
+Branch Repository::findRemoteBranch(const QString& branchName) const
+{
+    return _branches->findRemoteBranch(branchName);
+}
+
 bool Repository::deleteLocalBranch(const Reference &reference)
 {
     bool result = false;

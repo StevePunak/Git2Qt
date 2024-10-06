@@ -17,7 +17,11 @@ Reference::Reference(Repository* repo, const QString& canonicalName, const QStri
     GitEntity(ReferenceEntity, repo),
     _canonicalName(canonicalName), _targetIdentifier(targetIdentifier),
     _type(referenceType)
-{}
+{
+    if(ObjectId::isValid(targetIdentifier)) {
+        _targetOid = targetIdentifier;
+    }
+}
 
 Reference::Reference(const Reference& other) :
     GitEntity(ReferenceEntity, other.repository())

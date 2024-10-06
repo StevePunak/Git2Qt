@@ -37,6 +37,7 @@ public:
     QString remoteName() const;
     QString createRemoteName(const Remote& remote);
     BranchType branchType() const { return _branchType; }
+    Branch trackedBranch() const;
 
     Reference reference() const { return _reference; }
 
@@ -89,10 +90,11 @@ public:
         {
             Branch result;
             QString needle = branchName;
-            if(needle.startsWith("origin/") == false) {
+            if(needle.contains("/origin/") == false) {
                 needle.prepend("origin/");
             }
-             auto it = std::find_if(constBegin(), constEnd(), [needle](const Branch& b)
+
+            auto it = std::find_if(constBegin(), constEnd(), [needle](const Branch& b)
             {
                 return b.branchType() == RemoteBranch && b.name() == needle;
             });

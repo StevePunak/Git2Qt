@@ -56,6 +56,8 @@ public:
     QVariant toVariant() const { return QVariant::fromValue<ObjectId>(*this); }
     static ObjectId fromVariant(const QVariant& value) { return value.value<ObjectId>(); }
 
+    static bool isValid(const QString& sha);
+
     class List : public QList<ObjectId>
     {
     public:

@@ -127,6 +127,26 @@ QString Branch::createRemoteName(const Remote& remote)
     return result;
 }
 
+Branch Branch::trackedBranch() const
+{
+    Branch result;
+    try
+    {
+        git_buf buf;
+        QString myName = canonicalName();
+        throwOnError(git_branch_upstream_name(&buf, repository()->handle().value(), myName.toUtf8().constData()));
+
+        QString branchName = buf.ptr;
+        Reference reference = repository()->references().findByCanonicalName(branchName);
+        throwIfTrue(reference.isNull(), "Reference not found");
+        result = Branch(repository(), reference);
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
 Commit Branch::tip()
 {
     Commit commit(repository());
