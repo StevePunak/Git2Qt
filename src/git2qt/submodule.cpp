@@ -83,9 +83,11 @@ Submodule::SubmoduleStatuses Submodule::status() const
 {
     SubmoduleStatuses status = Unmodified;
     unsigned int stat;
+logText(LVL_DEBUG, QString("Status for %1   p1").arg(_name));
     if(git_submodule_status(&stat, repository()->handle().value(), _name.toUtf8().constData(), (git_submodule_ignore_t)GitSubmoduleIgnore::Unspecified) == 0) {
         status = (SubmoduleStatuses)stat;
     }
+logText(LVL_DEBUG, QString("Status for %2   p2").arg(_name));
     return status;
 }
 

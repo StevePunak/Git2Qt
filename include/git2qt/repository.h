@@ -30,6 +30,7 @@
 #include <git2qt/objectdatabase.h>
 #include <git2qt/blob.h>
 #include <git2qt/pulloptions.h>
+#include <git2qt/statusoptions.h>
 
 #include <Kanoop/timespan.h>
 
@@ -121,7 +122,7 @@ public:
     bool reset(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions = CheckoutOptions());
 
     // Status
-    GIT::RepositoryStatus status();
+    GIT::RepositoryStatus status(const StatusOptions& options = StatusOptions());
 
     // Stage
     bool stage(const QString& path, const StageOptions& stageOptions = StageOptions());

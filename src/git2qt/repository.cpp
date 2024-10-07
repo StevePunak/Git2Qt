@@ -831,8 +831,11 @@ bool Repository::reset(const Commit& commit, ResetMode resetMode, const Checkout
     return result;
 }
 
-RepositoryStatus Repository::status()
+RepositoryStatus Repository::status(const StatusOptions& options)
 {
+    QElapsedTimer t;
+    t.start();
+
     RepositoryStatus result;
     git_status_list* status_list = nullptr;
 
@@ -840,8 +843,8 @@ RepositoryStatus Repository::status()
     {
         throwOnError(git_index_read(_index->createHandle().value(), false));
 
-        StatusOptions options;
-        throwOnError(git_status_list_new(&status_list, _handle.value(), options.toNative()));
+        StatusOptions opts = options;
+        throwOnError(git_status_list_new(&status_list, _handle.value(), opts.toNative()));
         int count = git_status_list_entrycount(status_list);
         for(int i = 0;i < count;i++) {
             const git_status_entry* entry = git_status_byindex(status_list, i);
@@ -856,6 +859,8 @@ RepositoryStatus Repository::status()
     if(status_list != nullptr) {
         git_status_list_free(status_list);
     }
+
+    logText(LVL_DEBUG, QString("Retrieved %1 entries in %2").arg(result.entries().count()).arg(TimeSpan::fromMilliseconds(t.elapsed()).toString()));
     return result;
 }
 
