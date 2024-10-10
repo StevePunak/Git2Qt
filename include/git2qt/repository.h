@@ -31,6 +31,8 @@
 #include <git2qt/blob.h>
 #include <git2qt/pulloptions.h>
 #include <git2qt/statusoptions.h>
+#include <git2qt/mergeresult.h>
+#include <git2qt/mergeanalysisresult.h>
 
 #include <Kanoop/timespan.h>
 
@@ -42,7 +44,7 @@ class AnnotatedTag;
 class BranchCollection;
 class CompareOptions;
 class Configuration;
-class CredentialResolver;
+class AbstractCredentialResolver;
 class Diff;
 class Index;
 class LightweightTag;
@@ -80,7 +82,8 @@ public:
     bool push(const Remote& remote, const QStringList& pushRefSpecs);
 
     // Pull
-    bool pull(const PullOptions& options = PullOptions());
+    MergeResult pull(const Signature& merger, const PullOptions& options = PullOptions());
+    bool pull2(const PullOptions& options = PullOptions());
 
     // Checkout
     bool checkoutRemoteBranch(const QString& branchName, const CheckoutOptions& options = CheckoutOptions());
@@ -164,6 +167,10 @@ public:
     DiffDelta diffDelta(const StatusEntry& statusEntry) const;
     DiffDelta::List diffDeltas(const StatusEntry::List& statusEntries) const;
 
+    // Merge
+    MergeResult merge(const QList<AnnotatedCommitHandle>& handles, const Signature& merger, const MergeOptions& options);
+    MergeResult mergeFetchedRefs(const Signature& merger, const MergeOptions& options);
+
     // Remote
     Remote::List remotes() const;
     Reference::List remoteReferences(const QString& remoteName);
@@ -176,7 +183,7 @@ public:
     ObjectDatabase* objectDatabase() const { return _objectDatabase; }
 
     // Credentials Callback
-    void setCredentialResolver(CredentialResolver* value) { _credentialResolver = value; }
+    void setCredentialResolver(AbstractCredentialResolver* value) { _credentialResolver = value; }
 
     Branch head();
     bool setHead(const QString& referenceName);
@@ -225,7 +232,12 @@ private:
 
     bool reloadReferences();
     Commit::List retrieveParentsOfTheCommitBeingCreated(bool amendPreviousCommit);
+
     Commit::List mergeHeads();
+    MergeAnalysisResult mergeAnalysys(const QList<AnnotatedCommitHandle>& handles);
+    MergeResult fastForwardMerge(const AnnotatedCommitHandle& annotatedCommit, const MergeOptions& options);
+    MergeResult normalMerge(const QList<AnnotatedCommitHandle>& annotatedCommits, const Signature& merger, const MergeOptions& options);
+    FastForwardStrategy fastForwardStrategyFromMergePreference(MergePreferences preference) const;
 
     QString makeReferenceName(const QString& branchName);
     QString buildCommitLogMessage(const Commit& commit, bool amendPreviousCommit, bool isHeadOrphaned, bool isMergeCommit) const;
@@ -247,7 +259,7 @@ private:
     Network* _network = nullptr;
     SubmoduleCollection* _submodules = nullptr;
     TagCollection* _tags = nullptr;
-    CredentialResolver* _credentialResolver = nullptr;
+    AbstractCredentialResolver* _credentialResolver = nullptr;
     BranchCollection* _branches = nullptr;
     StashCollection* _stashes = nullptr;
 

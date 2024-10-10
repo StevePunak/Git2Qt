@@ -127,6 +127,19 @@ QString Branch::createRemoteName(const Remote& remote)
     return result;
 }
 
+Branch Branch::resolved() const
+{
+    Branch result;
+    if(_reference.isSymbolic() && _reference.target() != nullptr) {
+        Reference reference = *_reference.target();
+        result = Branch(repository(), reference);
+    }
+    else {
+        result = *this;
+    }
+    return result;
+}
+
 Branch Branch::trackedBranch() const
 {
     Branch result;
@@ -183,6 +196,11 @@ Commit Branch::birth()
     }
 
     return commit;
+}
+
+bool Branch::isTracking() const
+{
+    return trackedBranch().isNull() == false;
 }
 
 bool Branch::isHead() const

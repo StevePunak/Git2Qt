@@ -31,7 +31,12 @@ Submodule::Submodule(Repository* repo, const QString& name, const QString& path,
 
 bool Submodule::isWorkdirInitialized() const
 {
-    return (status() & (WorkDirUninitialized | WorkDirDeleted)) == 0;
+    return (status(IgnoreDirty) & (WorkDirUninitialized | WorkDirDeleted)) == 0;
+}
+
+bool Submodule::isInIndexButNotInHead() const
+{
+    return (status(IgnoreDirty) & (WorkDirAdded)) != 0;
 }
 
 bool Submodule::initialize(bool overwrite)
@@ -67,27 +72,25 @@ Repository* Submodule::open()
     return repo;
 }
 
-Repository* Submodule::clone(CredentialResolver* credentialResolver, ProgressCallback* progressCallback)
+Repository* Submodule::clone(AbstractCredentialResolver* credentialResolver, ProgressCallback* progressCallback)
 {
     Repository* repo = Commands::cloneSubmodule(repository(), *this, credentialResolver, progressCallback);
     return repo;
 }
 
-bool Submodule::update(bool initialize, CredentialResolver* credentialResolver, ProgressCallback* progressCallback)
+bool Submodule::update(bool initialize, AbstractCredentialResolver* credentialResolver, ProgressCallback* progressCallback)
 {
     bool result = Commands::updateSubmodule(repository(), *this, initialize, credentialResolver, progressCallback);
     return result;
 }
 
-Submodule::SubmoduleStatuses Submodule::status() const
+Submodule::SubmoduleStatuses Submodule::status(SubmoduleIgnore ignore) const
 {
     SubmoduleStatuses status = Unmodified;
     unsigned int stat;
-logText(LVL_DEBUG, QString("Status for %1   p1").arg(_name));
-    if(git_submodule_status(&stat, repository()->handle().value(), _name.toUtf8().constData(), (git_submodule_ignore_t)GitSubmoduleIgnore::Unspecified) == 0) {
+    if(git_submodule_status(&stat, repository()->handle().value(), _name.toUtf8().constData(), (git_submodule_ignore_t)ignore) == 0) {
         status = (SubmoduleStatuses)stat;
     }
-logText(LVL_DEBUG, QString("Status for %2   p2").arg(_name));
     return status;
 }
 

@@ -40,12 +40,20 @@ Commit::List CommitLog::performLookup()
         }
 
         ObjectId::List foundObjectIds;
+        ObjectId::Set foundObjectIdSet; // for fast lookup of stopWhenFound
         git_oid oid;
         int res;
         while((res = git_revwalk_next(&oid, handle.value())) == 0) {
             foundObjectIds.append(oid);
+            foundObjectIdSet.insert(oid);
             if(_filter.maxResults() > 0 && foundObjectIds.count() >= _filter.maxResults()) {
                 break;
+            }
+
+            if(_filter.stopWhenFound().count() > 0) {
+                if(foundObjectIdSet.containsAll(_filter.stopWhenFound())) {
+                    break;
+                }
             }
         }
         throwIfFalse(res == GIT_ITEROVER || res == 0);

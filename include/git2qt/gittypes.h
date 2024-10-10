@@ -9,6 +9,7 @@
 #define GITTYPES_H
 #include <Qt>
 #include <git2qt/declspec.h>
+#include <git2.h>
 
 namespace GIT {
 
@@ -161,9 +162,9 @@ enum GitStatusOptionFlags
 
 enum GitStatusShow
 {
-    IndexAndWorkDir = 0,
-    IndexOnly = 1,
-    WorkDirOnly = 2,
+    StatusShowIndexAndWorkDir = 0,
+    StatusShowIndexOnly = 1,
+    StatusShowWorkDirOnly = 2,
 };
 
 enum SubmoduleIgnore
@@ -987,6 +988,333 @@ enum FastForwardStrategy
 };
 Q_DECLARE_FLAGS(FastForwardStrategies, FastForwardStrategy)
 
+enum MergeAnalysis
+{
+    /// <summary>
+    /// No merge is possible.  (Unused.)
+    /// </summary>
+    MergeAnalysisNone = 0,
+
+    /// <summary>
+    /// A "normal" merge; both HEAD and the given merge input have diverged
+    /// from their common ancestor.  The divergent commits must be merged.
+    /// </summary>
+    MergeAnalysisNormal = (1 << 0),
+
+    /// <summary>
+    /// All given merge inputs are reachable from HEAD, meaning the
+    /// repository is up-to-date and no merge needs to be performed.
+    /// </summary>
+    MergeAnalysisUpToDate = (1 << 1),
+
+    /// <summary>
+    /// The given merge input is a fast-forward from HEAD and no merge
+    /// needs to be performed.  Instead, the client can check out the
+    /// given merge input.
+    /// </summary>
+    MergeAnalysisFastforward = (1 << 2),
+
+    /// <summary>
+    /// The HEAD of the current repository is "unborn" and does not point to
+    /// a valid commit.  No merge can be performed, but the caller may wish
+    /// to simply set HEAD to the target commit(s).
+    /// </summary>
+    MergeAnalysisUnborn = (1 << 3),
+};
+Q_DECLARE_FLAGS(MergeAnalyses, MergeAnalysis)
+
+enum MergePreference
+{
+    /// <summary>
+    /// No configuration was found that suggests a preferred behavior for
+    /// merge.
+    /// </summary>
+    MergePreferenceNone = 0,
+
+    /// <summary>
+    /// There is a `merge.ff=false` configuration setting, suggesting that
+    /// the user does not want to allow a fast-forward merge.
+    /// </summary>
+    MergePreferenceNoFastForward = (1 << 0),
+
+    /// <summary>
+    /// There is a `merge.ff=only` configuration setting, suggesting that
+    /// the user only wants fast-forward merges.
+    /// </summary>
+    MergePreferenceFastForwardOnly = (1 << 1),
+};
+Q_DECLARE_FLAGS(MergePreferences, MergePreference)
+
+enum MergeFlag
+{
+    /// <summary>
+    /// No options.
+    /// </summary>
+    MergeFlagNormal = 0,
+
+    /// <summary>
+    /// Detect renames that occur between the common ancestor and the "ours"
+    /// side or the common ancestor and the "theirs" side.  This will enable
+    /// the ability to merge between a modified and renamed file.
+    /// </summary>
+    MergeFlagFindRenames = (1 << 0),
+
+    /// <summary>
+    /// If a conflict occurs, exit immediately instead of attempting to
+    /// continue resolving conflicts.  The merge operation will fail with
+    /// GIT_EMERGECONFLICT and no index will be returned.
+    ///</summary>
+    MergeFlagFailOnConflict = (1 << 1),
+
+    /// <summary>
+    /// Do not write the REUC extension on the generated index
+    /// </summary>
+    MergeFlagSkipReuc = (1 << 2),
+
+    /// <summary>
+    /// If the commits being merged have multiple merge bases, do not build
+    /// a recursive merge base (by merging the multiple merge bases),
+    /// instead simply use the first base.  This flag provides a similar
+    /// merge base to `git-merge-resolve`.
+    /// </summary>
+    MergeFlagNoRecursive = (1 << 3),
+};
+Q_DECLARE_FLAGS(MergeFlags, MergeFlag)
+
+enum MergeFileFlag
+{
+    /// <summary>
+    /// Defaults
+    /// </summary>
+    MergeFileDefault = 0,
+
+    /// <summary>
+    /// Create standard conflicted merge files
+    /// </summary>
+    MergeFileStyleMerge = (1 << 0),
+
+    /// <summary>
+    /// Create diff3-style files
+    /// </summary>
+    MergeFileStyleDifF3 = (1 << 1),
+
+    /// <summary>
+    /// Condense non-alphanumeric regions for simplified diff file
+    /// </summary>
+    MergeFileSimplifyAlnum = (1 << 2),
+
+    /// <summary>
+    /// Ignore all whitespace
+    /// </summary>
+    MergeFileIgnoreWhitespace = (1 << 3),
+
+    /// <summary>
+    /// Ignore changes in amount of whitespace
+    /// </summary>
+    MergeFileIgnoreWhitespaceChange = (1 << 4),
+
+    /// <summary>
+    /// Ignore whitespace at end of line
+    /// </summary>
+    MergeFileIgnoreWhitespaceEol = (1 << 5),
+
+    /// <summary>
+    /// Use the "patience diff" algorithm
+    /// </summary>
+    MergeFileDiffPatience = (1 << 6),
+
+    /// <summary>
+    /// Take extra time to find minimal diff
+    /// </summary>
+    MergeFileDiffMinimal = (1 << 7),
+};
+Q_DECLARE_FLAGS(MergeFileFlags, MergeFileFlag)
+
+enum CheckoutNotifyFlag
+{
+
+    /// <summary>
+    /// No checkout notification.
+    /// </summary>
+    CheckoutNotifyNone = 0, /* GIT_CHECKOUT_NOTIFY_NONE */
+
+    /// <summary>
+    /// Notify on conflicting paths.
+    /// </summary>
+    CheckoutNotifyConflict = (1 << 0), /* GIT_CHECKOUT_NOTIFY_CONFLICT */
+
+    /// <summary>
+    /// Notify about dirty files. These are files that do not need
+    /// an update, but no longer match the baseline.
+    /// </summary>
+    CheckoutNotifyDirty = (1 << 1), /* GIT_CHECKOUT_NOTIFY_DIRTY */
+
+    /// <summary>
+    /// Notify for files that will be updated.
+    /// </summary>
+    CheckoutNotifyUpdated = (1 << 2), /* GIT_CHECKOUT_NOTIFY_UPDATED */
+
+    /// <summary>
+    /// Notify for untracked files.
+    /// </summary>
+    CheckoutNotifyUntracked = (1 << 3), /* GIT_CHECKOUT_NOTIFY_UNTRACKED */
+
+    /// <summary>
+    /// Notify about ignored file.
+    /// </summary>
+    CheckoutNotifyIgnored = (1 << 4), /* GIT_CHECKOUT_NOTIFY_IGNORED */
+};
+Q_DECLARE_FLAGS(CheckoutNotifyFlags, CheckoutNotifyFlag)
+
+/// <summary>
+/// Enum specifying what content checkout should write to disk
+/// for conflicts.
+/// </summary>
+enum CheckoutFileConflictStrategy
+{
+    /// <summary>
+    /// Use the default behavior for handling file conflicts. This is
+    /// controlled by the merge.conflictstyle config option, and is "Merge"
+    /// if no option is explicitly set.
+    /// </summary>
+    CheckoutFileConflictNormal,
+
+    /// <summary>
+    /// For conflicting files, checkout the "ours" (stage 2)  version of
+    /// the file from the index.
+    /// </summary>
+    CheckoutFileConflictOurs,
+
+    /// <summary>
+    /// For conflicting files, checkout the "theirs" (stage 3) version of
+    /// the file from the index.
+    /// </summary>
+    CheckoutFileConflictTheirs,
+
+    /// <summary>
+    /// Write normal merge files for conflicts.
+    /// </summary>
+    CheckoutFileConflictMerge,
+
+    /// <summary>
+    /// Write diff3 formated files for conflicts.
+    /// </summary>
+    CheckoutFileConflictDiff3
+};
+
+enum CheckoutStrategy
+{
+    /// <summary>
+    /// Default is a dry run, no actual updates.
+    /// </summary>
+    CheckoutStrategyNone = GIT_CHECKOUT_NONE,
+
+    /// <summary>
+    /// Allow safe updates that cannot overwrite uncommited data.
+    /// </summary>
+    CheckoutStrategySafe = GIT_CHECKOUT_SAFE,
+
+    /// <summary>
+    /// Allow update of entries in working dir that are modified from HEAD.
+    /// </summary>
+    CheckoutStrategyForce = GIT_CHECKOUT_FORCE,
+
+    /// <summary>
+    /// Allow checkout to recreate missing files.
+    /// </summary>
+    CheckoutStrategyRecreateMissing = GIT_CHECKOUT_RECREATE_MISSING,
+
+    /// <summary>
+    /// Allow checkout to make safe updates even if conflicts are found
+    /// </summary>
+    CheckoutStrategyAllowConflicts = GIT_CHECKOUT_ALLOW_CONFLICTS,
+
+    /// <summary>
+    /// Remove untracked files not in index (that are not ignored)
+    /// </summary>
+    CheckoutStrategyRemoveUntracked = GIT_CHECKOUT_REMOVE_UNTRACKED,
+
+    /// <summary>
+    /// Remove ignored files not in index
+    /// </summary>
+    CheckoutStrategy_REMOVE_IGNORED = GIT_CHECKOUT_REMOVE_IGNORED,
+
+    /// <summary>
+    /// Only update existing files, don't create new ones
+    /// </summary>
+    CheckoutStrategyUpdateOnly = GIT_CHECKOUT_UPDATE_ONLY,
+
+    /// <summary>
+    /// Normally checkout updates index entries as it goes; this stops that
+    /// Implies `GIT_CHECKOUT_DONT_WRITE_INDEX`.
+    /// </summary>
+    CheckoutStrategyDontUpdateIndex = GIT_CHECKOUT_DONT_UPDATE_INDEX,
+
+    /// <summary>
+    /// Don't refresh index/config/etc before doing checkout
+    /// </summary>
+    CheckoutStrategyNoRefresh = GIT_CHECKOUT_NO_REFRESH,
+
+    ///Allow checkout to skip unmerged files
+    CheckoutStrategySkipUnmerged = GIT_CHECKOUT_SKIP_UNMERGED,
+
+    /// <summary>
+    /// For unmerged files, checkout stage 2 from index
+    /// </summary>
+    CheckoutStrategyUseOurs = GIT_CHECKOUT_USE_OURS,
+
+    /// <summary>
+    /// For unmerged files, checkout stage 3 from index
+    /// </summary>
+    CheckoutStrategyUseTheirs = GIT_CHECKOUT_USE_THEIRS,
+
+    /// <summary>
+    /// Treat pathspec as simple list of exact match file paths
+    /// </summary>
+    CheckoutStrategyDisablePathspecMatch = GIT_CHECKOUT_DISABLE_PATHSPEC_MATCH,
+
+    /// <summary>
+    /// Ignore directories in use, they will be left empty
+    /// </summary>
+    CheckoutStrategySkipLockedDirectories = GIT_CHECKOUT_SKIP_LOCKED_DIRECTORIES,
+
+    /// <summary>
+    /// Don't overwrite ignored files that exist in the checkout target
+    /// </summary>
+    CheckoutStrategyDontOverwriteIgnored = GIT_CHECKOUT_DONT_OVERWRITE_IGNORED,
+
+    /// <summary>
+    /// Write normal merge files for conflicts
+    /// </summary>
+    CheckoutStrategyConflictStyleMerge = GIT_CHECKOUT_CONFLICT_STYLE_MERGE,
+
+    /// <summary>
+    /// Include common ancestor data in diff3 format files for conflicts
+    /// </summary>
+    CheckoutStrategyConflictStyleDiff3 = GIT_CHECKOUT_CONFLICT_STYLE_DIFF3,
+
+    /// <summary>
+    /// Don't overwrite existing files or folders
+    /// </summary>
+    CheckoutStrategyDontRemoveExisting = GIT_CHECKOUT_DONT_REMOVE_EXISTING,
+
+    /// <summary>
+    /// Normally checkout writes the index upon completion; this prevents that.
+    /// </summary>
+    CheckoutStrategyDontWriteIndex = GIT_CHECKOUT_DONT_WRITE_INDEX,
+
+    // THE FOLLOWING OPTIONS ARE NOT YET IMPLEMENTED
+
+    /// <summary>
+    /// Recursively checkout submodules with same options (NOT IMPLEMENTED)
+    /// </summary>
+    CheckoutStrategyUpdateSubmodules = GIT_CHECKOUT_UPDATE_SUBMODULES,
+
+    /// <summary>
+    /// Recursively checkout submodules if HEAD moved in super repo (NOT IMPLEMENTED)
+    /// </summary>
+    CheckoutStrategyUpdateSubmodulesIfChanged = GIT_CHECKOUT_UPDATE_SUBMODULES_IF_CHANGED,
+};
 
 GIT2QT_EXPORT QString getFileStatusString(FileStatuses value);
 GIT2QT_EXPORT FileStatus getFileStatus(const QString& value);
@@ -1048,5 +1376,10 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::DiffOptionFlags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::CommitSortStrategies)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::GraphItemTypes)
 Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::FastForwardStrategies)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::MergeAnalyses)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::MergePreferences)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::MergeFlags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::MergeFileFlags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GIT::CheckoutNotifyFlags)
 
 #endif // GITTYPES_H

@@ -1,6 +1,6 @@
 #include "remote.h"
 
-#include <credentialresolver.h>
+#include <abstractcredentialresolver.h>
 #include <repository.h>
 #include <referencecollection.h>
 #include <gitexception.h>

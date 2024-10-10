@@ -6,19 +6,19 @@
  *
  * Stephen Punak, August 1, 2024
 */
-#ifndef CREDENTIALRESOLVER_H
-#define CREDENTIALRESOLVER_H
+#ifndef ABSTRACTCREDENTIALRESOLVER_H
+#define ABSTRACTCREDENTIALRESOLVER_H
 #include <git2qt/kanoopgit.h>
 #include <QObject>
 #include <git2qt/declspec.h>
 
 namespace GIT {
 
-class GIT2QT_EXPORT CredentialResolver
+class GIT2QT_EXPORT AbstractCredentialResolver
 {
 public:
-    CredentialResolver() {}
-    virtual ~CredentialResolver() {}
+    AbstractCredentialResolver() {}
+    virtual ~AbstractCredentialResolver() {}
 
     /**
      * Public getters
@@ -46,4 +46,4 @@ private:
 
 } // namespace GIT
 
-#endif // CREDENTIALRESOLVER_H
+#endif // ABSTRACTCREDENTIALRESOLVER_H

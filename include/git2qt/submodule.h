@@ -16,7 +16,7 @@ namespace GIT {
 
 class ProgressCallback;
 
-class CredentialResolver;
+class AbstractCredentialResolver;
 
 class Repository;
 class GIT2QT_EXPORT Submodule : public GitEntity
@@ -187,15 +187,6 @@ public:
     };
     Q_DECLARE_FLAGS(SubmoduleStatuses, SubmoduleStatus)
 
-    enum GitSubmoduleIgnore
-    {
-        Unspecified = -1,
-        None = 1,
-        Untracked = 2,
-        Dirty = 3,
-        All = 4,
-    };
-
     QString name() const { return _name; }
     QString path() const { return _path; }
     QString url() const { return _url; }
@@ -207,13 +198,14 @@ public:
     SubmoduleUpdate updateRule() const { return _updateRule; }
 
     bool isWorkdirInitialized() const;
+    bool isInIndexButNotInHead() const;
 
     bool initialize(bool overwrite = false);
     Repository* open();
-    Repository* clone(CredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
-    bool update(bool initialize = false, CredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
+    Repository* clone(AbstractCredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
+    bool update(bool initialize = false, AbstractCredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
 
-    SubmoduleStatuses status() const;
+    SubmoduleStatuses status(SubmoduleIgnore ignore = IgnoreNone) const;
 
     QVariant toVariant() const { return QVariant::fromValue<Submodule>(*this); }
     static Submodule fromVariant(const QVariant& value) { return value.value<Submodule>(); }

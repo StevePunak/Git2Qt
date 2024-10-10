@@ -46,6 +46,8 @@ public:
     Reference* target() const { return _target; }
     ObjectId targetObjectId() const { return _targetOid; }
 
+    Reference resolveToDirectReference() const;
+
     void resolveTarget();
 
     bool isBranch() const { return _isBranch; }

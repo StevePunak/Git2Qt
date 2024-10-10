@@ -38,6 +38,8 @@ public:
 private:
     StatusEntry::List _statusEntries;
     bool _dirty;
+
+    friend class Repository;
 };
 
 } // namespace GIT

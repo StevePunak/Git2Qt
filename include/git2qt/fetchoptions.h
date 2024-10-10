@@ -21,6 +21,7 @@ public:
     void setCustomHeaders(QStringList value) { _customHeaders = value; }
 
     const git_fetch_options* toNative();
+    void makeNative(git_fetch_options* options);
 
 private:
     TagFetchMode _tagFetchMode = RemoteDownloadTagsUnspecified;

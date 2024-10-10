@@ -225,8 +225,12 @@ bool Repository::fetch(const FetchOptions& options)
         if(_remote == nullptr) {
             throwOnError(git_remote_lookup(&_remote, _handle.value(), "origin"));
         }
-        FetchOptions opts = options;
-        throwOnError(git_remote_fetch(_remote, nullptr, opts.toNative(), nullptr));
+
+        git_fetch_options opts;
+        FetchOptions(options).makeNative(&opts);
+        opts.callbacks.credentials = credentialsCallback;
+        opts.callbacks.payload = this;
+        throwOnError(git_remote_fetch(_remote, nullptr, &opts, nullptr));
 
         result = true;
     }
@@ -316,7 +320,32 @@ bool Repository::push(const Remote& remote, const QStringList& pushRefSpecs)
     return result;
 }
 
-bool Repository::pull(const PullOptions& options)
+MergeResult Repository::pull(const Signature& merger, const PullOptions& options)
+{
+    MergeResult result;
+    try
+    {
+        Branch currentBranch = head();
+        throwIfTrue(currentBranch.isNull(), "Could not locate HEAD");
+        throwIfTrue(merger.isNull(), "No signature supplied for pull/merge");
+        currentBranch = currentBranch.resolved();
+        throwIfTrue(currentBranch.isNull(), "Failed to resolve target for HEAD");
+        throwIfFalse(currentBranch.isTracking(), "There is no tracking information for the current branch");
+        throwIfTrue(currentBranch.remoteName().isEmpty(), "No upstream remote for the current branch.");
+
+        // Fetch
+        throwIfFalse(fetch(options.fetchOptions()));
+
+        result = mergeFetchedRefs(merger, options.mergeOptions());
+    }
+    catch(const GitException&)
+    {
+    }
+
+    return result;
+}
+
+bool Repository::pull2(const PullOptions& options)
 {
     // NOT SURE THIS IS RIGHT - Git2Sharp is quite different
 
@@ -793,6 +822,8 @@ int Repository::commitDistance(const Commit& a, const Commit& b)
     CommitFilter filter;
     filter.setIncludeReachableFrom(a.objectId());
     filter.setIncludeReachableFrom(b.objectId());
+    filter.setStopWhenFound(a.objectId());
+    filter.setStopWhenFound(b.objectId());
     filter.setSortBy(SortStrategyTime);
 
     // Create a commit log with results
@@ -841,15 +872,24 @@ RepositoryStatus Repository::status(const StatusOptions& options)
 
     try
     {
+logText(LVL_DEBUG, QString("%1 p1").arg(__FUNCTION__));
         throwOnError(git_index_read(_index->createHandle().value(), false));
 
+logText(LVL_DEBUG, QString("%1 p2").arg(__FUNCTION__));
         StatusOptions opts = options;
         throwOnError(git_status_list_new(&status_list, _handle.value(), opts.toNative()));
+logText(LVL_DEBUG, QString("%1 p3").arg(__FUNCTION__));
         int count = git_status_list_entrycount(status_list);
+logText(LVL_DEBUG, QString("%1 p4").arg(__FUNCTION__));
         for(int i = 0;i < count;i++) {
             const git_status_entry* entry = git_status_byindex(status_list, i);
+logText(LVL_DEBUG, QString("%1 p5").arg(__FUNCTION__));
             StatusEntry statusEntry = result.addStatusEntryForDelta((FileStatus)entry->status, entry->head_to_index, entry->index_to_workdir);
         }
+
+        int notDirtyCount = result.entries().findByStatus(Ignored).count() + result.entries().findByStatus(Unaltered).count();
+        result._dirty = notDirtyCount != result.entries().count();
+logText(LVL_DEBUG, QString("%1 dirty = %2").arg(__FUNCTION__).arg(result._dirty));
     }
     catch(const GitException&)
     {
@@ -1157,6 +1197,97 @@ DiffDelta::List Repository::diffDeltas(const StatusEntry::List& statusEntries) c
     return deltas;
 }
 
+MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const Signature& merger, const MergeOptions& options)
+{
+    MergeResult result;
+
+    try
+    {
+        MergeAnalysisResult analysis = mergeAnalysys(handles);
+        throwIfFalse(analysis.isValid());
+
+        if(analysis.analysis() & MergeAnalysisUpToDate) {
+            result = MergeResult(MergeResult::UpToDate);
+        }
+        else {
+            FastForwardStrategies fastForwardStrategy = options.fastForwardStrategy() != FastForwardDefault
+                                                      ? options.fastForwardStrategy()
+                                                      : fastForwardStrategyFromMergePreference(analysis.preference());
+            switch(fastForwardStrategy) {
+            case FastForwardDefault:
+                if(analysis.analysis() & MergeAnalysisFastforward) {
+                    if(handles.count() != 1) {
+                        throw GitException("Unable to perform Fast-Forward merge with mith multiple merge heads.");
+                    }
+                    result = fastForwardMerge(handles.at(0), options);
+                }
+                else if(analysis.analysis() & MergeAnalysisNormal) {
+                    result = normalMerge(handles, merger, options);
+                }
+                break;
+            case FastForwardOnly:
+                if(analysis.analysis() & MergeAnalysisFastforward) {
+                    if(handles.count() != 1) {
+                        throw GitException("Unable to perform Fast-Forward merge with mith multiple merge heads.");
+                    }
+                    result = fastForwardMerge(handles.at(0), options);
+                }
+                else {
+                    throw GitException("Can't perform fast-forward merge");
+                }
+                break;
+            case NoFastForward:
+                if(analysis.analysis() & MergeAnalysisNormal) {
+                    result = normalMerge(handles, merger, options);
+                }
+                break;
+            default:
+                throw GitException("Unknown merge analysis");
+                break;
+            }
+        }
+
+    }
+    catch(const GitException&)
+    {
+    }
+
+    return result;
+}
+
+MergeResult Repository::mergeFetchedRefs(const Signature& merger, const MergeOptions& options)
+{
+    MergeResult result;
+    QList<AnnotatedCommitHandle> handles;
+    try
+    {
+        throwIfTrue(merger.isNull(), "No signature provided for merge");
+
+        FetchHead::List fetchHeads = _network->fetchHeads().findForMerge();
+        if(fetchHeads.count() == 0) {
+            QString expected = head().upstreamBranchCanonicalName();
+            throw GitException(QString("The current branch is configured to merge with the reference '%1' from the remote, but this reference was not fetched.")
+                               .arg(expected));
+        }
+
+        for(const FetchHead& fetchHead : fetchHeads) {
+            git_annotated_commit* annotatedCommit;
+            throwOnError(git_annotated_commit_from_fetchhead(&annotatedCommit, _handle.value(), fetchHead.remoteCanonicalName().toUtf8().constData(), fetchHead.remoteUrl().toUtf8().constData(), fetchHead.objectId().toNative()));
+            handles.append(AnnotatedCommitHandle(annotatedCommit));
+        }
+
+        result = merge(handles, merger, options);
+    }
+    catch(const GitException&)
+    {
+    }
+
+    for(AnnotatedCommitHandle& handle : handles) {
+        handle.dispose();
+    }
+    return result;
+}
+
 Remote::List Repository::remotes() const
 {
     return _network->remotes();
@@ -1353,6 +1484,131 @@ Commit::List Repository::mergeHeads()
     return _mergeHeads;
 }
 
+MergeAnalysisResult Repository::mergeAnalysys(const QList<AnnotatedCommitHandle>& handles)
+{
+    MergeAnalysisResult result;
+    try
+    {
+        git_merge_analysis_t analysis;
+        git_merge_preference_t preference;
+
+        const git_annotated_commit* commits[handles.count()] = { 0 };
+        for(int i = 0;i < handles.count();i++) {
+            commits[i] = handles.at(i).value();
+        }
+
+        throwOnError(git_merge_analysis(&analysis, &preference, _handle.value(), commits, handles.count()));
+
+        result = MergeAnalysisResult((MergeAnalyses)analysis, (MergePreferences)preference);
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
+MergeResult Repository::fastForwardMerge(const AnnotatedCommitHandle& annotatedCommit, const MergeOptions& options)
+{
+    MergeResult result;
+    try
+    {
+        const git_oid* oid = git_annotated_commit_id(annotatedCommit.value());
+        throwIfNull(oid, "Failed to get annotated commit id");
+
+        Commit fastForwardCommit = findCommit(ObjectId(oid));
+        throwIfTrue(fastForwardCommit.isNull(), "Failed to lookup annotated commit");
+
+        Q_UNUSED(options)
+        throwIfFalse(checkoutTree(fastForwardCommit.tree(), QStringList()));        // TODO: need to use options here? Repository.cs line 1624
+
+        Reference reference = head().reference().resolveToDirectReference();
+        QString refLogEntry = QString("merge %1: Fast-forward").arg(fastForwardCommit.objectId().toString());
+
+        if(reference.isNull()) {
+            // ref doesn't exist. create it
+            _references->appendDirectReference(_references->head().targetIdentifier(), fastForwardCommit.objectId(), refLogEntry);
+        }
+        else {
+            // Update target reference
+            _references->updateDirectReferenceTarget(reference, fastForwardCommit.objectId(), refLogEntry);
+        }
+        result = MergeResult(MergeResult::FastForward, fastForwardCommit);
+
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
+MergeResult Repository::normalMerge(const QList<AnnotatedCommitHandle>& annotatedCommits, const Signature& merger, const MergeOptions& options)
+{
+    MergeResult result;
+    try
+    {
+        MergeOptions mergeOptions = options;
+        MergeFlags treeFlags = options.findRenames() ? MergeFlagFindRenames : MergeFlagNormal;
+        if(options.failOnConflict()) {
+            treeFlags |= MergeFlagFailOnConflict;
+        }
+        if(options.skipReuc()) {
+            treeFlags |= MergeFlagSkipReuc;
+        }
+        mergeOptions.setFlags(treeFlags);
+
+        MergeFileFlag fileFlags = options.ignoreWhitespaceChange() ? MergeFileIgnoreWhitespaceChange : MergeFileDefault;
+        mergeOptions.setFileFlags(fileFlags);
+
+        const git_annotated_commit* commits[annotatedCommits.count()] = { 0 };
+        for(int i = 0;i < annotatedCommits.count();i++) {
+            commits[i] = annotatedCommits.at(i).value();
+        }
+
+        CheckoutOptions checkoutOptions = CheckoutOptions::fromMergeOptions(options);
+        int rc = git_merge(_handle.value(), commits, annotatedCommits.count(), mergeOptions.toNative(), checkoutOptions.toNative());
+        if(rc == GIT_EMERGECONFLICT) {
+            result = MergeResult(MergeResult::Conflicts);
+        }
+        else if(rc != 0) {
+            throwOnError(rc);
+        }
+        else {
+            if(_index->isFullyMerged()) {
+                Commit mergeCommit;
+                if(options.commitOnSuccess()) {
+                    mergeCommit = commit(info()->message(), merger, merger);
+                }
+                result = MergeResult(MergeResult::NonFastForward, mergeCommit);
+            }
+            else {
+                result = MergeResult(MergeResult::Conflicts);
+            }
+        }
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
+FastForwardStrategy Repository::fastForwardStrategyFromMergePreference(MergePreferences preference) const
+{
+    FastForwardStrategy result = FastForwardDefault;
+    switch(preference) {
+    case MergePreferenceNone:
+        break;
+    case MergePreferenceFastForwardOnly:
+        result = FastForwardOnly;
+        break;
+    case MergePreferenceNoFastForward:
+        result = NoFastForward;
+        break;
+    default:
+        break;
+    }
+    return result;
+}
+
 QString Repository::makeReferenceName(const QString& branchName)
 {
     return Utility::combine("refs", "heads", branchName);
@@ -1432,7 +1688,7 @@ int Repository::credentialsCallback(git_cred** cred, const char* url, const char
             if(repo->_credentialResolver == nullptr) {
                 throw GitException("Remote is asking for username/password and no resolver is set");
             }
-            CredentialResolver* resolver = repo->_credentialResolver;
+            AbstractCredentialResolver* resolver = repo->_credentialResolver;
 
             // Allow interactive behavior
             QString username = resolver->getUsername();

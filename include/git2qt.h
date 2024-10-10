@@ -28,7 +28,7 @@
 #include <git2qt/tree.h>
 #include <git2qt/treechanges.h>
 #include <git2qt/commands.h>
-#include <git2qt/credentialresolver.h>
+#include <git2qt/abstractcredentialresolver.h>
 #include <git2qt/progresscallback.h>
 #include <git2qt/declspec.h>
 

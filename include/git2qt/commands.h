@@ -12,15 +12,15 @@ class Submodule;
 
 class ProgressCallback;
 
-class CredentialResolver;
+class AbstractCredentialResolver;
 class Repository;
 
 class GIT2QT_EXPORT Commands : public GitEntity
 {
 public:
-    static Repository* clone(const QString& remoteUrl, const QString& localPath, CredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
-    static Repository* cloneSubmodule(Repository* superRepo, const Submodule& submodule, CredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
-    static bool updateSubmodule(Repository* superRepo, const Submodule& submodule, bool initialize = false, CredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
+    static Repository* clone(const QString& remoteUrl, const QString& localPath, AbstractCredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
+    static Repository* cloneSubmodule(Repository* superRepo, const Submodule& submodule, AbstractCredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
+    static bool updateSubmodule(Repository* superRepo, const Submodule& submodule, bool initialize = false, AbstractCredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
 
     static QString lastErrorText() { return  _errorText; }
 

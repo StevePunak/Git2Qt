@@ -53,7 +53,7 @@ bool Commit::operator ==(const Commit& other) const
 
 Commit Commit::lookup(Repository* repo, const ObjectId& objectId)
 {
-    Commit result(repo, objectId);
+    Commit result;
     git_commit *commit;
     if(git_commit_lookup(&commit, repo->handle().value(), objectId.toNative()) == 0) {
         result = createFromNative(repo, commit);

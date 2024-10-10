@@ -10,12 +10,13 @@
 #define NETWORK_H
 #include <git2qt/gitentity.h>
 #include <git2qt/remote.h>
+#include <git2qt/fetchhead.h>
 
 #include <QObject>
 
 namespace GIT {
 
-class CredentialResolver;
+class AbstractCredentialResolver;
 class RemoteCollection;
 class Repository;
 class GIT2QT_EXPORT Network : public QObject,
@@ -29,6 +30,8 @@ public:
     Remote::List remotes();
     Remote remoteForName(const QString& name) const;
 
+    FetchHead::List fetchHeads();
+
     virtual bool isNull() const override { return false; }
 
 public slots:
@@ -36,6 +39,8 @@ public slots:
 
 private:
     RemoteCollection* _remotes;
+
+    static int fetchHeadCallback(const char *ref_name, const char *remote_url, const git_oid *oid, unsigned int is_merge, void *payload);
 };
 
 } // namespace GIT

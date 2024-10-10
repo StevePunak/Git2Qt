@@ -2,7 +2,7 @@
 
 #include <QDir>
 #include <cloneparameters.h>
-#include <credentialresolver.h>
+#include <abstractcredentialresolver.h>
 #include <git2qt.h>
 #include <gitexception.h>
 #include <log.h>
@@ -13,7 +13,7 @@ using namespace GIT;
 
 QString Commands::_errorText;
 
-Repository* Commands::clone(const QString& remoteUrl, const QString& localPath, CredentialResolver* credentialResolver, ProgressCallback* progressCallback)
+Repository* Commands::clone(const QString& remoteUrl, const QString& localPath, AbstractCredentialResolver* credentialResolver, ProgressCallback* progressCallback)
 {
     Git2Qt::ensureInitialized();
 
@@ -55,7 +55,7 @@ Repository* Commands::clone(const QString& remoteUrl, const QString& localPath, 
     return result;
 }
 
-Repository* Commands::cloneSubmodule(Repository* superRepo, const Submodule& submodule, CredentialResolver* credentialResolver, ProgressCallback* progressCallback)
+Repository* Commands::cloneSubmodule(Repository* superRepo, const Submodule& submodule, AbstractCredentialResolver* credentialResolver, ProgressCallback* progressCallback)
 {
     Git2Qt::ensureInitialized();
 
@@ -90,7 +90,7 @@ Repository* Commands::cloneSubmodule(Repository* superRepo, const Submodule& sub
     return result;
 }
 
-bool Commands::updateSubmodule(Repository* superRepo, const Submodule& submodule, bool initialize, CredentialResolver* credentialResolver, ProgressCallback* progressCallback)
+bool Commands::updateSubmodule(Repository* superRepo, const Submodule& submodule, bool initialize, AbstractCredentialResolver* credentialResolver, ProgressCallback* progressCallback)
 {
     bool result = false;
     try
@@ -140,7 +140,7 @@ int Commands::credentialsCallback(git_cred** cred, const char* url, const char* 
             if(cloneParameters->credentialResolver() == nullptr) {
                 throw GitException("Remote is asking for username/password and no resolver is set");
             }
-            CredentialResolver* resolver = cloneParameters->credentialResolver();
+            AbstractCredentialResolver* resolver = cloneParameters->credentialResolver();
 
             // Allow interactive behavior
             QString username = resolver->getUsername();

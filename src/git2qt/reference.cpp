@@ -239,6 +239,33 @@ ObjectId Reference::objectId() const
     return result;
 }
 
+Reference Reference::resolveToDirectReference() const
+{
+    Reference result;
+    if(isDirect()) {
+        result = *this;
+    }
+    else {
+        try
+        {
+            git_reference* targetRef = nullptr;
+            ReferenceHandle handle = createHandle();
+            throwOnError(git_reference_resolve(&targetRef, handle.value()));
+            const git_oid* oid = git_reference_target(targetRef);
+            if(oid != nullptr) {
+                ObjectId refId = ObjectId(oid);
+                result = Reference(repository(), _targetIdentifier, refId.toString(), DirectReferenceType);
+            }
+            handle.dispose();
+        }
+        catch(const GitException&)
+        {
+        }
+    }
+
+    return result;
+}
+
 void Reference::resolveTarget()
 {
     if(_target != nullptr) {

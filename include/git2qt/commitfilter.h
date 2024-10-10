@@ -23,6 +23,10 @@ public:
     void setExcludeReachableFromRefs(const ObjectId::List& value) { _excludeReachableFromRefs.append(value); }
     void setExcludeReachableFromRefs(const ObjectId& value) { _excludeReachableFromRefs.append(value); }
 
+    ObjectId::List stopWhenFound() const { return _stopWhenFound; }
+    void setStopWhenFound(ObjectId::List value) { _stopWhenFound.append(value); }
+    void setStopWhenFound(const ObjectId& value) { _stopWhenFound.append(value); }
+
     CommitSortStrategies sortBy() const { return _sortBy; }
     void setSortBy(CommitSortStrategies value) { _sortBy = value; }
 
@@ -37,6 +41,7 @@ private:
     QString _includeReachableFromStr;
     ObjectId::List _includeReachableFromRefs;
     ObjectId::List _excludeReachableFromRefs;
+    ObjectId::List _stopWhenFound;
     bool _firstParentOnly = false;
     int _maxResults = 0;
 };

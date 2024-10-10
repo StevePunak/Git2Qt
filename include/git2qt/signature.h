@@ -34,7 +34,7 @@ public:
     QDateTime timestamp() const { return _timestamp; }
     void setTimestamp(const QDateTime& value) { _timestamp = value; }
 
-    virtual bool isNull() const { return _native == nullptr; }
+    virtual bool isNull() const { return _name.isEmpty(); }
 
     const git_signature* toNative();
 

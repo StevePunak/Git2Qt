@@ -82,6 +82,17 @@ public:
                 insert(o);
             }
         }
+
+        bool containsAll(const ObjectId::List& other) const
+        {
+            int found = 0;
+            for(const ObjectId& o : other) {
+                if(contains(o)) {
+                    found++;
+                }
+            }
+            return found >= other.count();
+        }
     };
 
 private:

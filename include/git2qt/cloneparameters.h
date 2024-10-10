@@ -7,22 +7,22 @@ namespace GIT {
 
 class ProgressCallback;
 
-class CredentialResolver;
+class AbstractCredentialResolver;
 
 class CloneParameters
 {
 public:
-    CloneParameters(CredentialResolver* credentialResolver, ProgressCallback* progressCallback) :
+    CloneParameters(AbstractCredentialResolver* credentialResolver, ProgressCallback* progressCallback) :
         _credentialResolver(credentialResolver), _progressCallback(progressCallback) {}
 
-    CredentialResolver* credentialResolver() const { return _credentialResolver; }
+    AbstractCredentialResolver* credentialResolver() const { return _credentialResolver; }
     ProgressCallback* progressCallback() const { return _progressCallback; }
 
     QString errorText() const { return _errorText; }
     void setErrorText(const QString& value) { _errorText = value; }
 
 private:
-    CredentialResolver* _credentialResolver;
+    AbstractCredentialResolver* _credentialResolver;
     ProgressCallback* _progressCallback;
     QString _errorText;
 };

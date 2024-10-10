@@ -33,6 +33,7 @@ public:
     void replace(const TreeChanges& changes);
     void write();
     ObjectId writeTree();
+    bool isFullyMerged() const;
 
     IndexHandle createHandle() const;
 

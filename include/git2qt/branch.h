@@ -37,6 +37,7 @@ public:
     QString remoteName() const;
     QString createRemoteName(const Remote& remote);
     BranchType branchType() const { return _branchType; }
+    Branch resolved() const;
     Branch trackedBranch() const;
 
     Reference reference() const { return _reference; }
@@ -44,6 +45,7 @@ public:
     Commit tip();
     Commit birth();
 
+    bool isTracking() const;
     bool isHead() const;
     bool isRemote() const;
     bool isDetachedHead() const { return _detachedHead; }
