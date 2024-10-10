@@ -864,32 +864,23 @@ bool Repository::reset(const Commit& commit, ResetMode resetMode, const Checkout
 
 RepositoryStatus Repository::status(const StatusOptions& options)
 {
-    QElapsedTimer t;
-    t.start();
-
     RepositoryStatus result;
     git_status_list* status_list = nullptr;
 
     try
     {
-logText(LVL_DEBUG, QString("%1 p1").arg(__FUNCTION__));
         throwOnError(git_index_read(_index->createHandle().value(), false));
 
-logText(LVL_DEBUG, QString("%1 p2").arg(__FUNCTION__));
         StatusOptions opts = options;
         throwOnError(git_status_list_new(&status_list, _handle.value(), opts.toNative()));
-logText(LVL_DEBUG, QString("%1 p3").arg(__FUNCTION__));
         int count = git_status_list_entrycount(status_list);
-logText(LVL_DEBUG, QString("%1 p4").arg(__FUNCTION__));
         for(int i = 0;i < count;i++) {
             const git_status_entry* entry = git_status_byindex(status_list, i);
-logText(LVL_DEBUG, QString("%1 p5").arg(__FUNCTION__));
             StatusEntry statusEntry = result.addStatusEntryForDelta((FileStatus)entry->status, entry->head_to_index, entry->index_to_workdir);
         }
 
         int notDirtyCount = result.entries().findByStatus(Ignored).count() + result.entries().findByStatus(Unaltered).count();
         result._dirty = notDirtyCount != result.entries().count();
-logText(LVL_DEBUG, QString("%1 dirty = %2").arg(__FUNCTION__).arg(result._dirty));
     }
     catch(const GitException&)
     {
@@ -900,7 +891,6 @@ logText(LVL_DEBUG, QString("%1 dirty = %2").arg(__FUNCTION__).arg(result._dirty)
         git_status_list_free(status_list);
     }
 
-    logText(LVL_DEBUG, QString("Retrieved %1 entries in %2").arg(result.entries().count()).arg(TimeSpan::fromMilliseconds(t.elapsed()).toString()));
     return result;
 }
 
