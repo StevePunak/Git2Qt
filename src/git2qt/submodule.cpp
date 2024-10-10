@@ -34,9 +34,19 @@ bool Submodule::isWorkdirInitialized() const
     return (status(IgnoreDirty) & (WorkDirUninitialized | WorkDirDeleted)) == 0;
 }
 
-bool Submodule::isInIndexButNotInHead() const
+bool Submodule::isWorkdirInitialized(SubmoduleStatus status)
 {
-    return (status(IgnoreDirty) & (WorkDirAdded)) != 0;
+    return (status & (WorkDirUninitialized | WorkDirDeleted)) == 0;
+}
+
+bool Submodule::isInIndexButNotInHead(SubmoduleStatus status)
+{
+    return (status & WorkDirAdded) != 0;
+}
+
+bool Submodule::isWorkDirDirty(SubmoduleStatus status)
+{
+    return (status & (WorkDirFilesIndexDirty | WorkDirFilesModified | WorkDirFilesUntracked)) != 0;
 }
 
 bool Submodule::initialize(bool overwrite)
@@ -84,14 +94,27 @@ bool Submodule::update(bool initialize, AbstractCredentialResolver* credentialRe
     return result;
 }
 
-Submodule::SubmoduleStatuses Submodule::status(SubmoduleIgnore ignore) const
+Submodule::SubmoduleStatus Submodule::status(SubmoduleIgnore ignore) const
 {
-    SubmoduleStatuses status = Unmodified;
+    SubmoduleStatus status = Unmodified;
     unsigned int stat;
     if(git_submodule_status(&stat, repository()->handle().value(), _name.toUtf8().constData(), (git_submodule_ignore_t)ignore) == 0) {
-        status = (SubmoduleStatuses)stat;
+        status = (SubmoduleStatus)stat;
     }
     return status;
+}
+
+QString Submodule::statusDebugString(SubmoduleStatus status)
+{
+    QList<Submodule::SubmoduleStatus> allStatuses = getSubmoduleStatusValues();
+    QString str;
+    QTextStream output(&str);
+    for(Submodule::SubmoduleStatus s : allStatuses) {
+        if(status & s) {
+            output << getSubmoduleStatusString(s) << ' ';
+        }
+    }
+    return str;
 }
 
 SubmoduleHandle Submodule::createHandle() const

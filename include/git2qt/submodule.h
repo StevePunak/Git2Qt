@@ -198,20 +198,24 @@ public:
     SubmoduleUpdate updateRule() const { return _updateRule; }
 
     bool isWorkdirInitialized() const;
-    bool isInIndexButNotInHead() const;
+
+    static bool isWorkdirInitialized(SubmoduleStatus status);
+    static bool isInIndexButNotInHead(SubmoduleStatus status);
+    static bool isWorkDirDirty(SubmoduleStatus status);
 
     bool initialize(bool overwrite = false);
     Repository* open();
     Repository* clone(AbstractCredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
     bool update(bool initialize = false, AbstractCredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
 
-    SubmoduleStatuses status(SubmoduleIgnore ignore = IgnoreNone) const;
+    SubmoduleStatus status(SubmoduleIgnore ignore = IgnoreNone) const;
 
     QVariant toVariant() const { return QVariant::fromValue<Submodule>(*this); }
     static Submodule fromVariant(const QVariant& value) { return value.value<Submodule>(); }
 
     virtual bool isNull() const override { return _name.isEmpty(); }
 
+    static QString statusDebugString(SubmoduleStatus status);
     static QString getSubmoduleStatusString(SubmoduleStatus value) { return _SubmoduleStatusToStringMap.getString(value); }
     static SubmoduleStatus getSubmoduleStatus(const QString& value) { return _SubmoduleStatusToStringMap.getType(value); }
     static QList<SubmoduleStatus> getSubmoduleStatusValues() { return _SubmoduleStatusToStringMap.getTypes(); }
