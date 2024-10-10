@@ -14,8 +14,12 @@
 
 namespace GIT {
 
+class ProgressCallback;
+
+class AbstractCredentialResolver;
+
 class Repository;
-class Submodule : public GitEntity
+class GIT2QT_EXPORT Submodule : public GitEntity
 {
 public:
     Submodule() :
@@ -183,15 +187,6 @@ public:
     };
     Q_DECLARE_FLAGS(SubmoduleStatuses, SubmoduleStatus)
 
-    enum GitSubmoduleIgnore
-    {
-        Unspecified = -1,
-        None = 1,
-        Untracked = 2,
-        Dirty = 3,
-        All = 4,
-    };
-
     QString name() const { return _name; }
     QString path() const { return _path; }
     QString url() const { return _url; }
@@ -202,16 +197,61 @@ public:
     SubmoduleIgnore ignoreRule() const { return _ignoreRule; }
     SubmoduleUpdate updateRule() const { return _updateRule; }
 
+    bool isWorkdirInitialized() const;
+
+    static bool isWorkdirInitialized(SubmoduleStatus status);
+    static bool isInIndexButNotInHead(SubmoduleStatus status);
+    static bool isWorkDirDirty(SubmoduleStatus status);
+
+    bool initialize(bool overwrite = false);
     Repository* open();
-    SubmoduleStatuses retrieveStatus();
+    Repository* clone(AbstractCredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
+    bool update(bool initialize = false, AbstractCredentialResolver* credentialResolver = nullptr, ProgressCallback* progressCallback = nullptr);
+
+    SubmoduleStatus status(SubmoduleIgnore ignore = IgnoreNone) const;
+
+    QVariant toVariant() const { return QVariant::fromValue<Submodule>(*this); }
+    static Submodule fromVariant(const QVariant& value) { return value.value<Submodule>(); }
 
     virtual bool isNull() const override { return _name.isEmpty(); }
 
+    static QString statusDebugString(SubmoduleStatus status);
+    static QString getSubmoduleStatusString(SubmoduleStatus value) { return _SubmoduleStatusToStringMap.getString(value); }
+    static SubmoduleStatus getSubmoduleStatus(const QString& value) { return _SubmoduleStatusToStringMap.getType(value); }
+    static QList<SubmoduleStatus> getSubmoduleStatusValues() { return _SubmoduleStatusToStringMap.getTypes(); }
+
     class Map : public QMap<QString, Submodule> {};
+    class List : public QList<Submodule>
+    {
+    public:
+        List() {}
+        List(const QList<Submodule>& other)
+        {
+            for(const Submodule& s : other) {
+                append(s);
+            }
+        }
+
+        Submodule findByName(const QString& name) const
+        {
+            Submodule result;
+            auto it = std::find_if(constBegin(), constEnd(), [name](const Submodule& submodule) { return submodule.name() == name; });
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
+
+        int countWithStatus(SubmoduleStatuses statuses) const
+        {
+            int result = std::count_if(constBegin(), constEnd(), [statuses] (const Submodule& submodule) { return (submodule.status() & statuses) != 0; } );
+            return result;
+        }
+    };
+
+    SubmoduleHandle createHandle() const;
 
 private:
-    SubmoudleHandle createhandle() const;
-
     QString _name;
     QString _path;
     QString _url;
@@ -221,8 +261,40 @@ private:
     SubmoduleRecurse _fetchRecurseSumbmodulesRule = RecurseReset;
     SubmoduleIgnore _ignoreRule = IgnoreReset;
     SubmoduleUpdate _updateRule = UpdateReset;
+
+    class SubmoduleStatusToStringMap : public EnumToStringMap<SubmoduleStatus>
+    {
+    public:
+        SubmoduleStatusToStringMap()
+        {
+            insert(Unmodified,                  "Unmodified");
+            insert(InHead,                      "InHead");
+            insert(InIndex,                     "InIndex");
+            insert(InConfig,                    "InConfig");
+            insert(InWorkDir,                   "InWorkDir");
+            insert(IndexAdded,                  "IndexAdded");
+            insert(IndexDeleted,                "IndexDeleted");
+            insert(IndexModified,               "IndexModified");
+            insert(WorkDirUninitialized,        "WorkDirUninitialized");
+            insert(WorkDirAdded,                "WorkDirAdded");
+            insert(WorkDirDeleted,              "WorkDirDeleted");
+            insert(WorkDirModified,             "WorkDirModified");
+            insert(WorkDirFilesIndexDirty,      "WorkDirFilesIndexDirty");
+            insert(WorkDirFilesModified,        "WorkDirFilesModified");
+            insert(WorkDirFilesUntracked,       "WorkDirFilesUntracked");
+        }
+    };
+
+    static const SubmoduleStatusToStringMap _SubmoduleStatusToStringMap;
 };
 
+GIT2QT_EXPORT QString getSubmoduleStatusString(Submodule::SubmoduleStatus value);
+GIT2QT_EXPORT Submodule::SubmoduleStatus getSubmoduleStatus(const QString& value);
+GIT2QT_EXPORT QList<Submodule::SubmoduleStatus> getSubmoduleStatusValues();
+
+
 } // namespace GIT
+
+Q_DECLARE_METATYPE(GIT::Submodule)
 
 #endif // SUBMODULE_H

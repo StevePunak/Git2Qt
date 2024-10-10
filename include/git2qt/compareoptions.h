@@ -11,10 +11,11 @@
 
 #include <git2qt/similarityoptions.h>
 #include <git2qt/gittypes.h>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
-class CompareOptions
+class GIT2QT_EXPORT CompareOptions
 {
 public:
     CompareOptions();

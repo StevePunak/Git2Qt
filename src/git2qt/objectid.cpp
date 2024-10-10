@@ -8,18 +8,21 @@ ObjectId::ObjectId(const GitOid& oid) :
     _oid(oid)
 {
     _sha = oid.id().toHex().toLower();
+    calculateParts();
 }
 
 ObjectId::ObjectId(const git_oid& oid) :
     _oid(oid)
 {
     _sha = _oid.id().toHex().toLower();
+    calculateParts();
 }
 
 ObjectId::ObjectId(const git_oid* oid) :
     _oid(oid)
 {
     _sha = _oid.id().toHex().toLower();
+    calculateParts();
 }
 
 ObjectId::ObjectId(const git_object* obj)
@@ -28,12 +31,19 @@ ObjectId::ObjectId(const git_object* obj)
     if(oid != nullptr) {
         _oid = GitOid(oid);
         _sha = _oid.id().toHex().toLower();
+        calculateParts();
     }
 }
 
 ObjectId::ObjectId(const QString& sha) :
     _oid(sha), _sha(sha)
 {
+    QByteArray buf = QByteArray::fromHex(sha.toUtf8());
+    if(buf.length() != GitOid::Size) {
+        _oid = GitOid();
+        _sha = QString();
+        calculateParts();
+    }
 }
 
 ObjectId ObjectId::createFromHandle(git_reference* handle)
@@ -56,4 +66,20 @@ ObjectId ObjectId::createFromReference(const Reference& reference)
         referenceHandle.dispose();
     }
     return result;
+}
+
+bool ObjectId::isValid(const QString& sha)
+{
+    QByteArray data = QByteArray::fromHex(sha.toUtf8());
+    return data.length() == _rawSize;
+}
+
+void ObjectId::calculateParts()
+{
+    if(_sha.length() == HexSize) {
+        QStringView s(_sha);
+        _p1 = s.mid(0, 16).toULongLong(nullptr, 16);
+        _p2 = s.mid(16, 16).toULongLong(nullptr, 16);
+        _p3 = s.mid(32, 8).toULongLong(nullptr, 16);
+    }
 }

@@ -14,9 +14,10 @@
 
 namespace GIT {
 
-class DiffLine
+class GIT2QT_EXPORT DiffLine
 {
 public:
+    DiffLine() {}
     DiffLine(const git_diff_line* line);
 
     QChar origin() const { return _origin; }
@@ -26,16 +27,17 @@ public:
     int64_t contentOffset() const { return _contentOffset; }
     QByteArray content() const { return _content; }
 
+    bool isValid() const { return _origin.isNull() == false; }
     QString toString() const;
 
     class List : public QList<DiffLine> {};
 
 private:
     QChar _origin;
-    int _oldLineNumber;
-    int _newLineNumber;
-    int _lineCount;
-    int64_t _contentOffset;
+    int _oldLineNumber = 0;
+    int _newLineNumber = 0;
+    int _lineCount = 0;
+    int64_t _contentOffset = 0;
     QByteArray _content;
 };
 

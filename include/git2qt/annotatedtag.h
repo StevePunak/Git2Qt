@@ -15,7 +15,7 @@
 namespace GIT {
 
 class Repository;
-class AnnotatedTag : public Tag
+class GIT2QT_EXPORT AnnotatedTag : public Tag
 {
 public:
     AnnotatedTag();

@@ -14,15 +14,20 @@
 
 namespace GIT {
 
+class Remote;
+
 class Commit;
 class Reference;
 class Repository;
-class Branch : public GitEntity
+class GIT2QT_EXPORT Branch : public GitEntity
 {
 public:
     explicit Branch() : GitEntity(BranchEntity) {}
-    explicit Branch(Repository* repo, const Reference& reference, git_branch_t type);
-    virtual ~Branch();
+    explicit Branch(Repository* repo, const Reference& reference);
+    Branch(const Branch& other);
+    Branch& operator=(const Branch& other);
+
+    virtual ~Branch() {}
 
     QString name() const;
     QString canonicalName() const;
@@ -30,21 +35,29 @@ public:
     QString upstreamBranchCanonicalName() const;
     QString upstreamBranchCanonicalNameFromLocalBranch() const;
     QString remoteName() const;
+    QString createRemoteName(const Remote& remote);
     BranchType branchType() const { return _branchType; }
+    Branch resolved() const;
+    Branch trackedBranch() const;
 
     Reference reference() const { return _reference; }
 
     Commit tip();
     Commit birth();
 
+    bool isTracking() const;
     bool isHead() const;
     bool isRemote() const;
+    bool isDetachedHead() const { return _detachedHead; }
+    void setDetachedHead(bool value) { _detachedHead = value; }
 
     bool isValid() const { return canonicalName().isEmpty() == false; }
     virtual bool isNull() const override { return _reference.isNull(); }
 
     QVariant toVariant() const { return QVariant::fromValue<Branch>(*this); }
     static Branch fromVariant(const QVariant& value) { return value.value<Branch>(); }
+
+    static QString removeOrigin(const QString& branchName);
 
     class List : public QList<Branch>
     {
@@ -78,8 +91,12 @@ public:
         Branch findRemoteBranch(const QString& branchName) const
         {
             Branch result;
-            QString needle = QString("origin/%1").arg(branchName);
-             auto it = std::find_if(constBegin(), constEnd(), [needle](const Branch& b)
+            QString needle = branchName;
+            if(needle.contains("/origin/") == false) {
+                needle.prepend("origin/");
+            }
+
+            auto it = std::find_if(constBegin(), constEnd(), [needle](const Branch& b)
             {
                 return b.branchType() == RemoteBranch && b.name() == needle;
             });
@@ -113,6 +130,7 @@ private:
 
     Reference _reference;
     BranchType _branchType = LocalBranch;
+    bool _detachedHead = false;
 };
 
 } // namespace GIT

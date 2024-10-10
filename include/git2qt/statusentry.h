@@ -10,12 +10,13 @@
 
 #include <QList>
 #include <QString>
+#include <QVariant>
 #include <git2qt/renamedetails.h>
 #include <git2qt/gittypes.h>
 
 namespace GIT {
 
-class StatusEntry
+class GIT2QT_EXPORT StatusEntry
 {
 public:
     StatusEntry() {}
@@ -23,13 +24,32 @@ public:
         _filePath(filePath), _status(status), _headToIndexRenameDetails(headToIndexRenameDetails), _indexToWorkDirRenameDetails(indexToWorkDirRenameDetails) {}
 
     QString path() const { return _filePath; }
-    FileStatus status() const { return _status; }
+    FileStatuses status() const { return _status; }
+    RenameDetails headToIndexRenameDetails() const { return _headToIndexRenameDetails; }
+    RenameDetails indexToWorkDirRenameDetails() const { return _indexToWorkDirRenameDetails; }
 
     bool isValid() const { return _filePath.isEmpty() == false; }
+
+    QVariant toVariant() const { return QVariant::fromValue<StatusEntry>(*this); }
+    static StatusEntry fromVariant(const QVariant& value) { return value.value<StatusEntry>(); }
 
     class List : public QList<StatusEntry>
     {
     public:
+        void appendIfNotPresent(const StatusEntry::List& entries)
+        {
+            for(const StatusEntry& entry : entries) {
+                appendIfNotPresent(entry);
+            }
+        }
+
+        void appendIfNotPresent(const StatusEntry& entry)
+        {
+            if(findByPath(entry.path()).isValid() == false) {
+                append(entry);
+            }
+        }
+
         StatusEntry findByPath(const QString& path) const
         {
             StatusEntry result;
@@ -44,7 +64,7 @@ public:
         {
             List result;
             for(const StatusEntry& entry : *this) {
-                if(entry.status() == status) {
+                if(entry.status() & status) {
                     result.append(entry);
                 }
             }
@@ -63,11 +83,14 @@ public:
 
 private:
     QString _filePath;
-    FileStatus _status;
+    FileStatuses _status;
     RenameDetails _headToIndexRenameDetails;
     RenameDetails _indexToWorkDirRenameDetails;
 };
 
 } // namespace GIT
+
+
+Q_DECLARE_METATYPE(GIT::StatusEntry)
 
 #endif // STATUSENTRY_H

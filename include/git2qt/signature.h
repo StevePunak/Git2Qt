@@ -7,7 +7,6 @@
 */
 #ifndef SIGNATURE_H
 #define SIGNATURE_H
-
 #include <git2qt/gitentity.h>
 
 #include <QDateTime>
@@ -15,7 +14,7 @@
 namespace GIT {
 
 class Repository;
-class Signature : public GitEntity
+class GIT2QT_EXPORT Signature : public GitEntity
 {
 public:
     Signature() :
@@ -35,7 +34,7 @@ public:
     QDateTime timestamp() const { return _timestamp; }
     void setTimestamp(const QDateTime& value) { _timestamp = value; }
 
-    virtual bool isNull() const { return _native == nullptr; }
+    virtual bool isNull() const { return _name.isEmpty(); }
 
     const git_signature* toNative();
 

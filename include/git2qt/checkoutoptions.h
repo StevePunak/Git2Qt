@@ -10,10 +10,14 @@
 #include <QStringList>
 #include <git2.h>
 #include <git2qt/stringarray.h>
+#include <git2qt/declspec.h>
+#include <git2qt/gittypes.h>
 
 namespace GIT {
 
-class CheckoutOptions
+class MergeOptions;
+
+class GIT2QT_EXPORT CheckoutOptions
 {
 public:
     enum CheckoutModifiers
@@ -33,8 +37,13 @@ public:
     CheckoutOptions() :
         _modifiers(None) {}
 
+    static CheckoutOptions fromMergeOptions(const MergeOptions& mergeOptions);
+
     CheckoutModifiers modifiers() const { return _modifiers; }
     void setModifiers(CheckoutModifiers value) { _modifiers = value; }
+
+    CheckoutNotifyFlag notifyFlags() const { return _notifyFlags; }
+    void setNotifyFlags(CheckoutNotifyFlag value) { _notifyFlags = value; }
 
     QStringList paths() const { return _paths; }
     void setPaths(QStringList value) { _paths = value; }
@@ -42,12 +51,11 @@ public:
     const git_checkout_options* toNative();
 
 private:
-    bool _force;
-
     CheckoutModifiers _modifiers;
 
     QStringList _paths;
     StringArray _pathsArray;
+    CheckoutNotifyFlag _notifyFlags = CheckoutNotifyNone;
 
     git_checkout_options _options;
 };

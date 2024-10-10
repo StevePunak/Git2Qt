@@ -15,7 +15,7 @@
 namespace GIT {
 
 class Repository;
-class GitObject : public GitEntity
+class GIT2QT_EXPORT GitObject : public GitEntity
 {
 protected:
     GitObject(GitEntityType type, Repository* repo, const ObjectId& objectId);

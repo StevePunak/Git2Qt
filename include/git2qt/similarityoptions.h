@@ -8,10 +8,11 @@
 #ifndef SIMILARITYOPTIONS_H
 #define SIMILARITYOPTIONS_H
 #include <git2.h>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
-class SimilarityOptions
+class GIT2QT_EXPORT SimilarityOptions
 {
 public:
     SimilarityOptions();

@@ -8,10 +8,11 @@
 #ifndef GRAPHEDCOMMIT_H
 #define GRAPHEDCOMMIT_H
 #include <git2qt/commit.h>
+#include <git2qt/graphline.h>
 
 namespace GIT {
 
-class GraphedCommit : public Commit
+class GIT2QT_EXPORT GraphedCommit : public Commit
 {
 public:
     GraphedCommit();
@@ -21,7 +22,16 @@ public:
     bool operator !=(const GraphedCommit& other) const { return !(*this == other); }
 
     int level() const { return _level; }
-    void setLevel(int value) { _level = value; }
+    void setLevel(int value);
+
+    int maxLevel() const { return _maxLevel; }
+    void setMaxLevel(int value) { _maxLevel = value; }
+
+    int index() const { return _index; }
+    void setIndex(int value) { _index = value; }
+
+    QString friendlyBranchName() const { return _friendlyBranchName; }
+    void setFriendlyBranchName(const QString& value) { _friendlyBranchName = value; }
 
     QString branchName() const { return _branchName; }
     void setBranchName(const QString& value) { _branchName = value; }
@@ -32,6 +42,17 @@ public:
     bool isMerge() const { return _merge; }
     void setMerge(bool value) { _merge = value; }
 
+    bool isStash() const { return _stash; }
+    void setStash(bool value) { _stash = value; }
+
+    bool isStashBase() const { return _stashBaseOf.isValid(); }
+
+    bool isStashParent() const { return _stashParent; }
+    void setStashParent(bool value) { _stashParent = value; }
+
+    bool isRemote() const { return _remote; }
+    void setRemote(bool value) { _remote = value; }
+
     ObjectId mergeBase() const { return _mergeBase; }
     void setMergeBase(const ObjectId& value) { _mergeBase = value; }
 
@@ -41,10 +62,28 @@ public:
     ObjectId mergedInto() const { return _mergedInto; }
     void setMergedInto(const ObjectId& value) { _mergedInto = value; }
 
+    ObjectId stashBaseOf() const { return _stashBaseOf; }
+    void setStashBaseOf(const ObjectId& value) { _stashBaseOf = value; }
+
+    QStringList branchBases() const { return _branchBases; }
+    void setBranchBases(const QStringList& value) { _branchBases = value; }
+    void addBranchBase(const QString& value) { if(_branchBases.contains(value) == false) _branchBases.append(value); }
+
     int distanceAhead(const Commit& other) const;
     int distanceBehind(const Commit& other) const;
 
     ObjectId::List parentObjectIds() const { return _parentObjectIds; }
+    void setParentObjectIds(const ObjectId::List& value) { _parentObjectIds = value; }
+
+    ObjectId::List childObjectIds() const { return _childObjectIds; }
+    void setChildObjectIds(const ObjectId::List& value) { _childObjectIds = value; }
+
+    GraphLine graphLine() const { return _graphLine; }
+    GraphLine& graphLineRef() { return _graphLine; }
+    void setGraphLine(const GraphLine& value) { _graphLine = value; }
+
+    QVariant toVariant() const { return QVariant::fromValue<GraphedCommit>(*this); }
+    static GraphedCommit fromVariant(const QVariant& value) { return value.value<GraphedCommit>(); }
 
     QString toString() const;
 
@@ -64,15 +103,6 @@ public:
             for(const GraphedCommit& commit : *this) {
                 result.append(commit);
             }
-            return result;
-        }
-
-        int distanceBetween(const GraphedCommit& a, const GraphedCommit& b) const
-        {
-            int result = -1;
-            int indexA = indexOf(a);
-            int indexB = indexOf(b);
-            result = std::abs(indexA - indexB);
             return result;
         }
 
@@ -96,16 +126,7 @@ public:
             return result;
         }
 
-        List findChildren(const GraphedCommit& of)
-        {
-            List result;
-            for(GraphedCommit& commit : *this) {
-                if(commit.parents().objectIds().contains(of.objectId())) {
-                    result.append(commit);
-                }
-            }
-            return result;
-        }
+        List findChildren(const GraphedCommit& of) const;
 
         bool hasParent(const ObjectId& parentObjectId)
         {
@@ -132,7 +153,7 @@ public:
             int result = -1;
             auto it = std::find_if(constBegin(), constEnd(), [branchName](const GraphedCommit& c)
             {
-                return c.branchName() == branchName;
+                return c.friendlyBranchName() == branchName;
             });
             if(it != constEnd()) {
                 result = (*it).level();
@@ -140,79 +161,71 @@ public:
             return result;
         }
 
-        int levelForChild(const GraphedCommit& commit) const
+        int levelForCommit(const ObjectId& commitId) const
         {
-            int result = -1;
-#if 0
-            // look backwards through this collection for the best match
-            for(int i = count() - 1;i >= 0;i--) {
-                const GraphedCommit& candidate = at(i);
-                Commit::List parents = candidate.parents();
-                if(parents.count() == 1 && parents.at(0).objectId() == commit.objectId()) {
-                    result = candidate.level();
-                    break;
-                }
-                if(parents.count() > 1) {
-                    // TODO - handle merge
-                    if(parents.at(0).objectId() == commit.objectId()) {
-                        result = candidate.level();
-                        break;
-                    }
-                }
-            }
-#else
-            // Build a list of candidates
-            List candidates;
-            for(int i = count() - 1;i >= 0;i--) {
-                const GraphedCommit& candidate = at(i);
-                Commit::List parents = candidate.parents();
-                for(const Commit& parent : parents) {
-                    if(parent.objectId() == commit.objectId()) {
-                        candidates.append(candidate);
-                        break;
-                    }
-                }
-            }
-
-            if(candidates.count() == 1) {
-                GraphedCommit candidate = candidates.at(0);
-                if(candidate.isMerge() == false) {
-                    result = candidates.at(0).level();
-                }
-            }
-            else if(candidates.count() == 2) {
-                // this is a merge. get the best branch
-                for(const GraphedCommit& candidate : candidates) {
-                    int ahead = commit.distanceAhead(candidate);    Q_UNUSED(ahead)
-                    int behind = commit.distanceBehind(candidate);    Q_UNUSED(behind)
-                    if(candidate.branchName() == commit.branchName()) {
-                        result = candidate.level();
-                        break;
-                    }
-                }
-            }
-            else {
-                int x = 1; Q_UNUSED(x)
-            }
-#endif
-            return result;
+            return findCommit(commitId).level();
         }
 
+        int maxLevel() const
+        {
+           int level = 1;
+           auto it = std::max_element(constBegin(), constEnd(), [](const GraphedCommit& a, const GraphedCommit& b) { return a.level() < b.level(); });
+           if(it != constEnd()) {
+               level = (*it).level();
+           }
+           return level;
+        }
+
+    };
+
+    class Map : public QMap<ObjectId, GraphedCommit>
+    {
+    public:
+        Map() {}
+        Map(const GraphedCommit::List& other) {
+            for(const GraphedCommit& commit : other) {
+                insert(commit.objectId(), commit);
+            }
+        }
+
+        GraphedCommit::List findCommits(const ObjectId::List& objectIds) const
+        {
+            GraphedCommit::List result;
+            for(const ObjectId& objectId : objectIds) {
+                GraphedCommit commit = value(objectId);
+                if(commit.isValid()) {
+                    result.append(commit);
+                }
+            }
+            return result;
+        }
     };
 
 private:
     static bool getDistance(Repository* repo, const ObjectId& local, const ObjectId& upstream, size_t* ahead, size_t* behind);
 
     int _level = 0;
+    int _maxLevel = 0;
+    int _index = 0;
+    QString _friendlyBranchName;
     QString _branchName;
     bool _head = false;
     bool _merge = false;
-    ObjectId::List _parentObjectIds;
+    bool _stash = false;
+    bool _stashParent = false;
+    bool _remote = false;
     ObjectId _mergeBase;
     ObjectId _mergeFrom;
     ObjectId _mergedInto;
+    ObjectId _stashBaseOf;
+    QStringList _branchBases;
+    ObjectId::List _parentObjectIds;
+    ObjectId::List _childObjectIds;
+    GraphLine _graphLine;
 };
 
 } // namespace GIT
+
+Q_DECLARE_METATYPE(GIT::GraphedCommit)
 
 #endif // GRAPHEDCOMMIT_H

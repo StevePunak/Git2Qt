@@ -10,27 +10,37 @@
 #include <network.h>
 #include <remote.h>
 #include <repository.h>
+#include <utility.h>
 
 using namespace GIT;
 
-Branch::Branch(Repository* repo, const Reference& reference, git_branch_t type) :
-    GitEntity(GitEntity::BranchEntity, repo),
+Branch::Branch(Repository* repo, const Reference& reference) :
+    GitEntity(BranchEntity, repo),
     _reference(reference)
 {
-    switch(type) {
-    case GIT_BRANCH_LOCAL:
-        _branchType = LocalBranch;
-        break;
-    case GIT_BRANCH_REMOTE:
-        _branchType = RemoteBranch;
-        break;
-    default:
-        break;
+    ReferenceHandle refHandle = reference.createHandle();
+    try
+    {
+        throwIfTrue(refHandle.isNull());
+        _branchType = git_reference_is_remote(refHandle.value()) == 1 ? RemoteBranch : LocalBranch;
     }
+    catch(const GitException&)
+    {}
+    refHandle.dispose();
 }
 
-Branch::~Branch()
+Branch::Branch(const Branch& other) :
+    GitEntity(BranchEntity, nullptr)
 {
+    *this = other;
+}
+
+Branch& Branch::operator=(const Branch& other)
+{
+    GitEntity::operator =(other);
+    _reference = other._reference;
+    _branchType = other._branchType;
+    return *this;
 }
 
 QString Branch::name() const
@@ -65,6 +75,9 @@ QString Branch::friendlyName(bool trimOrigin) const
             result = result.mid(remote.length() + 1);
         }
     }
+    else if(_reference.canonicalName() == "HEAD") {
+        result = _reference.canonicalName();
+    }
     else {
         Log::logText(LVL_ERROR, QString("%1 does not look like a valid branch name").arg(_reference.canonicalName()));
     }
@@ -94,6 +107,8 @@ QString Branch::upstreamBranchCanonicalNameFromLocalBranch() const
     return result;
 }
 
+// "refs/heads/feature/test-branch:refs/remotes/origin/feature/feature/test-branch"
+
 QString Branch::remoteName() const
 {
     QString result;
@@ -106,13 +121,52 @@ QString Branch::remoteName() const
     return result;
 }
 
+QString Branch::createRemoteName(const Remote& remote)
+{
+    QString result = Utility::combine(Reference::RemoteTrackingBranchPrefix, remote.name(), friendlyName());
+    return result;
+}
+
+Branch Branch::resolved() const
+{
+    Branch result;
+    if(_reference.isSymbolic() && _reference.target() != nullptr) {
+        Reference reference = *_reference.target();
+        result = Branch(repository(), reference);
+    }
+    else {
+        result = *this;
+    }
+    return result;
+}
+
+Branch Branch::trackedBranch() const
+{
+    Branch result;
+    try
+    {
+        git_buf buf = GIT_BUF_INIT;
+        QString myName = canonicalName();
+        throwOnError(git_branch_upstream_name(&buf, repository()->handle().value(), myName.toUtf8().constData()));
+
+        QString branchName = buf.ptr;
+        Reference reference = repository()->references().findByCanonicalName(branchName);
+        throwIfTrue(reference.isNull(), "Reference not found");
+        result = Branch(repository(), reference);
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
 Commit Branch::tip()
 {
     Commit commit(repository());
 
     try
     {
-        ObjectId objid = ObjectId::createFromReference(_reference);
+        ObjectId objid = _reference.targetObjectId();
         commit = Commit::lookup(repository(), objid);
         if(commit.isValid() == false) {
             throw GitException("Failed to find commit at starting reference");
@@ -144,6 +198,11 @@ Commit Branch::birth()
     return commit;
 }
 
+bool Branch::isTracking() const
+{
+    return trackedBranch().isNull() == false;
+}
+
 bool Branch::isHead() const
 {
     bool result = false;
@@ -158,6 +217,16 @@ bool Branch::isHead() const
 bool Branch::isRemote() const
 {
     return _reference.looksLikeRemoteTrackingBranch();
+}
+
+QString Branch::removeOrigin(const QString& branchName)
+{
+    static const QString NEEDLE = "origin/";
+    QString result = branchName;
+    if(result.startsWith(NEEDLE)) {
+        result = result.mid(NEEDLE.length());
+    }
+    return result;
 }
 
 QString Branch::remoteNameFromRemoteTrackingBranch() const

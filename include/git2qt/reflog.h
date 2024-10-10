@@ -19,7 +19,7 @@ namespace GIT {
 
 class Repository;
 
-class Reflog : public GitEntity
+class GIT2QT_EXPORT Reflog : public GitEntity
 {
 public:
     Reflog(Repository* repo, const QString& canonicalName);

@@ -2,6 +2,8 @@
 #define LOG_H
 #include <git2qt/enumtostringmap.h>
 
+#include <QTextStream>
+
 class QString;
 namespace GIT {
 
@@ -40,7 +42,7 @@ private:
     };
 
     static const LogLevelToStringMap _LogLevelToStringMap;
-
+    static QTextStream _stdout;
 };
 
 #define LVL_DEBUG      __FILE__,__LINE__,Log::LogLevel::Debug

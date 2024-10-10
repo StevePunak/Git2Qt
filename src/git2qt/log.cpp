@@ -8,6 +8,7 @@
 using namespace GIT;
 
 const Log::LogLevelToStringMap Log::_LogLevelToStringMap;
+QTextStream Log::_stdout(stdout);
 
 void Log::logText(const char* file, int line, LogLevel level, const QString& text)
 {
@@ -26,6 +27,7 @@ void Log::logText(const char* file, int line, LogLevel level, const QString& tex
     output << _LogLevelToStringMap.getString(level) << ' ';
 
     output << text;
+    output << Qt::endl;
 
-    qDebug() << result;
+    QTextStream(stdout) << result;
 }

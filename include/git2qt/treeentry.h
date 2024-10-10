@@ -15,11 +15,14 @@ namespace GIT {
 
 class Repository;
 class Tree;
-class TreeEntry : public GitEntity
+class GIT2QT_EXPORT TreeEntry : public GitEntity
 {
 public:
     TreeEntry();
-    TreeEntry(Repository* repo, const ObjectId& parentTreeId, const ObjectId& objectId);
+    TreeEntry(Repository* repo, const ObjectId& parentTreeId, const ObjectId& objectId, const QString& parentPath);
+    TreeEntry(const TreeEntry& other);
+    TreeEntry& operator=(const TreeEntry& other);
+    virtual ~TreeEntry();
 
     ObjectId parentTreeId() const { return _parentTreeId; }
     QString name() const { return _name; }
@@ -33,21 +36,15 @@ public:
     bool isValid() const { return _name.isEmpty() == false; }
     virtual bool isNull() const override { return _name.isEmpty(); }
 
-    class List : public QList<TreeEntry>
+    class GIT2QT_EXPORT List : public QList<TreeEntry>
     {
     public:
-        TreeEntry findByPath(const QString& path) const
-        {
-            TreeEntry result;
-            auto it = std::find_if(constBegin(), constEnd(), [path](const TreeEntry& t) { return t.path() == path; } );
-            if(it != constEnd()) {
-                result = *it;
-            }
-            return result;
-        }
+        TreeEntry findByPath(const QString& path) const;
     };
 
 private:
+    void createTarget();
+
     ObjectId _parentTreeId;
     GitObject* _target = nullptr;
     ObjectId _targetObjectId;

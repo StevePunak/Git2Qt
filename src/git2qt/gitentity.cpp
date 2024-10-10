@@ -6,37 +6,28 @@
 
 using namespace GIT;
 
-bool GitEntity::handleError(int value)
-{
-    if(value) {
-        repository()->setErrorText(git_error_last()->message);
-        return true;
-    }
-    return false;
-}
-
 void GitEntity::throwOnError(int result, const QString& message) const
 {
     if(result != 0) {
-        throwException(message);
+        throwException(message, result);
     }
 }
 
-void GitEntity::throwIfNull(const void* ptr, const QString& message)
+void GitEntity::throwIfNull(const void* ptr, const QString& message) const
 {
     if(ptr == nullptr) {
         throwException(message);
     }
 }
 
-void GitEntity::throwIfFalse(bool result, const QString& message)
+void GitEntity::throwIfFalse(bool result, const QString& message) const
 {
     if(result == false) {
         throwException(message);
     }
 }
 
-void GitEntity::throwIfEmpty(const QString& value, const QString& message)
+void GitEntity::throwIfEmpty(const QString& value, const QString& message) const
 {
     if(value.isEmpty()) {
         throwException(message);
@@ -58,7 +49,12 @@ void GitEntity::throwIfTrue(Repository* repo, int result)
     repo->throwIfTrue(result);
 }
 
-void GitEntity::throwException(const QString& message) const
+void GitEntity::throwIfNull(Repository* repo, const void* ptr)
+{
+    repo->throwIfNull(ptr);
+}
+
+void GitEntity::throwException(const QString& message, int errorCode) const
 {
     QString errorText = message;
     if(errorText.isEmpty()) {
@@ -68,7 +64,13 @@ void GitEntity::throwException(const QString& message) const
         }
     }
     repository()->setErrorText(errorText);
+    repository()->setErrorCode(errorCode);
     throw GitException(errorText);
+}
+
+bool GitEntity::operator ==(const GitEntity& other) const
+{
+    return _objectType == other._objectType;
 }
 
 void GitEntity::setErrorText(const QString& errorText)

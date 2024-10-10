@@ -161,3 +161,13 @@ bool Index::isNull() const
     return result;
     return createHandle().isNull();
 }
+
+bool GIT::Index::isFullyMerged() const
+{
+    bool result = false;
+    IndexHandle handle = createHandle();
+    if(handle.isNull() == false) {
+        result = git_index_has_conflicts(handle.value()) == 0;
+    }
+    return result;
+}

@@ -1,2 +1,2 @@
-#include "credentialresolver.h"
+#include "abstractcredentialresolver.h"
 

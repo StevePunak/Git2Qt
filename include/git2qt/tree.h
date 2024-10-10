@@ -15,20 +15,22 @@
 
 namespace GIT {
 
+class Commit;
 class Repository;
 
-class Tree : public GitObject
+class GIT2QT_EXPORT Tree : public GitObject
 {
 public:
     Tree() :
         GitObject(TreeEntity, nullptr, ObjectId()) {}
 
-    Tree(Repository* repo, const ObjectId& objectId);
+    Tree(Repository* repo, const ObjectId& objectId, const QString& path = QString());
     virtual ~Tree();
 
     static Tree createFromBranchName(Repository* repo, const QString& branchName);
+    static Tree createFromCommit(Repository* repo, const Commit& commit);
 
-    TreeEntry findEntryByPath(const QString& path) { return _entries.findByPath(path); }
+    TreeEntry findEntryByPath(const QString& path) const;
     TreeEntry::List entries() const { return _entries; }
 
     ObjectHandle createObjectHandle() const;
@@ -51,6 +53,7 @@ public:
     };
 
 private:
+    QString _path;
     TreeEntry::List _entries;
     Tree::List _trees;
 };

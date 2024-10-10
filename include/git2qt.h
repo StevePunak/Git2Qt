@@ -11,6 +11,7 @@
 #include <git2qt/kanoopgit.h>
 #include <git2.h>
 #include <git2qt/branchcollection.h>
+#include <git2qt/commitlog.h>
 #include <git2qt/compareoptions.h>
 #include <git2qt/configuration.h>
 #include <git2qt/diff.h>
@@ -18,7 +19,6 @@
 #include <git2qt/remote.h>
 #include <git2qt/remotecollection.h>
 #include <git2qt/repository.h>
-#include <git2qt/submodulecollection.h>
 #include <git2qt/tagcollection.h>
 #include <git2qt/annotatedtag.h>
 #include <git2qt/lightweighttag.h>
@@ -28,11 +28,12 @@
 #include <git2qt/tree.h>
 #include <git2qt/treechanges.h>
 #include <git2qt/commands.h>
-#include <git2qt/credentialresolver.h>
+#include <git2qt/abstractcredentialresolver.h>
 #include <git2qt/progresscallback.h>
+#include <git2qt/declspec.h>
 
 class CredentialResolver;
-class KANOOPGIT_EXPORT Git2Qt : public QObject
+class GIT2QT_EXPORT Git2Qt : public QObject
 {
     Q_OBJECT
 public:

@@ -23,7 +23,7 @@ class AnnotatedTag;
 class Commit;
 class Repository;
 class Signature;
-class TagCollection : public QObject,
+class GIT2QT_EXPORT TagCollection : public QObject,
                       public GitEntity
 {
     Q_OBJECT

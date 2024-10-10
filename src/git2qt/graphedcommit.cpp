@@ -35,6 +35,14 @@ bool GraphedCommit::operator ==(const GraphedCommit& other) const
     return Commit::operator ==(other);
 }
 
+void GraphedCommit::setLevel(int value)
+{
+if(objectId().sha().startsWith("d6134")) {
+    logText(LVL_DEBUG, "Ehere");
+}
+    _level = value;
+}
+
 int GraphedCommit::distanceAhead(const Commit& other) const
 {
     int result = 0;
@@ -76,7 +84,7 @@ int GraphedCommit::distanceBehind(const Commit& other) const
 QString GraphedCommit::toString() const
 {
     QString text = QString("[name: %1  lvl: %2  head: %3  parents: %4]")
-                   .arg(_branchName)
+                   .arg(_friendlyBranchName)
                    .arg(_level)
                    .arg(Utility::toString(_head))
                    .arg(_parentObjectIds.count());
@@ -96,3 +104,20 @@ bool GraphedCommit::getDistance(Repository* repo, const ObjectId& local, const O
     }
     return result;
 }
+
+// -------------------------------- GraphedCommit::List --------------------------------
+
+GraphedCommit::List GraphedCommit::List::findChildren(const GraphedCommit& of) const
+{
+    List result;
+    for(const GraphedCommit& commit : *this) {
+        if(of.isStashBase() && commit.isStash() && of.stashBaseOf() == commit.objectId()) {
+            result.append(commit);
+        }
+        else if(commit.parents().objectIds().contains(of.objectId())) {
+            result.append(commit);
+        }
+    }
+    return result;
+}
+

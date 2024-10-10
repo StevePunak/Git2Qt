@@ -16,7 +16,7 @@ namespace GIT {
 
 class Tree;
 class Repository;
-class Commit : public GitObject
+class GIT2QT_EXPORT Commit : public GitObject
 {
 public:
     Commit();
@@ -72,6 +72,16 @@ public:
             auto it = std::find_if(constBegin(), constEnd(), [objectId](const Commit& c) { return c.objectId() == objectId; } );
             if(it != constEnd()) {
                 result = *it;
+            }
+            return result;
+        }
+
+        int indexOfObjectId(const ObjectId& objectId) const
+        {
+            int result = -1;
+            auto it = std::find_if(constBegin(), constEnd(), [objectId](const Commit& commit) { return commit.objectId() == objectId; });
+            if(it != constEnd()) {
+                result = std::distance(constBegin(), it);
             }
             return result;
         }

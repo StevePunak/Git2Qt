@@ -18,7 +18,7 @@ qt_add_library(
     ${PROJ} ${KANOOP_GIT_SOURCES} ${KANOOP_GIT_HEADERS}
 )
 
-target_compile_options(${PROJ} PRIVATE -Wextra -Wall -Werror)
+target_compile_options(${PROJ} PRIVATE -Wextra -Wall -Werror -Wno-missing-field-initializers -Wno-documentation)
 
 set_target_properties(${PROJ} PROPERTIES VERSION "${KANOOP_GIT_VERSION}")
 set_target_properties(${PROJ} PROPERTIES SOVERSION 1)
@@ -28,9 +28,18 @@ target_include_directories(${PROJ} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(${PROJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/git2qt)
 
-target_link_libraries(${PROJ} PRIVATE Qt6::Network git2)
+# Temp include Kanoop
+get_directory_property(PARENT_DIR PARENT_DIRECTORY)
+target_include_directories(${PROJ} PRIVATE ${PARENT_DIR}/KanoopCommon/include)
 
-add_compile_definitions(KANOOP_GIT)
+# target_link_directories(${PROJ} PRIVATE "C:/Program Files (x86)/libgit2/lib/")
+target_link_libraries(${PROJ} PRIVATE Qt6::Network git2 KanoopCommon)
+# end temp Kanoop
+
+target_include_directories(${PROJ} PRIVATE ${PARENT_DIR}/libgit2/include)
+target_link_directories(${PROJ} PRIVATE ${CMAKE_BINARY_DIR}/libgit2)
+
+add_compile_definitions(GIT2QT_LIBRARY)
 add_compile_definitions(QT_DEPRECATED_WARNINGS)
 add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x060000)  # Disables all the APIs deprecated before Qt 6.0.0
 

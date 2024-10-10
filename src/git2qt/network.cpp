@@ -1,5 +1,6 @@
 #include "network.h"
 
+#include <gitexception.h>
 #include <remote.h>
 #include <remotecollection.h>
 #include <repository.h>
@@ -31,6 +32,20 @@ Remote Network::remoteForName(const QString& name) const
     // git_remote_lookup()
 }
 
+FetchHead::List Network::fetchHeads()
+{
+    FetchHead::List result;
+    try
+    {
+        throwOnError(git_repository_fetchhead_foreach(repository()->handle().value(), fetchHeadCallback, &result));
+    }
+    catch(const GitException&)
+    {
+    }
+
+    return result;
+}
+
 void Network::reload()
 {
     if(_remotes != nullptr) {
@@ -47,5 +62,13 @@ void Network::reload()
         }
         git_strarray_free(&list);
     }
+}
+
+int Network::fetchHeadCallback(const char* ref_name, const char* remote_url, const git_oid* oid, unsigned int is_merge, void* payload)
+{
+    FetchHead fetchHead(ref_name, remote_url, oid, is_merge);
+    FetchHead::List* list = static_cast<FetchHead::List*>(payload);
+    list->append(fetchHead);
+    return 0;
 }
 

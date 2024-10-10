@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class TreeChanges : public TreeChangeEntry::List
+class GIT2QT_EXPORT TreeChanges : public TreeChangeEntry::List
 {
 public:
     TreeChanges() : TreeChangeEntry::List() {}

@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class StatusOptions
+class GIT2QT_EXPORT StatusOptions
 {
 public:
     StatusOptions() {}
@@ -58,7 +58,7 @@ private:
     bool _includeIgnored = false;
     bool _includeUntracked = true;
     bool _recurseUntrackedDirs = true;
-    GitStatusShow _show = IndexAndWorkDir;
+    GitStatusShow _show = StatusShowIndexAndWorkDir;
     bool _detectRenamesInWorkDir = true;
     bool _excludeSubmodules = true;
     bool _recurseIgnoredDirs = false;

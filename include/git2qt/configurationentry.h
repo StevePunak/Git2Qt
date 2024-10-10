@@ -14,7 +14,7 @@
 
 namespace GIT {
 
-class ConfigurationEntry
+class GIT2QT_EXPORT ConfigurationEntry
 {
 public:
     ConfigurationEntry() {}

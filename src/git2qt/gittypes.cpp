@@ -169,4 +169,19 @@ QList<ChangeKind> getChangeKindValues()
     return EnumStrings::getChangeKindValues();
 }
 
+QString getGitEntityTypeString(GitEntityType value)
+{
+    return EnumStrings::getGitEntityTypeString(value);
+}
+
+GitEntityType getGitEntityType(const QString& value)
+{
+    return EnumStrings::getGitEntityType(value);
+}
+
+QList<GitEntityType> getGitEntityTypeValues()
+{
+    return EnumStrings::getGitEntityTypeValues();
+}
+
 }   // namespace
