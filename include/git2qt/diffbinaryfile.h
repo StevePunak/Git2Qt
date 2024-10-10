@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class DiffBinaryFile
+class GIT2QT_EXPORT DiffBinaryFile
 {
 public:
     enum DiffBinaryType

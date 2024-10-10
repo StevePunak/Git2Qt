@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class DiffHunk
+class GIT2QT_EXPORT DiffHunk
 {
 public:
     DiffHunk() {}
@@ -31,11 +31,32 @@ public:
     DiffLine::List lines() const { return _lines; }
     void appendLine(const DiffLine& value) { _lines.append(value); }
 
+    bool isValid() const { return _header.isEmpty() == false; }
     QString toString() const;
 
     class List : public QList<DiffHunk>
     {
     public:
+        DiffHunk findHunkForOldLine(int line) const
+        {
+            DiffHunk result;
+            auto it = std::find_if(constBegin(), constEnd(), [line](const DiffHunk& hunk) { return line >= hunk.oldStart() && line < hunk.oldStart() + hunk.oldLines(); } );
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
+
+        DiffHunk findHunkForNewLine(int line) const
+        {
+            DiffHunk result;
+            auto it = std::find_if(constBegin(), constEnd(), [line](const DiffHunk& hunk) { return line >= hunk.newStart() && line < hunk.newStart() + hunk.newLines(); } );
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
+
         DiffHunk* getDiffHunkPtr(const DiffHunk& hunk)
         {
             DiffHunk* result = nullptr;

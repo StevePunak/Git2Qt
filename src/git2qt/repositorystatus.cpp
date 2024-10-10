@@ -3,7 +3,7 @@
 using namespace GIT;
 
 
-void RepositoryStatus::addStatusEntryForDelta(FileStatus fileStatus, git_diff_delta* deltaHeadToIndex, git_diff_delta* deltaIndexToWorkDir)
+StatusEntry RepositoryStatus::addStatusEntryForDelta(FileStatus fileStatus, git_diff_delta* deltaHeadToIndex, git_diff_delta* deltaIndexToWorkDir)
 {
     RenameDetails headToIndexRenameDetails;
     RenameDetails indexToWorkDirRenameDetails;
@@ -26,4 +26,5 @@ void RepositoryStatus::addStatusEntryForDelta(FileStatus fileStatus, git_diff_de
 
     StatusEntry statusEntry(filePath, fileStatus, headToIndexRenameDetails, indexToWorkDirRenameDetails);
     _statusEntries.append(statusEntry);
+    return statusEntry;
 }

@@ -53,10 +53,9 @@ bool Commit::operator ==(const Commit& other) const
 
 Commit Commit::lookup(Repository* repo, const ObjectId& objectId)
 {
-    Commit result(repo, objectId);
+    Commit result;
     git_commit *commit;
     if(git_commit_lookup(&commit, repo->handle().value(), objectId.toNative()) == 0) {
-        const git_oid* oid = git_commit_id(commit);  Q_UNUSED(oid)
         result = createFromNative(repo, commit);
         git_commit_free(commit);
     }
@@ -121,7 +120,6 @@ CommitHandle Commit::createHandle() const
     git_commit* commit = nullptr;
     if(git_commit_lookup(&commit, repository()->handle().value(), objectId().toNative()) == 0) {
         handle = CommitHandle(commit);
-        git_commit_free(commit);
     }
     return handle;
 }

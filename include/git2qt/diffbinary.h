@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class DiffBinary
+class GIT2QT_EXPORT DiffBinary
 {
 public:
     DiffBinary(const git_diff_binary* binary);

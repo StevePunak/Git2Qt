@@ -15,7 +15,7 @@
 namespace GIT {
 
 class Repository;
-class LightweightTag : public Tag
+class GIT2QT_EXPORT LightweightTag : public Tag
 {
 public:
     LightweightTag();

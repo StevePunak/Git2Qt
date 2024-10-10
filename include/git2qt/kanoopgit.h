@@ -3,6 +3,11 @@
  *
  * Windoze declspec stuff
  *
+ *
+ * DPERECATE!!! and DELETE!!!
+ *
+ *
+ *
  * Stephen Punak, August 1, 2024
 */
 #ifndef KANOOPGIT_H

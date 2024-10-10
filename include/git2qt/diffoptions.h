@@ -13,7 +13,7 @@
 
 namespace GIT {
 
-class DiffOptions
+class GIT2QT_EXPORT DiffOptions
 {
 public:
     DiffOptions();

@@ -17,7 +17,11 @@ Reference::Reference(Repository* repo, const QString& canonicalName, const QStri
     GitEntity(ReferenceEntity, repo),
     _canonicalName(canonicalName), _targetIdentifier(targetIdentifier),
     _type(referenceType)
-{}
+{
+    if(ObjectId::isValid(targetIdentifier)) {
+        _targetOid = targetIdentifier;
+    }
+}
 
 Reference::Reference(const Reference& other) :
     GitEntity(ReferenceEntity, other.repository())
@@ -28,7 +32,6 @@ Reference::Reference(const Reference& other) :
 Reference::~Reference()
 {
     if(_target != nullptr) {
-        _target->dispose();
         delete _target;
     }
 }
@@ -45,10 +48,24 @@ Reference& Reference::operator=(const Reference& other)
     _isRemote = other._isRemote;
     _isTag = other._isTag;
 
-    if(_type == SymbolicReferenceType) {
+    if(_type == SymbolicReferenceType && repository() != nullptr) {
         resolveTarget();
     }
     return *this;
+}
+
+bool Reference::operator ==(const Reference& other) const
+{
+    bool result = GitEntity::operator ==(other) &&
+                  _canonicalName == other._canonicalName &&
+                  _targetIdentifier == other._targetIdentifier &&
+                  _targetOid == other._targetOid &&
+                  _type == other._type &&
+                  _isBranch == other._isBranch &&
+                  _isNote == other._isNote &&
+                  _isRemote == other._isRemote &&
+                  _isTag == other._isTag;
+    return result;
 }
 
 void Reference::resolveProperties()
@@ -60,11 +77,6 @@ void Reference::resolveProperties()
         _isRemote = git_reference_is_remote(handle.value());
         _isTag = git_reference_is_tag(handle.value());
     }
-}
-
-void Reference::dispose()
-{
-    createHandle().dispose();
 }
 
 ReferenceHandle Reference::createHandle() const
@@ -224,6 +236,33 @@ ObjectId Reference::objectId() const
         result = objectIdFromHandle(handle);
         handle.dispose();
     }
+    return result;
+}
+
+Reference Reference::resolveToDirectReference() const
+{
+    Reference result;
+    if(isDirect()) {
+        result = *this;
+    }
+    else {
+        try
+        {
+            git_reference* targetRef = nullptr;
+            ReferenceHandle handle = createHandle();
+            throwOnError(git_reference_resolve(&targetRef, handle.value()));
+            const git_oid* oid = git_reference_target(targetRef);
+            if(oid != nullptr) {
+                ObjectId refId = ObjectId(oid);
+                result = Reference(repository(), _targetIdentifier, refId.toString(), DirectReferenceType);
+            }
+            handle.dispose();
+        }
+        catch(const GitException&)
+        {
+        }
+    }
+
     return result;
 }
 

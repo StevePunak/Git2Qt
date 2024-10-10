@@ -14,7 +14,7 @@
 
 namespace GIT {
 
-class RepositoryInformation : public GitEntity
+class GIT2QT_EXPORT RepositoryInformation : public GitEntity
 {
 public:
     RepositoryInformation(Repository* repo);

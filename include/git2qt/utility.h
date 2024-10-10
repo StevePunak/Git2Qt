@@ -15,10 +15,11 @@
 
 #include <QDir>
 #include <QString>
+#include <git2qt/declspec.h>
 
 namespace GIT {
 
-class Utility
+class GIT2QT_EXPORT Utility
 {
 public:
     static QString toString(bool value) { return value ? "true" : "false"; }
@@ -27,19 +28,16 @@ public:
     /**
      * @brief combine paths into a normalized path
      */
-    static QString combine(const QString& p1, const QString& p2)
-    { return QDir::cleanPath(p1 + QDir::separator() + p2); }
-    static QString combine(const QString& p1, const QString& p2, const QString& p3)
-    { return QDir::cleanPath(p1 + QDir::separator() + p2 + QDir::separator() + p3); }
-    static QString combine(const QString& p1, const QString& p2, const QString& p3, const QString& p4)
-    { return QDir::cleanPath(p1 + QDir::separator() + p2 + QDir::separator() + p3 + QDir::separator() + p4); }
-    static QString combine(const QString& p1, const QString& p2, const QString& p3, const QString& p4, const QString& p5)
-    { return QDir::cleanPath(p1 + QDir::separator() + p2 + QDir::separator() + p3 + QDir::separator() + p4 + QDir::separator() + p5); }
-    static QString combine(const QString& p1, const QString& p2, const QString& p3, const QString& p4, const QString& p5, const QString& p6)
-    { return QDir::cleanPath(p1 + QDir::separator() + p2 + QDir::separator() + p3 + QDir::separator() + p4 + QDir::separator() + p5 + QDir::separator() + p6); }
-    static QString combine(const QString& p1, const QString& p2, const QString& p3, const QString& p4, const QString& p5, const QString& p6, const QString& p7)
-    { return QDir::cleanPath(p1 + QDir::separator() + p2 + QDir::separator() + p3 + QDir::separator() + p4 + QDir::separator() + p5 + QDir::separator() + p6 + QDir::separator() + p7); }
+    static QString combine(const QString& p1, const QString& p2, bool dropLeadingSlash = false);
+    static QString combine(const QString& p1, const QString& p2, const QString& p3, bool dropLeadingSlash = false);
+    static QString combine(const QString& p1, const QString& p2, const QString& p3, const QString& p4, bool dropLeadingSlash = false);
+    static QString combine(const QString& p1, const QString& p2, const QString& p3, const QString& p4, const QString& p5, bool dropLeadingSlash = false);
+    static QString combine(const QString& p1, const QString& p2, const QString& p3, const QString& p4, const QString& p5, const QString& p6, bool dropLeadingSlash = false);
+    static QString combine(const QString& p1, const QString& p2, const QString& p3, const QString& p4, const QString& p5, const QString& p6, const QString& p7, bool dropLeadingSlash = false);
     static QString combine(const QStringList& parts);
+
+private:
+    static const QChar SEPERATOR;
 };
 
 } // namespace GIT

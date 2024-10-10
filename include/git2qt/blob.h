@@ -13,10 +13,19 @@
 namespace GIT {
 class Repository;
 
-class Blob : public GitObject
+class GIT2QT_EXPORT Blob : public GitObject
 {
 public:
     Blob(Repository* repo, const ObjectId& objectId);
+
+    QByteArray rawData();
+
+    BlobHandle createHandle() const;
+
+    bool isValid() const;
+
+private:
+    QByteArray _rawData;
 };
 
 } // namespace GIT

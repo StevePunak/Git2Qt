@@ -16,7 +16,7 @@ namespace GIT {
 
 class Repository;
 class ReferenceCollection;
-class Remote : public GitEntity
+class GIT2QT_EXPORT Remote : public GitEntity
 {
 public:
     Remote();
@@ -35,6 +35,9 @@ public:
     RemoteHandle createHandle() const;
 
     virtual bool isNull() const override { return createHandle().isNull(); }
+
+    QVariant toVariant() const { return QVariant::fromValue<Remote>(*this); }
+    static Remote fromVariant(const QVariant& value) { return value.value<Remote>(); }
 
     class List : public QList<Remote>
     {
@@ -61,5 +64,7 @@ private:
 };
 
 } // namespace GIT
+
+Q_DECLARE_METATYPE(GIT::Remote)
 
 #endif // REMOTE_H

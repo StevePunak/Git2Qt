@@ -9,7 +9,7 @@ namespace GIT {
 
 class Commit;
 class Repository;
-class CommitLog : public GitEntity
+class GIT2QT_EXPORT CommitLog : public GitEntity
 {
 public:
     CommitLog(Repository* repo, const CommitFilter& filter);

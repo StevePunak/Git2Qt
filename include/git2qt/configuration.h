@@ -16,7 +16,7 @@
 namespace GIT {
 
 class Signature;
-class Configuration : public QObject,
+class GIT2QT_EXPORT Configuration : public QObject,
                       public GitEntity
 {
     Q_OBJECT

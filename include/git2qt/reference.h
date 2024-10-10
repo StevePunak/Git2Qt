@@ -17,7 +17,7 @@
 namespace GIT {
 
 class Repository;
-class Reference : public GitEntity
+class GIT2QT_EXPORT Reference : public GitEntity
 {
 public:
     Reference() :
@@ -25,8 +25,7 @@ public:
 
     Reference(const Reference& other);
     Reference& operator=(const Reference& other);
-
-    void dispose();
+    bool operator ==(const Reference& other) const;
 
     ReferenceHandle createHandle() const;
 
@@ -45,13 +44,16 @@ public:
     ObjectId objectId() const;
 
     Reference* target() const { return _target; }
-    ObjectId targetOid() const { return _targetOid; }
+    ObjectId targetObjectId() const { return _targetOid; }
+
+    Reference resolveToDirectReference() const;
 
     void resolveTarget();
 
     bool isBranch() const { return _isBranch; }
     bool isNote() const { return _isNote; }
     bool isRemote() const { return _isRemote; }
+    bool isLocal() const { return !_isRemote; }
     bool isTag() const { return _isTag; }
 
     virtual bool isDirect() const { return type() == DirectReferenceType; }
@@ -96,6 +98,27 @@ public:
             return result;
         }
 
+        Reference findByCanonicalName(const QString& canonicalName) const
+        {
+            Reference result;
+            auto it = std::find_if(constBegin(), constEnd(), [canonicalName](const Reference& r) { return r.canonicalName() == canonicalName; });
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
+
+        List findByTargetObjectId(const ObjectId& objectId) const
+        {
+            List result;
+            for(const Reference& reference : *this) {
+                if(reference.targetObjectId() == objectId) {
+                    result.append(reference);
+                }
+            }
+            return result;
+        }
+
         List localBranchReferences() const
         {
             List result;
@@ -115,7 +138,7 @@ public:
                     result.append(reference.objectId());
                 }
                 else {
-                    result.append(reference.targetOid());
+                    result.append(reference.targetObjectId());
                 }
             }
             return result;
