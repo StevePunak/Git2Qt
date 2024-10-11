@@ -1120,9 +1120,14 @@ Stash::List Repository::stashes() const
     return _stashes->stashes();
 }
 
-DiffDelta::List Repository::diffTreeToTree(const Tree& fromTree, const Tree& newTree, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
+DiffDelta::List Repository::diffTreeToTree_DEP(const Tree& fromTree, const Tree& newTree, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
 {
-    return _diff->diffTreeToTree(fromTree, newTree, compareOptions, diffFlags);
+    return _diff->diffTreeToTree_DEP(fromTree, newTree, compareOptions, diffFlags);
+}
+
+DiffDelta::List Repository::diffCommitToCommit(const Commit& oldCommit, const Commit& newCommit, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
+{
+    return _diff->diffCommitToCommit(oldCommit, newCommit, compareOptions, diffFlags);
 }
 
 DiffDelta::List Repository::diffIndexToWorkDir(const QString& path, bool includeUntracked, const CompareOptions& compareOptions, DiffModifiers diffFlags) const

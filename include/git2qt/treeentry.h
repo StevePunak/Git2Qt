@@ -13,8 +13,10 @@
 
 namespace GIT {
 
+class Commit;
 class Repository;
 class Tree;
+
 class GIT2QT_EXPORT TreeEntry : public GitEntity
 {
 public:
@@ -23,6 +25,8 @@ public:
     TreeEntry(const TreeEntry& other);
     TreeEntry& operator=(const TreeEntry& other);
     virtual ~TreeEntry();
+
+    static TreeEntry findForCommit(const Commit& commit, const QString& path);
 
     ObjectId parentTreeId() const { return _parentTreeId; }
     QString name() const { return _name; }
@@ -53,6 +57,10 @@ private:
     Mode _mode = NonexistentFile;
     ObjectType _entryType = ObjectTypeInvalid;
     ObjectType _targetType = ObjectTypeInvalid;
+
+    static TreeHandle findParentTree(Repository* repo, TreeHandle childHandle, const QString& path);
+    static bool pathHasParent(const QString& path) { return path.contains('/'); }
+    static QString stripFilename(const QString& path);
 };
 
 } // namespace GIT

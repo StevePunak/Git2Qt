@@ -49,9 +49,14 @@ void GitEntity::throwIfTrue(Repository* repo, int result)
     repo->throwIfTrue(result);
 }
 
-void GitEntity::throwIfNull(Repository* repo, const void* ptr)
+void GitEntity::throwIfFalse(Repository* repo, int result, const QString& message)
 {
-    repo->throwIfNull(ptr);
+    repo->throwIfFalse(result, message);
+}
+
+void GitEntity::throwIfNull(Repository* repo, const void* ptr, const QString& message)
+{
+    repo->throwIfNull(ptr, message);
 }
 
 void GitEntity::throwException(const QString& message, int errorCode) const

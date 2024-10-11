@@ -53,7 +53,8 @@ protected:
 
     static void throwOnError(Repository* repo, int result);
     static void throwIfTrue(Repository* repo, int result);
-    static void throwIfNull(Repository* repo, const void* ptr);
+    static void throwIfFalse(Repository* repo, int result, const QString& message = QString());
+    static void throwIfNull(Repository* repo, const void* ptr, const QString& message = QString());
 
     void setRepository(Repository* value) { _repository = value; }
 

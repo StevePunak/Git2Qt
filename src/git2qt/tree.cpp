@@ -20,6 +20,7 @@ Tree::Tree(Repository* repo, const ObjectId& objectId, const QString& path) :
         TreeHandle handle = createTreeHandle();
         throwIfTrue(handle.isNull());
         size_t count = git_tree_entrycount(handle.value());
+logText(LVL_DEBUG, QString("Create tree at %1 with %2 entries").arg(path).arg(count));
         for(size_t i = 0;i < count;i++) {
             const git_tree_entry* nativeEntry = git_tree_entry_byindex(handle.value(), i);
             throwIfNull(nativeEntry);
@@ -27,6 +28,7 @@ Tree::Tree(Repository* repo, const ObjectId& objectId, const QString& path) :
             TreeEntry entry(repository(), objectId, entryId, path);
             _entries.append(entry);
         }
+        handle.dispose();
     }
     catch(const GitException&)
     {
