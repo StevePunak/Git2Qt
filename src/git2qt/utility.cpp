@@ -13,6 +13,34 @@ QString Utility::combine(const QString& p1, const QString& p2, bool dropLeadingS
     return result;
 }
 
+bool Utility::readAllLines(const QString& filename, QStringList& lines)
+{
+    QFile file(filename);
+    if(file.open(QIODevice::ReadOnly)) {
+        lines.clear();
+        QTextStream ts(&file);
+        QString line;
+        while((line = ts.readLine()).isNull() == false) {
+            lines.append(line);
+        }
+        return true;
+    }
+    return false;
+}
+
+bool Utility::writeAllLines(const QString& filename, const QStringList& lines)
+{
+    QFile file(filename);
+    if(file.open(QIODevice::WriteOnly)) {
+        foreach(const QString& line, lines) {
+            file.write(line.toLatin1());
+            file.write("\n");
+        }
+        return true;
+    }
+    return false;
+}
+
 QString Utility::combine(const QString& p1, const QString& p2, const QString& p3, bool dropLeadingSlash)
 {
     QString result = QDir::cleanPath(p1 + SEPERATOR + p2 + SEPERATOR + p3);

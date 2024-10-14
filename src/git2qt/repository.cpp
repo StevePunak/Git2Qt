@@ -34,6 +34,7 @@
 #include <QElapsedTimer>
 
 #include <git2qt/private/graphbuilder.h>
+#include <git2qt/private/submodulehelper.h>
 
 using namespace GIT;
 
@@ -838,13 +839,84 @@ int Repository::commitDistance(const Commit& a, const Commit& b)
     return result;
 }
 
+bool Repository::addSubmodule(const QString& url, const QString& path, const CheckoutOptions& checkoutOptions, const FetchOptions& fetchOptions)
+{
+    bool result = false;
+    try
+    {
+        git_submodule* sm = nullptr;
+        throwOnError(git_submodule_add_setup(&sm, _handle.value(), url.toUtf8().constData(), path.toUtf8().constData(), false));
+
+        CheckoutOptions checkoutOpts = checkoutOptions;
+
+        git_fetch_options fetchOpts;
+        FetchOptions(fetchOptions).makeNative(&fetchOpts);
+        fetchOpts.callbacks.credentials = credentialsCallback;
+        fetchOpts.callbacks.payload = this;
+
+        git_submodule_update_options opts = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
+        opts.checkout_opts = *checkoutOpts.toNative();
+        opts.fetch_opts = fetchOpts;
+        opts.allow_fetch = true;
+
+        git_repository* repo = nullptr;
+        throwOnError(git_submodule_clone(&repo, sm, &opts));
+
+        throwOnError(git_submodule_add_finalize(sm));
+
+        _submodules->reload();
+
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
+bool Repository::deleteSubmodule(const Submodule& submodule, bool removeFromFileSystem)
+{
+    bool result = false;
+    try
+    {
+        IndexEntry indexEntry = _index->findByObjectId(submodule.indexCommitId());
+        throwIfFalse(indexEntry.isValid(), "Failed to find submodule in index");
+
+
+        QString key = QString("submodule.%1.url").arg(submodule.name());
+        ConfigurationEntry configEntry = _config->get(key);
+        throwIfTrue(configEntry.isValid() == false, "Failed to find submodule configuration entry");
+
+        QString path = Utility::combine(_localPath, submodule.path());
+
+        throwIfFalse(_index->remove(submodule.path()));
+        throwIfFalse(_config->remove(configEntry));
+
+        SubmoduleHelper gitmodules;
+        throwIfFalse(gitmodules.removeSubmodule(this, submodule), "Failed to write .gitmodules");
+
+        if(removeFromFileSystem) {
+            QDir dir(path);
+            throwIfFalse(dir.removeRecursively(), "Failed to delete directory");
+        }
+        reloadReferences();
+        _index->reload();
+        _submodules->reload();
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
 Blob Repository::findBlob(const ObjectId& objectId)
 {
     Blob result(this, objectId);
     return result;
 }
 
-bool Repository::reset(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions)
+bool Repository::resetCommit(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions)
 {
     bool result = false;
     ObjectHandle objectHandle = commit.createObjectHandle();

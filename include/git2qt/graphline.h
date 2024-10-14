@@ -15,6 +15,10 @@ public:
     {
         _graphItems[level] |= types;
     }
+    void clearGraphItem(int level, GraphItemTypes types)
+    {
+        _graphItems[level] &= ~(types);
+    }
     void makeHorizontals(int fromLevel, int toLevel);
     bool hasHorizontal(int atLevel) const;
 

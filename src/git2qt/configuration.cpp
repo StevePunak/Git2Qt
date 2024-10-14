@@ -165,6 +165,23 @@ bool Configuration::set(const QString& key, const QString& value, ConfigurationL
         ConfigurationHandle levelHandle = createHandle(level);
         throwIfTrue(levelHandle.isNull());
         throwOnError(git_config_set_string(levelHandle.value(), key.toUtf8().constData(), value.toUtf8().constData()));
+        levelHandle.dispose();
+        result = true;
+    }
+    catch(const GitException&)
+    {
+        result = false;
+    }
+    return result;
+}
+
+bool Configuration::remove(const ConfigurationEntry& entry)
+{
+    bool result = false;
+    try
+    {
+        ConfigurationHandle handle = createHandle(entry.level());
+        throwOnError(git_config_delete_entry(handle.value(), entry.key().toUtf8().constData()));
         result = true;
     }
     catch(const GitException&)

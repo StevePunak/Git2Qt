@@ -242,7 +242,17 @@ public:
             return result;
         }
 
-        int countWithStatus(SubmoduleStatuses statuses) const
+        Submodule findByUrl(const QString& url) const
+        {
+            Submodule result;
+            auto it = std::find_if(constBegin(), constEnd(), [url](const Submodule& submodule) { return submodule.url() == url; });
+            if(it != constEnd()) {
+                result = *it;
+            }
+            return result;
+        }
+
+        int countWithStatus(SubmoduleStatus statuses) const
         {
             int result = std::count_if(constBegin(), constEnd(), [statuses] (const Submodule& submodule) { return (submodule.status() & statuses) != 0; } );
             return result;

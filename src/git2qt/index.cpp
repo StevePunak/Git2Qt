@@ -20,26 +20,33 @@ Index::~Index()
 {
 }
 
-void Index::remove(const QString& path)
+bool Index::remove(const QString& path)
 {
+    bool result = false;
     IndexHandle handle = createHandle();
     if(handle.isNull() == false) {
         git_index_remove_bypath(handle.value(), path.toUtf8().constData());
         handle.dispose();
+        result = true;
     }
+    return result;
 }
 
-void Index::add(const QString& path)
+bool Index::add(const QString& path)
 {
+    bool result = false;
     IndexHandle handle = createHandle();
     if(handle.isNull() == false) {
         git_index_add_bypath(handle.value(), path.toUtf8().constData());
         handle.dispose();
+        result = true;
     }
+    return result;
 }
 
-void Index::add(const QString& path, const ObjectId& objectId, Mode mode)
+bool Index::add(const QString& path, const ObjectId& objectId, Mode mode)
 {
+    bool result = false;
     IndexHandle handle = createHandle();
     try
     {
@@ -51,11 +58,13 @@ void Index::add(const QString& path, const ObjectId& objectId, Mode mode)
         entry.path = path.toUtf8().constData();
 
         throwOnError(git_index_add(handle.value(), &entry));
+        result = true;
     }
     catch(const GitException&)
     {
     }
     handle.dispose();
+    return result;
 }
 
 void Index::replace(const Commit& commit, const QStringList& paths, const CompareOptions& compareOptions)

@@ -118,11 +118,15 @@ public:
     Commit mostRecentCommit();
     int commitDistance(const Commit& a, const Commit& b);
 
+    // Submodules
+    bool addSubmodule(const QString& url, const QString& path, const CheckoutOptions& checkoutOptions = CheckoutOptions(), const FetchOptions& fetchOptions = FetchOptions());
+    bool deleteSubmodule(const Submodule& submodule, bool removeFromFileSystem = true);
+
     // Blobs
     Blob findBlob(const ObjectId& objectId);
 
     // Reset
-    bool reset(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions = CheckoutOptions());
+    bool resetCommit(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions = CheckoutOptions());
 
     // Status
     GIT::RepositoryStatus status(const StatusOptions& options = StatusOptions());
@@ -133,9 +137,6 @@ public:
     bool stage(const QStringList& paths, const StageOptions& stageOptions = StageOptions());
     bool unstage(const QString& path) { return unstage(QStringList() << path); }
     bool unstage(const QStringList& paths);
-
-    // Add
-    void add(const GIT::StatusEntry::List& items);
 
     // Restore
     bool restore(const QStringList& paths);

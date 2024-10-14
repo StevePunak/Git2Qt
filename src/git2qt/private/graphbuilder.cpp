@@ -479,6 +479,11 @@ if(commit->objectId().sha().startsWith("e067")) {
             }
         }
     }
+
+    if(_allCommits.count() > 0) {
+        GraphBuilderCommit* lastCommit = _allCommits.last();
+        lastCommit->graphLineRef().clearGraphItem(lastCommit->level(), VerticalDown);
+    }
 }
 
 GraphItemType GraphBuilder::drawMergeLine(GraphBuilderCommit* commit, GraphBuilderCommit* toCommit, int lineLevel)

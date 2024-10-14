@@ -31,6 +31,8 @@ public:
     // Setters
     bool set(const QString& key, const QString& value, ConfigurationLevel level);
 
+    bool remove(const ConfigurationEntry& entry);
+
     Signature buildSignature(const QDateTime& timestamp = QDateTime::currentDateTimeUtc());
 
     QString repoConfigPath() const { return _repoConfigPath; }
