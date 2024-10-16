@@ -13,8 +13,13 @@
 #include <git2qt/handle.h>
 
 #include <QMap>
+#include <QRegularExpressionMatch>
 
 namespace GIT {
+
+class GitObject;
+
+class Commit;
 
 class Repository;
 class GIT2QT_EXPORT Reference : public GitEntity
@@ -47,8 +52,11 @@ public:
     ObjectId targetObjectId() const { return _targetOid; }
 
     Reference resolveToDirectReference() const;
+    Commit peelToCommit() const;
 
     void resolveTarget();
+
+    int depth() const;
 
     bool isBranch() const { return _isBranch; }
     bool isNote() const { return _isNote; }
@@ -105,6 +113,20 @@ public:
             if(it != constEnd()) {
                 result = *it;
             }
+            return result;
+        }
+
+        List findReferences(const QRegularExpression& regex) const
+        {
+            List result;
+
+            for(const Reference& reference : *this) {
+                QRegularExpressionMatch match = regex.match(reference.canonicalName());
+                if(match.hasMatch()) {
+                    result.append(reference);
+                }
+            }
+
             return result;
         }
 

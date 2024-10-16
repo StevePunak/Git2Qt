@@ -33,6 +33,7 @@
 #include <QDirIterator>
 #include <QElapsedTimer>
 
+#include <git2qt/private/commitmessagerewriter.h>
 #include <git2qt/private/graphbuilder.h>
 #include <git2qt/private/submodulehelper.h>
 
@@ -501,6 +502,7 @@ bool Repository::checkoutPaths(const QString& branchName, const QStringList& pat
     try
     {
         Commit commit = findCommit(branchName);
+        throwIfTrue(commit.isNull(), "Failed to find commit");
 
         checkoutTree(commit.tree(), paths, options);
 
@@ -839,6 +841,37 @@ int Repository::commitDistance(const Commit& a, const Commit& b)
     return result;
 }
 
+Commit Repository::amendCommitMessage(const Commit& commit, const QString& message)
+{
+    Commit result;
+
+    CommitHandle commitHandle = commit.createHandle();
+    try
+    {
+        throwIfTrue(commitHandle.isNull(), "Failed to retrieve commit");
+
+        Commit::List commits;
+        commits.append(commit);
+
+        CommitMessageRewriter rewriteOptions(message);
+        _references->rewriteHistory(&rewriteOptions, commits);
+
+#if 0
+        git_oid oid;
+        throwOnError(git_commit_amend(&oid, commitHandle.value(), nullptr, nullptr, nullptr, nullptr, message.toUtf8().constData(), nullptr));
+
+        ObjectId commitId(oid);
+        result = findCommit(commitId);
+#endif
+        reloadReferences();
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+
+}
+
 bool Repository::addSubmodule(const QString& url, const QString& path, const CheckoutOptions& checkoutOptions, const FetchOptions& fetchOptions)
 {
     bool result = false;
@@ -1088,6 +1121,9 @@ bool Repository::restore(const QStringList& paths)
         CheckoutOptions options;
         options.setModifiers(CheckoutOptions::Force);
 
+        Branch branch = head();
+        Q_UNUSED(branch)
+
         throwIfFalse(checkoutPaths(head().friendlyName(), paths, options));
 
         result = true;
@@ -1190,6 +1226,21 @@ Stash Repository::findStash(const ObjectId& objectId) const
 Stash::List Repository::stashes() const
 {
     return _stashes->stashes();
+}
+
+Reference::List Repository::findReferencesReachableFrom(const Commit::List& commits)
+{
+    return _references->findReachableFrom(commits);
+}
+
+Reference::List Repository::findReferences(const QRegularExpression& regex) const
+{
+    return _references->references().findReferences(regex);
+}
+
+bool Repository::deleteLocalReference(const Reference& reference)
+{
+    return _references->deleteLocalReference(reference);
 }
 
 DiffDelta::List Repository::diffTreeToTree_DEP(const Tree& fromTree, const Tree& newTree, const CompareOptions& compareOptions, DiffModifiers diffFlags) const

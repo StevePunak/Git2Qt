@@ -117,6 +117,7 @@ public:
     Commit initialCommit();
     Commit mostRecentCommit();
     int commitDistance(const Commit& a, const Commit& b);
+    Commit amendCommitMessage(const Commit& commit, const QString& message);
 
     // Submodules
     bool addSubmodule(const QString& url, const QString& path, const CheckoutOptions& checkoutOptions = CheckoutOptions(), const FetchOptions& fetchOptions = FetchOptions());
@@ -159,6 +160,11 @@ public:
     bool deleteStash(const Stash& stash);
     Stash findStash(const ObjectId& objectId) const;
     Stash::List stashes() const;
+
+    // References
+    Reference::List findReferencesReachableFrom(const Commit::List& commits);
+    Reference::List findReferences(const QRegularExpression& regex) const;
+    bool deleteLocalReference(const Reference& reference);
 
     // Diffs
     DiffDelta::List diffTreeToTree_DEP(const Tree& oldTree, const Tree& newTree, const CompareOptions& compareOptions, DiffModifiers diffFlags = DiffModifier::DiffModNone) const;

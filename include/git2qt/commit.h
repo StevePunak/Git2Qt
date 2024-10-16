@@ -31,6 +31,8 @@ public:
 
     bool operator ==(const Commit& other) const;
     bool operator !=(const Commit& other) const { return !(*this == other); }
+    bool operator <(const Commit& other) const { return objectId() < other.objectId(); }
+    bool operator >(const Commit& other) const { return objectId() > other.objectId(); }
 
     static Commit lookup(Repository* repo, const ObjectId& objectId);
 

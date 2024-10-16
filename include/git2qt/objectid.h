@@ -67,6 +67,17 @@ public:
                 append(o);
             }
         }
+
+        List unique() const
+        {
+            List result;
+            for(const ObjectId& objectId : *this) {
+                if(result.contains(objectId) == false) {
+                    result.append(objectId);
+                }
+            }
+            return result;
+        }
     };
 
     /**

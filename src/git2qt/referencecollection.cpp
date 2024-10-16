@@ -5,6 +5,8 @@
 
 #include "log.h"
 
+#include <git2qt/private/historyrewriter.h>
+
 using namespace GIT;
 
 ReferenceCollection::ReferenceCollection(Repository* repo) :
@@ -119,6 +121,17 @@ Reference ReferenceCollection::updateDirectReferenceTarget(const Reference& dire
     return reference;
 }
 
+bool ReferenceCollection::rewriteHistory(RewriteHistoryOptions* options, const Commit::List& commits)
+{
+    if(_references.count() == 0) {
+        return false;
+    }
+
+    HistoryRewriter rewriter(repository(), commits, options);
+    bool result = rewriter.execute();
+    return result;
+}
+
 Reference ReferenceCollection::appendDirectReference(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite)
 {
     Reference reference = Reference::create(repository(), name, targetId, logMessage, allowOverwrite);
@@ -126,4 +139,69 @@ Reference ReferenceCollection::appendDirectReference(const QString& name, const 
         Log::logText(LVL_ERROR, "Failed to create DIRECT reference");
     }
     return reference;
+}
+
+bool ReferenceCollection::deleteLocalReference(const Reference& reference)
+{
+    bool result = false;
+
+    ReferenceHandle handle = reference.createHandle();
+    try
+    {
+        throwIfTrue(handle.isNull(), "Invalid reference");
+        throwOnError(git_reference_delete(handle.value()));
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
+Reference::List ReferenceCollection::findReachableFrom(const Reference::List& subset, const Commit::List& commits) const
+{
+    Reference::List result;
+
+    Reference::List refs = subset;
+    if(refs.count() == 0) {
+        return result;
+    }
+
+    ObjectId::List targetsSet = commits.objectIds().unique();
+    if(targetsSet.isEmpty()) {
+        return result;
+    }
+
+    for(const Reference& reference : refs) {
+        Reference directRef = reference.resolveToDirectReference();
+        if(directRef.isNull()) {
+            continue;
+        }
+
+        Commit commit = directRef.peelToCommit();
+        if(commit.isNull()) {
+            continue;
+        }
+
+        ObjectId commitId = commit.objectId();
+        for(const ObjectId& potentialAncestorId : targetsSet) {
+            if(potentialAncestorId == commitId) {
+                result.append(reference);
+                break;
+            }
+
+            if(git_graph_descendant_of(repository()->handle().value(), commitId.toNative(), potentialAncestorId.toNative())) {
+                result.append(reference);
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
+Reference::List ReferenceCollection::findReachableFrom(const Commit::List& commits) const
+{
+    Reference::List refs = _references.values();
+    return findReachableFrom(refs, commits);
 }

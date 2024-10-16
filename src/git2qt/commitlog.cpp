@@ -10,7 +10,6 @@ CommitLog::CommitLog(Repository* repo, const CommitFilter& filter) :
     GitEntity(CommitLogEntity, repo),
     _filter(filter)
 {
-
 }
 
 Commit::List CommitLog::performLookup()
