@@ -35,6 +35,7 @@ public:
     QString name() const { return _name; }
     QString shortName() const;
 
+    ObjectId targetObjectId() const { return _targetObjectId; }
     GitObject* target() const { return _target; }
 
     LightweightTag toLightweightTag() const;
@@ -101,11 +102,16 @@ public:
 
 protected:
     void setName(const QString& value) { _name = value; }
-    void setTarget(GitObject* value) { _target = value; }
+    void setTarget(GitObject* value)
+    {
+        _target = value;
+        if(value != nullptr) { _targetObjectId = value->objectId(); }
+    }
 
 private:
     QString _name;
     GitObject* _target = nullptr;
+    ObjectId _targetObjectId;
 };
 
 } // namespace GIT

@@ -33,7 +33,7 @@ public:
     QString path() const { return _path; }
     Mode mode() const { return _mode; }
     ObjectType targetType() const { return _targetType; }
-    GitObject* target() const { return _target; }
+    GitObject* target();
     ObjectType entryType() const { return _entryType; }
     ObjectId targetObjectId() const { return _targetObjectId; }
 

@@ -27,6 +27,10 @@ public:
     QString message() const { return _message; }
     Signature signature() const { return _signature; }
 
+    class List : public QList<AnnotatedTag>
+    {
+    };
+
 private:
     void commonInit();
     TagHandle createHandle() const;

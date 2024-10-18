@@ -130,8 +130,8 @@ QString Branch::createRemoteName(const Remote& remote)
 Branch Branch::resolved() const
 {
     Branch result;
-    if(_reference.isSymbolic() && _reference.target() != nullptr) {
-        Reference reference = *_reference.target();
+    if(_reference.isSymbolic() && _reference.target().isNull() == false) {
+        Reference reference = _reference.target();
         result = Branch(repository(), reference);
     }
     else {

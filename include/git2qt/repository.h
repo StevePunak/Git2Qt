@@ -12,7 +12,6 @@
 #include <QTimer>
 #include <git2.h>
 #include <git2qt/branchcollection.h>
-#include <git2qt/tagcollection.h>
 #include <git2qt/gitentity.h>
 #include <git2qt/branch.h>
 #include <git2qt/diffdelta.h>
@@ -21,6 +20,7 @@
 #include <git2qt/commitoptions.h>
 #include <git2qt/reference.h>
 #include <git2qt/remote.h>
+#include <git2qt/tag.h>
 #include <git2qt/repositorystatus.h>
 #include <git2qt/checkoutoptions.h>
 #include <git2qt/referencecollection.h>
@@ -33,6 +33,8 @@
 #include <git2qt/statusoptions.h>
 #include <git2qt/mergeresult.h>
 #include <git2qt/mergeanalysisresult.h>
+#include <git2qt/annotatedtag.h>
+#include <git2qt/lightweighttag.h>
 
 #include <Kanoop/timespan.h>
 
@@ -139,7 +141,14 @@ public:
     bool unstage(const QString& path) { return unstage(QStringList() << path); }
     bool unstage(const QStringList& paths);
 
-    // Restore
+    // Restore / Revert
+
+    /**
+     * @brief restore
+     * Revert all the given paths to head()
+     * @param paths
+     * @return
+     */
     bool restore(const QStringList& paths);
 
     // Tags
@@ -188,6 +197,16 @@ public:
     // Graph
     GraphedCommit::List commitGraph();
 
+    // Tags
+    AnnotatedTag::List annotatedTags() const;
+    AnnotatedTag::List annotatedTags(const ObjectId& commitId) const;
+    LightweightTag::List lightweightTags() const;
+    LightweightTag::List lightweightTags(const ObjectId& commitId) const;
+
+    // -- will remove these two (or make internal)
+    Tag::ConstPtrList tags_DEP() const;
+    QMap<ObjectId, Tag::ConstPtrList> tagsByCommitId_DEP() const;
+
     ObjectDatabase* objectDatabase() const { return _objectDatabase; }
 
     // Credentials Callback
@@ -208,7 +227,6 @@ public:
     Network* network() const { return _network; }
     Diff* diff() const { return _diff; }
     Submodule::List submodules() const;
-    Tag::ConstPtrList tags() const { return _tags != nullptr ? _tags->tags() : Tag::ConstPtrList();  }
 
     void walkerTest(const ObjectId& commitId);
     void ancestorTest(const ObjectId& commitId);

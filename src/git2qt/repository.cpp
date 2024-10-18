@@ -36,6 +36,7 @@
 #include <git2qt/private/commitmessagerewriter.h>
 #include <git2qt/private/graphbuilder.h>
 #include <git2qt/private/submodulehelper.h>
+#include <git2qt/private/tagcollection.h>
 
 using namespace GIT;
 
@@ -501,7 +502,7 @@ bool Repository::checkoutPaths(const QString& branchName, const QStringList& pat
     bool result = false;
     try
     {
-        Commit commit = findCommit(branchName);
+        Commit commit = branchName == "HEAD" ? headCommit() : findCommit(branchName);
         throwIfTrue(commit.isNull(), "Failed to find commit");
 
         checkoutTree(commit.tree(), paths, options);
@@ -595,10 +596,10 @@ Branch Repository::currentBranch()
         Reference head = _references->head();
         throwIfTrue(head.isNull());
         if(head.isSymbolic()) {
-            if(head.target() == nullptr) {
+            if(head.target().isNull()) {
                 logText(LVL_DEBUG, "Periodic crash.... Figure this out when it becomes reproducible (10/4/24)");
             }
-            Reference resolved = *head.target();
+            Reference resolved = head.target();
             result = Branch(this, resolved);
         }
         else {
@@ -1121,9 +1122,6 @@ bool Repository::restore(const QStringList& paths)
         CheckoutOptions options;
         options.setModifiers(CheckoutOptions::Force);
 
-        Branch branch = head();
-        Q_UNUSED(branch)
-
         throwIfFalse(checkoutPaths(head().friendlyName(), paths, options));
 
         result = true;
@@ -1462,6 +1460,68 @@ GraphedCommit::List Repository::commitGraph()
     return result;
 }
 
+AnnotatedTag::List Repository::annotatedTags() const
+{
+    AnnotatedTag::List result;
+    Tag::ConstPtrList tags = _tags->tags();
+    for(const Tag* tag : tags) {
+        if(tag->isAnnotated()) {
+            result.append(*(const AnnotatedTag*)tag);
+        }
+    }
+    return result;
+}
+
+AnnotatedTag::List Repository::annotatedTags(const ObjectId& commitId) const
+{
+    AnnotatedTag::List result;
+    Tag::ConstPtrList tags = _tags->findTagsForCommit(commitId);
+    for(const Tag* tag : tags) {
+        if(tag->isAnnotated()) {
+            result.append(*(const AnnotatedTag*)tag);
+        }
+    }
+    return result;
+}
+
+LightweightTag::List Repository::lightweightTags() const
+{
+    LightweightTag::List result;
+    Tag::ConstPtrList tags = _tags->tags();
+    for(const Tag* tag : tags) {
+        if(tag->isLightweight()) {
+            result.append(*(const LightweightTag*)tag);
+        }
+    }
+    return result;
+}
+
+LightweightTag::List Repository::lightweightTags(const ObjectId& commitId) const
+{
+    LightweightTag::List result;
+    Tag::ConstPtrList tags = _tags->findTagsForCommit(commitId);
+    for(const Tag* tag : tags) {
+        if(tag->isLightweight()) {
+            result.append(*(const LightweightTag*)tag);
+        }
+    }
+    return result;
+}
+
+Tag::ConstPtrList Repository::tags_DEP() const
+{
+    return _tags != nullptr ? _tags->tags() : Tag::ConstPtrList();
+}
+
+QMap<ObjectId, Tag::ConstPtrList> Repository::tagsByCommitId_DEP() const
+{
+    QMap<ObjectId, Tag::ConstPtrList> result;
+    for(const Tag* tag : tags_DEP()) {
+        result[tag->target()->objectId()].append(tag);
+    }
+    return result;
+}
+
 Branch Repository::head()
 {
     Branch branch;
@@ -1763,12 +1823,12 @@ void Repository::updateHeadAndTerminalReference(const Commit& commit, const QStr
         }
         else {
             Reference symRef = reference;
-            if(symRef.target() == nullptr) {
+            if(symRef.target().isNull()) {
                 _references->appendDirectReference(symRef.targetIdentifier(), commit.objectId(), reflogMessage);
                 break;
             }
             else {
-                reference = *symRef.target();
+                reference = symRef.target();
             }
         }
     }

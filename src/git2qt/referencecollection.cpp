@@ -28,7 +28,7 @@ void ReferenceCollection::resolveSymbolicTargets()
         if(reference.type() != SymbolicReferenceType) {
             continue;
         }
-        if(reference.target() == nullptr) {
+        if(reference.target().isNull()) {
             reference.resolveTarget();
         }
     }

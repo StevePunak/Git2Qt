@@ -48,7 +48,7 @@ public:
     QString targetIdentifier() const { return _targetIdentifier; }
     ObjectId objectId() const;
 
-    Reference* target() const { return _target; }
+    Reference target() const { return *_target; }
     ObjectId targetObjectId() const { return _targetOid; }
 
     Reference resolveToDirectReference() const;

@@ -29,7 +29,6 @@ TreeEntry::TreeEntry(Repository* repo, const ObjectId& parentTreeId, const Objec
         git_object* obj = nullptr;
         throwOnError(git_object_lookup(&obj, repository()->handle().value(), _targetObjectId.toNative(), GIT_OBJECT_ANY));
         _targetType = (ObjectType)git_object_type(obj);
-        createTarget();
         git_object_free(obj);
     }
     catch(const GitException&)
@@ -123,6 +122,14 @@ Q_UNUSED(validate);
     commitHandle.dispose();
 
     return result;
+}
+
+GitObject* TreeEntry::target()
+{
+    if(_target == nullptr) {
+        createTarget();
+    }
+    return _target;
 }
 
 void TreeEntry::createTarget()
