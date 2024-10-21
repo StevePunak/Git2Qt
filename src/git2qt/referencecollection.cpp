@@ -158,11 +158,11 @@ bool ReferenceCollection::deleteLocalReference(const Reference& reference)
     return result;
 }
 
-Reference::List ReferenceCollection::findReachableFrom(const Reference::List& subset, const Commit::List& commits) const
+ReferenceList ReferenceCollection::findReachableFrom(const ReferenceList& subset, const Commit::List& commits) const
 {
-    Reference::List result;
+    ReferenceList result;
 
-    Reference::List refs = subset;
+    ReferenceList refs = subset;
     if(refs.count() == 0) {
         return result;
     }
@@ -200,8 +200,8 @@ Reference::List ReferenceCollection::findReachableFrom(const Reference::List& su
     return result;
 }
 
-Reference::List ReferenceCollection::findReachableFrom(const Commit::List& commits) const
+ReferenceList ReferenceCollection::findReachableFrom(const Commit::List& commits) const
 {
-    Reference::List refs = _references.values();
+    ReferenceList refs = _references.values();
     return findReachableFrom(refs, commits);
 }

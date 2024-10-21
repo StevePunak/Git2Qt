@@ -51,8 +51,8 @@ protected:
 
     void logText(const char* file, int line, Log::LogLevel level, const QString& text) const;
 
-    static void throwOnError(Repository* repo, int result);
-    static void throwIfTrue(Repository* repo, int result);
+    static void throwOnError(Repository* repo, int result, const QString& message = QString());
+    static void throwIfTrue(Repository* repo, int result, const QString& message = QString());
     static void throwIfFalse(Repository* repo, int result, const QString& message = QString());
     static void throwIfNull(Repository* repo, const void* ptr, const QString& message = QString());
 

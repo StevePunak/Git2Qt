@@ -219,6 +219,16 @@ bool Branch::isRemote() const
     return _reference.looksLikeRemoteTrackingBranch();
 }
 
+bool GIT::Branch::isBranchNameValid(const QString& name)
+{
+    bool result = false;
+    int valid;
+    if(git_branch_name_is_valid(&valid, name.toUtf8().constData()) == 0) {
+        result = valid != 0;
+    }
+    return result;
+}
+
 QString Branch::removeOrigin(const QString& branchName)
 {
     static const QString NEEDLE = "origin/";

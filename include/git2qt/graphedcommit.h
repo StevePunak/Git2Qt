@@ -97,6 +97,13 @@ public:
             }
         }
 
+        List reverse() const
+        {
+            List result = *this;
+            std::reverse(result.begin(), result.end());
+            return result;
+        }
+
         Commit::List toCommitList() const
         {
             Commit::List result;

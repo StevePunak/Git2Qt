@@ -38,9 +38,9 @@ public:
 
     bool deleteLocalReference(const Reference& reference);
 
-    Reference::List references() const { return Reference::List(_references.values()); }
-    Reference::List findReachableFrom(const Reference::List& subset, const Commit::List& commits) const;
-    Reference::List findReachableFrom(const Commit::List& commits) const;
+    ReferenceList references() const { return ReferenceList(_references.values()); }
+    ReferenceList findReachableFrom(const ReferenceList& subset, const Commit::List& commits) const;
+    ReferenceList findReachableFrom(const Commit::List& commits) const;
 
     Reference updateTarget(const Reference& directRef, const ObjectId& targetId, const QString& logMessage);
     Reference updateHeadTarget(const ObjectId& targetId, const QString& logMessage);

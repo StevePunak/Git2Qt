@@ -25,7 +25,7 @@ bool HistoryRewriter::execute()
     bool success = false;
     try
     {
-        Reference::List refsToRewrite = repository()->findReferencesReachableFrom(_targetedCommits);
+        ReferenceList refsToRewrite = repository()->findReferencesReachableFrom(_targetedCommits);
 
         CommitFilter commitFilter;
         commitFilter.setIncludeReachableFrom(refsToRewrite.objectIds());

@@ -54,6 +54,8 @@ public:
     bool isValid() const { return canonicalName().isEmpty() == false; }
     virtual bool isNull() const override { return _reference.isNull(); }
 
+    static bool isBranchNameValid(const QString& name);
+
     QVariant toVariant() const { return QVariant::fromValue<Branch>(*this); }
     static Branch fromVariant(const QVariant& value) { return value.value<Branch>(); }
 

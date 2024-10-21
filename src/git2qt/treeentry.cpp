@@ -124,7 +124,7 @@ Q_UNUSED(validate);
     return result;
 }
 
-GitObject* TreeEntry::target()
+const GitObject* TreeEntry::target()
 {
     if(_target == nullptr) {
         createTarget();
@@ -194,16 +194,16 @@ QString TreeEntry::stripFilename(const QString& path)
 
 // ------------------------- TreeEntry::List -------------------------
 
-TreeEntry TreeEntry::List::findByPath(const QString& path) const
+TreeEntry TreeEntry::List::findByPath(const QString& path)
 {
     TreeEntry result;
-    for(const TreeEntry& entry : *this) {
+    for(TreeEntry& entry : *this) {
         if(entry.path() == path) {
             result = entry;
             break;
         }
         else if(entry.target() != nullptr && entry.targetType() == ObjectTypeTree) {
-            Tree* tree = dynamic_cast<Tree*>(entry.target());
+            const Tree* tree = dynamic_cast<const Tree*>(entry.target());
             result = tree->entries().findByPath(path);
             if(result.isValid()) {
                 break;

@@ -85,6 +85,11 @@ bool Repository::isRepository(const QString& path)
     return result;
 }
 
+bool Repository::isEmpty() const
+{
+    return git_repository_is_empty(_handle.value()) == 1;
+}
+
 void Repository::commonInit()
 {
     try
@@ -339,7 +344,7 @@ MergeResult Repository::pull(const Signature& merger, const PullOptions& options
         // Fetch
         throwIfFalse(fetch(options.fetchOptions()));
 
-        result = mergeFetchedRefs(merger, options.mergeOptions());
+        result = mergeFetchedRefs(merger, QString(), options.mergeOptions());
     }
     catch(const GitException&)
     {
@@ -660,6 +665,8 @@ Commit Repository::commit(const QString& message, const Signature& author, const
 
         QString logMessage = buildCommitLogMessage(result, options.amendPreviousCommit(), orphaned, parents.count() > 1);
         updateHeadAndTerminalReference(result, logMessage);
+
+        reloadReferences();
 
     }
     catch(const GitException&)
@@ -1226,12 +1233,12 @@ Stash::List Repository::stashes() const
     return _stashes->stashes();
 }
 
-Reference::List Repository::findReferencesReachableFrom(const Commit::List& commits)
+ReferenceList Repository::findReferencesReachableFrom(const Commit::List& commits)
 {
     return _references->findReachableFrom(commits);
 }
 
-Reference::List Repository::findReferences(const QRegularExpression& regex) const
+ReferenceList Repository::findReferences(const QRegularExpression& regex) const
 {
     return _references->references().findReferences(regex);
 }
@@ -1313,7 +1320,38 @@ DiffDelta::List Repository::diffDeltas(const StatusEntry::List& statusEntries) c
     return deltas;
 }
 
-MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const Signature& merger, const MergeOptions& options)
+MergeResult Repository::merge(const QString& commitish, const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options)
+{
+    MergeResult result;
+    Commit commit = Commit::lookup(this, commitish);
+    if(commit.isValid()) {
+        result = merge(commit, merger, mergeCommitMessage, options);
+    }
+    return result;
+}
+
+MergeResult Repository::merge(const Commit& commit, const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options)
+{
+    MergeResult result;
+    AnnotatedCommitHandle commitHandle;
+    try
+    {
+        git_annotated_commit* anno = nullptr;
+        throwOnError(git_annotated_commit_lookup(&anno, _handle.value(), commit.objectId().toNative()));
+
+        commitHandle = AnnotatedCommitHandle(anno);
+        QList<AnnotatedCommitHandle> handles;
+        handles.append(commitHandle);
+        result = merge(handles, merger, mergeCommitMessage, options);
+    }
+    catch(const GitException&)
+    {
+    }
+    commitHandle.dispose();
+    return result;
+}
+
+MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options)
 {
     MergeResult result;
 
@@ -1335,10 +1373,10 @@ MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const
                     if(handles.count() != 1) {
                         throw GitException("Unable to perform Fast-Forward merge with mith multiple merge heads.");
                     }
-                    result = fastForwardMerge(handles.at(0), options);
+                    result = fastForwardMerge(handles.at(0), mergeCommitMessage, options);
                 }
                 else if(analysis.analysis() & MergeAnalysisNormal) {
-                    result = normalMerge(handles, merger, options);
+                    result = normalMerge(handles, merger, mergeCommitMessage, options);
                 }
                 break;
             case FastForwardOnly:
@@ -1346,7 +1384,7 @@ MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const
                     if(handles.count() != 1) {
                         throw GitException("Unable to perform Fast-Forward merge with mith multiple merge heads.");
                     }
-                    result = fastForwardMerge(handles.at(0), options);
+                    result = fastForwardMerge(handles.at(0), mergeCommitMessage, options);
                 }
                 else {
                     throw GitException("Can't perform fast-forward merge");
@@ -1354,7 +1392,7 @@ MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const
                 break;
             case NoFastForward:
                 if(analysis.analysis() & MergeAnalysisNormal) {
-                    result = normalMerge(handles, merger, options);
+                    result = normalMerge(handles, merger, mergeCommitMessage, options);
                 }
                 break;
             default:
@@ -1371,7 +1409,7 @@ MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const
     return result;
 }
 
-MergeResult Repository::mergeFetchedRefs(const Signature& merger, const MergeOptions& options)
+MergeResult Repository::mergeFetchedRefs(const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options)
 {
     MergeResult result;
     QList<AnnotatedCommitHandle> handles;
@@ -1392,7 +1430,7 @@ MergeResult Repository::mergeFetchedRefs(const Signature& merger, const MergeOpt
             handles.append(AnnotatedCommitHandle(annotatedCommit));
         }
 
-        result = merge(handles, merger, options);
+        result = merge(handles, merger, mergeCommitMessage, options);
     }
     catch(const GitException&)
     {
@@ -1409,9 +1447,9 @@ Remote::List Repository::remotes() const
     return _network->remotes();
 }
 
-Reference::List Repository::remoteReferences(const QString& remoteName)
+ReferenceList Repository::remoteReferences(const QString& remoteName)
 {
-    Reference::List references;
+    ReferenceList references;
     Remote remote = _network->remoteForName(remoteName);
     if(remote.isNull() == false) {
         for(const Reference& reference : remote.references()) {
@@ -1423,9 +1461,9 @@ Reference::List Repository::remoteReferences(const QString& remoteName)
     return references;
 }
 
-Reference::List Repository::localReferences() const
+ReferenceList Repository::localReferences() const
 {
-    Reference::List references;
+    ReferenceList references;
     for(const Reference& reference : _references->references()) {
         if(reference.isRemote() == false) {
             references.append(reference);
@@ -1544,9 +1582,9 @@ bool Repository::setHead(const QString& referenceName)
     return git_repository_set_head(_handle.value(), referenceName.toUtf8().constData()) == 0;
 }
 
-Reference::List Repository::references() const
+ReferenceList Repository::references() const
 {
-    Reference::List references = _references->references();
+    ReferenceList references = _references->references();
     Reference head = _references->head();
     if(head.isNull() == false && references.contains(head) == false) {
         references.prepend(head);
@@ -1623,6 +1661,8 @@ bool Repository::reloadReferences()
         // reload remotes
         _network->reload();
 
+        _branches->reloadBranches();
+
         result = true;
     }
     catch(const GitException& e)
@@ -1685,7 +1725,7 @@ MergeAnalysisResult Repository::mergeAnalysys(const QList<AnnotatedCommitHandle>
     return result;
 }
 
-MergeResult Repository::fastForwardMerge(const AnnotatedCommitHandle& annotatedCommit, const MergeOptions& options)
+MergeResult Repository::fastForwardMerge(const AnnotatedCommitHandle& annotatedCommit, const QString& mergeCommitMessage, const MergeOptions& options)
 {
     MergeResult result;
     try
@@ -1700,7 +1740,9 @@ MergeResult Repository::fastForwardMerge(const AnnotatedCommitHandle& annotatedC
         throwIfFalse(checkoutTree(fastForwardCommit.tree(), QStringList()));        // TODO: need to use options here? Repository.cs line 1624
 
         Reference reference = head().reference().resolveToDirectReference();
-        QString refLogEntry = QString("merge %1: Fast-forward").arg(fastForwardCommit.objectId().toString());
+        QString refLogEntry = mergeCommitMessage.isEmpty()
+                              ? QString("merge %1: Fast-forward").arg(fastForwardCommit.objectId().toString())
+                              : mergeCommitMessage;
 
         if(reference.isNull()) {
             // ref doesn't exist. create it
@@ -1719,7 +1761,7 @@ MergeResult Repository::fastForwardMerge(const AnnotatedCommitHandle& annotatedC
     return result;
 }
 
-MergeResult Repository::normalMerge(const QList<AnnotatedCommitHandle>& annotatedCommits, const Signature& merger, const MergeOptions& options)
+MergeResult Repository::normalMerge(const QList<AnnotatedCommitHandle>& annotatedCommits, const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options)
 {
     MergeResult result;
     try
@@ -1754,7 +1796,10 @@ MergeResult Repository::normalMerge(const QList<AnnotatedCommitHandle>& annotate
             if(_index->isFullyMerged()) {
                 Commit mergeCommit;
                 if(options.commitOnSuccess()) {
-                    mergeCommit = commit(info()->message(), merger, merger);
+                    QString message = mergeCommitMessage.isEmpty()
+                                      ? info()->message()
+                                      : mergeCommitMessage;
+                    mergeCommit = commit(message, merger, merger);
                 }
                 result = MergeResult(MergeResult::NonFastForward, mergeCommit);
             }

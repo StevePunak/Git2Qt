@@ -30,7 +30,7 @@ public:
     static Tree createFromBranchName(Repository* repo, const QString& branchName);
     static Tree createFromCommit(Repository* repo, const Commit& commit);
 
-    TreeEntry findEntryByPath(const QString& path) const;
+    TreeEntry findEntryByPath(const QString& path);
     TreeEntry::List entries() const { return _entries; }
 
     ObjectHandle createObjectHandle() const;

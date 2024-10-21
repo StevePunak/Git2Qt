@@ -73,6 +73,8 @@ public:
 
     static bool isRepository(const QString& path);
 
+    bool isEmpty() const;
+
     // Fetch
     bool fetch(const FetchOptions& options = FetchOptions());
 
@@ -171,8 +173,8 @@ public:
     Stash::List stashes() const;
 
     // References
-    Reference::List findReferencesReachableFrom(const Commit::List& commits);
-    Reference::List findReferences(const QRegularExpression& regex) const;
+    ReferenceList findReferencesReachableFrom(const Commit::List& commits);
+    ReferenceList findReferences(const QRegularExpression& regex) const;
     bool deleteLocalReference(const Reference& reference);
 
     // Diffs
@@ -185,13 +187,15 @@ public:
     DiffDelta::List diffDeltas(const StatusEntry::List& statusEntries) const;
 
     // Merge
-    MergeResult merge(const QList<AnnotatedCommitHandle>& handles, const Signature& merger, const MergeOptions& options);
-    MergeResult mergeFetchedRefs(const Signature& merger, const MergeOptions& options);
+    MergeResult merge(const QString& commitish, const Signature& merger, const QString& mergeCommitMessage = QString(), const MergeOptions& options = MergeOptions());
+    MergeResult merge(const Commit& commit, const Signature& merger, const QString& mergeCommitMessage = QString(), const MergeOptions& options = MergeOptions());
+    MergeResult merge(const QList<AnnotatedCommitHandle>& handles, const Signature& merger, const QString& mergeCommitMessage = QString(), const MergeOptions& options = MergeOptions());
+    MergeResult mergeFetchedRefs(const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options = MergeOptions());
 
     // Remote
     Remote::List remotes() const;
-    Reference::List remoteReferences(const QString& remoteName);
-    Reference::List localReferences() const;
+    ReferenceList remoteReferences(const QString& remoteName);
+    ReferenceList localReferences() const;
     QString firstRemoteUrl() const;
 
     // Graph
@@ -219,7 +223,7 @@ public:
     bool isBare() const { return _bare; }
 
     Branch::List branches() const { return _branches->branches(); }
-    Reference::List references() const;
+    ReferenceList references() const;
     const RepositoryHandle handle() const { return _handle; }
     Index* index() const { return _index; }
     RepositoryInformation* info() const { return _info; }
@@ -261,8 +265,8 @@ private:
 
     Commit::List mergeHeads();
     MergeAnalysisResult mergeAnalysys(const QList<AnnotatedCommitHandle>& handles);
-    MergeResult fastForwardMerge(const AnnotatedCommitHandle& annotatedCommit, const MergeOptions& options);
-    MergeResult normalMerge(const QList<AnnotatedCommitHandle>& annotatedCommits, const Signature& merger, const MergeOptions& options);
+    MergeResult fastForwardMerge(const AnnotatedCommitHandle& annotatedCommit, const QString& mergeCommitMessage, const MergeOptions& options);
+    MergeResult normalMerge(const QList<AnnotatedCommitHandle>& annotatedCommits, const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options);
     FastForwardStrategy fastForwardStrategyFromMergePreference(MergePreferences preference) const;
 
     QString makeReferenceName(const QString& branchName);

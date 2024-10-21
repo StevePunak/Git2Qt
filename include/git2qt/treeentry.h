@@ -33,7 +33,7 @@ public:
     QString path() const { return _path; }
     Mode mode() const { return _mode; }
     ObjectType targetType() const { return _targetType; }
-    GitObject* target();
+    const GitObject* target();
     ObjectType entryType() const { return _entryType; }
     ObjectId targetObjectId() const { return _targetObjectId; }
 
@@ -43,7 +43,7 @@ public:
     class GIT2QT_EXPORT List : public QList<TreeEntry>
     {
     public:
-        TreeEntry findByPath(const QString& path) const;
+        TreeEntry findByPath(const QString& path);
     };
 
 private:

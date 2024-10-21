@@ -73,7 +73,7 @@ Tree Tree::createFromCommit(Repository* repo, const Commit& commit)
     return result;
 }
 
-TreeEntry Tree::findEntryByPath(const QString& path) const
+TreeEntry Tree::findEntryByPath(const QString& path)
 {
     return _entries.findByPath(path);
 }

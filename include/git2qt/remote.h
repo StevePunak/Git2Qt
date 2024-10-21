@@ -27,7 +27,7 @@ public:
     QString name() const { return _name; }
     QString url() const { return _url; }
 
-    Reference::List references() const { return _references.references(); }
+    ReferenceList references() const { return _references.references(); }
     void reloadReferences();
 
     QString fetchSpecTransformToSource(const QString& value);

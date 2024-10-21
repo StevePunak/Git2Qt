@@ -39,14 +39,14 @@ void GitEntity::logText(const char* file, int line, Log::LogLevel level, const Q
     Log::logText(file, line, level, text);
 }
 
-void GitEntity::throwOnError(Repository* repo, int result)
+void GitEntity::throwOnError(Repository* repo, int result, const QString& message)
 {
-    repo->throwOnError(result);
+    repo->throwOnError(result, message);
 }
 
-void GitEntity::throwIfTrue(Repository* repo, int result)
+void GitEntity::throwIfTrue(Repository* repo, int result, const QString& message)
 {
-    repo->throwIfTrue(result);
+    repo->throwIfTrue(result, message);
 }
 
 void GitEntity::throwIfFalse(Repository* repo, int result, const QString& message)
