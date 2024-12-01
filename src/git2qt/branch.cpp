@@ -160,7 +160,7 @@ Branch Branch::trackedBranch() const
     return result;
 }
 
-Commit Branch::tip()
+Commit Branch::tip() const
 {
     Commit commit(repository());
 
@@ -196,6 +196,31 @@ Commit Branch::birth()
     }
 
     return commit;
+}
+
+TrackingDetails Branch::trackingDetails() const
+{
+    TrackingDetails result;
+
+    try
+    {
+        throwIfTrue(isRemote(), "Branch is remote");
+
+        Commit local = tip();
+        throwIfFalse(local.isValid(), "Unable to resolve tip");
+
+        Branch tracked = trackedBranch();
+        throwIfFalse(tracked.isValid(), "No remote tracking branch found");
+
+        Commit upstream = tracked.tip();
+
+        result = repository()->objectDatabase()->calculateHistoryDivergence(local, upstream);
+    }
+    catch(const GitException&)
+    {
+    }
+
+    return result;
 }
 
 bool Branch::isTracking() const

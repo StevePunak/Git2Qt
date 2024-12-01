@@ -593,6 +593,23 @@ bool Repository::deleteLocalBranch(const Reference &reference)
     return result;
 }
 
+bool Repository::setUpstream(const Reference& reference, const QString& upstreamBranchName)
+{
+    bool result = false;
+    ReferenceHandle refHandle = reference.createHandle();
+    try
+    {
+        throwOnError(refHandle.isNull(), "Invalid reference");
+        throwOnError(git_branch_set_upstream(refHandle.value(), upstreamBranchName.toUtf8().constData()));
+        reloadReferences();
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
 Branch Repository::currentBranch()
 {
     Branch result;
@@ -1623,12 +1640,6 @@ void Repository::walkerTest(const ObjectId &commitId)
     {
     }
 
-}
-
-void Repository::ancestorTest(const ObjectId &commitId)
-{
-    GraphBuilder builder(this);
-    builder.ancestorTest(commitId);
 }
 
 void Repository::emitProgress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects)

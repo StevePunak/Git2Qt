@@ -9,6 +9,7 @@
 #define BRANCH_H
 #include <git2qt/gitentity.h>
 #include <git2qt/reference.h>
+#include <git2qt/trackingdetails.h>
 
 #include <QMap>
 
@@ -42,8 +43,10 @@ public:
 
     Reference reference() const { return _reference; }
 
-    Commit tip();
+    Commit tip() const;
     Commit birth();
+
+    TrackingDetails trackingDetails() const;
 
     bool isTracking() const;
     bool isHead() const;

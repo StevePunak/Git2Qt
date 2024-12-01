@@ -102,6 +102,7 @@ public:
     Branch findLocalBranch(const QString& branchName) const;
     Branch findRemoteBranch(const QString& branchName) const;
     bool deleteLocalBranch(const Reference& reference);
+    bool setUpstream(const Reference& reference, const QString& upstreamBranchName);
     Branch currentBranch();
 
     Branch::Map localBranches() const;
@@ -233,7 +234,6 @@ public:
     Submodule::List submodules() const;
 
     void walkerTest(const ObjectId& commitId);
-    void ancestorTest(const ObjectId& commitId);
 
     QString errorText() const { return _errorText; }
     void setErrorText(const QString& errorText) { _errorText = errorText; }

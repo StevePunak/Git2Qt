@@ -111,6 +111,25 @@ Commit ObjectDatabase::findMergeBase(const ObjectId::List& objectIds, MergeBaseF
     return baseCommit;
 }
 
+TrackingDetails ObjectDatabase::calculateHistoryDivergence(const Commit& local, const Commit& upstream) const
+{
+    TrackingDetails divergence;
+
+    try
+    {
+        size_t ahead, behind;
+        throwOnError(git_graph_ahead_behind(&ahead, &behind, repository()->handle().value(), local.objectId().toNative(), upstream.objectId().toNative()));
+
+        divergence = TrackingDetails(local, upstream, ahead, behind);
+    }
+    catch(const GitException&)
+    {
+    }
+
+
+    return divergence;
+}
+
 QByteArray ObjectDatabase::readBlobData(const Blob& blob)
 {
     QByteArray result;
