@@ -24,6 +24,11 @@ public:
     LightweightTag& operator=(const LightweightTag& other);
     virtual ~LightweightTag();
 
+    class List : public QList<LightweightTag>
+    {
+    };
+
+
 private:
     void commonInit();
 };

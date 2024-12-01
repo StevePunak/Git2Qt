@@ -39,7 +39,25 @@ TreeChanges Diff::compare(DiffModifiers diffModifiers, const QStringList& paths,
     return result;
 }
 
-TreeChanges Diff::compare(const Tree& fromTree, const Tree& toTree)
+TreeChanges Diff::compare(const Commit& from, const Commit& to, const CompareOptions& compareOptions, DiffModifiers diffFlags)
+{
+    TreeChanges result;
+
+    try
+    {
+        DiffHandle diffHandle = buildDiffList(from, to, compareOptions, diffFlags);
+        throwIfTrue(diffHandle.isNull());
+        result = buildTreeChanges(diffHandle);
+        diffHandle.dispose();
+    }
+    catch(const GitException&)
+    {
+    }
+
+    return result;
+}
+
+TreeChanges Diff::compare_DEP(const Tree& fromTree, const Tree& toTree)
 {
     return compare(fromTree, toTree, DiffModifier::DiffModNone, CompareOptions());
 }
@@ -162,7 +180,7 @@ DiffDelta::List Diff::diffTreeToWorkDir(const Tree& oldTree, const QStringList& 
     return collection;
 }
 
-DiffDelta::List Diff::diffTreeToTree(const Tree& oldTree, const Tree& newTree, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
+DiffDelta::List Diff::diffTreeToTree_DEP(const Tree& oldTree, const Tree& newTree, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
 {
     DiffDelta::List collection;
     git_diff* diff = nullptr;
@@ -193,6 +211,25 @@ DiffDelta::List Diff::diffTreeToTree(const Tree& oldTree, const Tree& newTree, c
     indexHandle.dispose();
     return collection;
 }
+
+DiffDelta::List Diff::diffCommitToCommit(const Commit& oldCommit, const Commit& newCommit, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
+{
+    DiffDelta::List result;
+
+    try
+    {
+        DiffHandle diffHandle = buildDiffList(oldCommit, newCommit, compareOptions, diffFlags);
+        throwIfTrue(diffHandle.isNull());
+        result = loadDiffs(diffHandle, compareOptions);
+        diffHandle.dispose();
+    }
+    catch(const GitException&)
+    {
+    }
+
+    return result;
+}
+
 
 DiffDelta::List Diff::loadDiffs(const DiffHandle& handle, const CompareOptions& compareOptions) const
 {
@@ -272,6 +309,42 @@ DiffHandle Diff::buildDiffList(const ObjectId& oldTreeId, DiffModifiers diffOpti
     return result;
 }
 
+DiffHandle Diff::buildDiffList(const Commit& oldCommit, const Commit& newCommit, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
+{
+    DiffHandle result;
+    CommitHandle fromCommitHandle = oldCommit.createHandle();
+    CommitHandle toCommitHandle = newCommit.createHandle();
+
+    try
+    {
+        throwIfTrue(fromCommitHandle.isNull());
+        throwIfTrue(toCommitHandle.isNull());
+
+        const git_oid* fromTreeId = git_commit_tree_id(fromCommitHandle.value());
+        const git_oid* toTreeId = git_commit_tree_id(toCommitHandle.value());
+
+        git_tree* fromTree = nullptr;
+        git_tree* toTree = nullptr;
+        throwOnError(git_tree_lookup(&fromTree, repository()->handle().value(), fromTreeId));
+        throwOnError(git_tree_lookup(&toTree, repository()->handle().value(), toTreeId));
+
+        DiffOptions options = buildDiffOptions(diffFlags, QStringList(), compareOptions);
+
+        git_diff* diff = nullptr;
+        throwOnError(git_diff_tree_to_tree(&diff, repository()->handle().value(), fromTree, toTree, options.toNative()));
+
+        result = DiffHandle(diff);
+    }
+    catch(const GitException&)
+    {
+    }
+
+    fromCommitHandle.dispose();
+    toCommitHandle.dispose();
+
+    return result;
+}
+
 void Diff::detectRenames(const DiffHandle& handle, const CompareOptions& compareOptions) const
 {
     SimilarityOptions similarityOptions = compareOptions.similarity();
@@ -292,7 +365,7 @@ void Diff::detectRenames(const DiffHandle& handle, const CompareOptions& compare
     git_diff_find_similar(handle.value(), &opts);
 }
 
-TreeChanges Diff::buildTreeChanges(const DiffHandle& handle)
+TreeChanges Diff::buildTreeChanges(const DiffHandle& handle) const
 {
     TreeChanges changes;
     int count = git_diff_num_deltas(handle.value());

@@ -130,8 +130,8 @@ QString Branch::createRemoteName(const Remote& remote)
 Branch Branch::resolved() const
 {
     Branch result;
-    if(_reference.isSymbolic() && _reference.target() != nullptr) {
-        Reference reference = *_reference.target();
+    if(_reference.isSymbolic() && _reference.target().isNull() == false) {
+        Reference reference = _reference.target();
         result = Branch(repository(), reference);
     }
     else {
@@ -160,7 +160,7 @@ Branch Branch::trackedBranch() const
     return result;
 }
 
-Commit Branch::tip()
+Commit Branch::tip() const
 {
     Commit commit(repository());
 
@@ -198,6 +198,31 @@ Commit Branch::birth()
     return commit;
 }
 
+TrackingDetails Branch::trackingDetails() const
+{
+    TrackingDetails result;
+
+    try
+    {
+        throwIfTrue(isRemote(), "Branch is remote");
+
+        Commit local = tip();
+        throwIfFalse(local.isValid(), "Unable to resolve tip");
+
+        Branch tracked = trackedBranch();
+        throwIfFalse(tracked.isValid(), "No remote tracking branch found");
+
+        Commit upstream = tracked.tip();
+
+        result = repository()->objectDatabase()->calculateHistoryDivergence(local, upstream);
+    }
+    catch(const GitException&)
+    {
+    }
+
+    return result;
+}
+
 bool Branch::isTracking() const
 {
     return trackedBranch().isNull() == false;
@@ -217,6 +242,16 @@ bool Branch::isHead() const
 bool Branch::isRemote() const
 {
     return _reference.looksLikeRemoteTrackingBranch();
+}
+
+bool GIT::Branch::isBranchNameValid(const QString& name)
+{
+    bool result = false;
+    int valid;
+    if(git_branch_name_is_valid(&valid, name.toUtf8().constData()) == 0) {
+        result = valid != 0;
+    }
+    return result;
 }
 
 QString Branch::removeOrigin(const QString& branchName)

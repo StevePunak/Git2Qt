@@ -3,6 +3,7 @@
 #include <repository.h>
 #include <objectid.h>
 #include <tree.h>
+#include <gitexception.h>
 
 using namespace GIT;
 
@@ -59,6 +60,26 @@ Commit Commit::lookup(Repository* repo, const ObjectId& objectId)
         result = createFromNative(repo, commit);
         git_commit_free(commit);
     }
+    return result;
+}
+
+Commit Commit::lookup(Repository* repo, const QString& commitish)
+{
+    Commit result;
+
+    try
+    {
+        git_object* obj = nullptr;
+        throwOnError(repo, git_revparse_single(&obj, repo->handle().value(), commitish.toUtf8().constData()));
+        ObjectType type = (ObjectType)git_object_type(obj);
+        throwIfTrue(repo, type != ObjectTypeCommit, "The object is not a commit");
+        const git_oid* oid = git_object_id(obj);
+        result = Commit(repo, ObjectId(oid));
+    }
+    catch(const GitException&)
+    {
+    }
+
     return result;
 }
 

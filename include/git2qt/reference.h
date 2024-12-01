@@ -13,8 +13,13 @@
 #include <git2qt/handle.h>
 
 #include <QMap>
+#include <QRegularExpressionMatch>
 
 namespace GIT {
+
+class GitObject;
+
+class Commit;
 
 class Repository;
 class GIT2QT_EXPORT Reference : public GitEntity
@@ -43,12 +48,15 @@ public:
     QString targetIdentifier() const { return _targetIdentifier; }
     ObjectId objectId() const;
 
-    Reference* target() const { return _target; }
+    Reference target() const { return _target != nullptr ? *_target : Reference(); }
     ObjectId targetObjectId() const { return _targetOid; }
 
     Reference resolveToDirectReference() const;
+    Commit peelToCommit() const;
 
     void resolveTarget();
+
+    int depth() const;
 
     bool isBranch() const { return _isBranch; }
     bool isNote() const { return _isNote; }
@@ -74,77 +82,6 @@ public:
     static bool looksLikeTag(const QString& canonicalName) { return isPrefixedBy(canonicalName, TagPrefix); }
     static bool looksLikeNote(const QString& canonicalName) { return isPrefixedBy(canonicalName, NotePrefix); }
     static bool isPrefixedBy(const QString& value, const QString& prefix) { return value.startsWith(prefix); }
-
-    class List : public QList<Reference>
-    {
-    public:
-        List() {}
-        List(const QList<Reference>& other)
-        {
-            for(const Reference& r : other) {
-                append(r);
-            }
-        }
-
-        Reference findByObjectId(const ObjectId& objectId) const
-        {
-            Reference result;
-            for(const Reference& reference : *this) {
-                if(reference.isDirect() && reference.objectId() == objectId) {
-                    result = reference;
-                    break;
-                }
-            }
-            return result;
-        }
-
-        Reference findByCanonicalName(const QString& canonicalName) const
-        {
-            Reference result;
-            auto it = std::find_if(constBegin(), constEnd(), [canonicalName](const Reference& r) { return r.canonicalName() == canonicalName; });
-            if(it != constEnd()) {
-                result = *it;
-            }
-            return result;
-        }
-
-        List findByTargetObjectId(const ObjectId& objectId) const
-        {
-            List result;
-            for(const Reference& reference : *this) {
-                if(reference.targetObjectId() == objectId) {
-                    result.append(reference);
-                }
-            }
-            return result;
-        }
-
-        List localBranchReferences() const
-        {
-            List result;
-            for(const Reference& reference : *this) {
-                if(reference.isBranch() == true && reference.isRemote() == false) {
-                    result.append(reference);
-                }
-            }
-            return result;
-        }
-
-        ObjectId::List objectIds() const
-        {
-            ObjectId::List result;
-            for(const Reference& reference : *this) {
-                if(reference.isDirect()) {
-                    result.append(reference.objectId());
-                }
-                else {
-                    result.append(reference.targetObjectId());
-                }
-            }
-            return result;
-        }
-
-    };
 
     class Map : public QMap<QString, Reference>
     {
@@ -194,8 +131,97 @@ public:
     static const QString NotePrefix;
 };
 
+class ReferenceList : public QList<Reference>
+{
+public:
+    ReferenceList() {}
+    ReferenceList(const QList<Reference>& other)
+    {
+        for(const Reference& r : other) {
+            append(r);
+        }
+    }
+
+    QVariant toVariant() const { return QVariant::fromValue<ReferenceList>(*this); }
+    static ReferenceList fromVariant(const QVariant& value) { return value.value<ReferenceList>(); }
+
+    Reference findByObjectId(const ObjectId& objectId) const
+    {
+        Reference result;
+        for(const Reference& reference : *this) {
+            if(reference.isDirect() && reference.objectId() == objectId) {
+                result = reference;
+                break;
+            }
+        }
+        return result;
+    }
+
+    Reference findByCanonicalName(const QString& canonicalName) const
+    {
+        Reference result;
+        auto it = std::find_if(constBegin(), constEnd(), [canonicalName](const Reference& r) { return r.canonicalName() == canonicalName; });
+        if(it != constEnd()) {
+            result = *it;
+        }
+        return result;
+    }
+
+    ReferenceList findReferences(const QRegularExpression& regex) const
+    {
+        ReferenceList result;
+
+        for(const Reference& reference : *this) {
+            QRegularExpressionMatch match = regex.match(reference.canonicalName());
+            if(match.hasMatch()) {
+                result.append(reference);
+            }
+        }
+
+        return result;
+    }
+
+    ReferenceList findByTargetObjectId(const ObjectId& objectId) const
+    {
+        ReferenceList result;
+        for(const Reference& reference : *this) {
+            if(reference.targetObjectId() == objectId) {
+                result.append(reference);
+            }
+        }
+        return result;
+    }
+
+    ReferenceList localBranchReferences() const
+    {
+        ReferenceList result;
+        for(const Reference& reference : *this) {
+            if(reference.isBranch() == true && reference.isRemote() == false) {
+                result.append(reference);
+            }
+        }
+        return result;
+    }
+
+    ObjectId::List objectIds() const
+    {
+        ObjectId::List result;
+        for(const Reference& reference : *this) {
+            if(reference.isDirect()) {
+                result.append(reference.objectId());
+            }
+            else {
+                result.append(reference.targetObjectId());
+            }
+        }
+        return result;
+    }
+
+};
+
 } // namespace GIT
 
 Q_DECLARE_METATYPE(GIT::Reference)
+Q_DECLARE_METATYPE(GIT::ReferenceList)
 
 #endif // REFERENCE_H

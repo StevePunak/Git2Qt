@@ -13,8 +13,11 @@
 #include <git2qt/gitentity.h>
 #include <git2qt/objectid.h>
 #include <git2qt/reference.h>
+#include <git2qt/commit.h>
 
 namespace GIT {
+
+class RewriteHistoryOptions;
 
 class Repository;
 class GIT2QT_EXPORT ReferenceCollection : public GitEntity
@@ -33,11 +36,17 @@ public:
     void appendDirectReferences(const QList<Reference>& references);
     Reference appendDirectReference(const QString& name, const ObjectId& targetId, const QString& logMessage, bool allowOverwrite = false);
 
-    Reference::List references() const { return Reference::List(_references.values()); }
+    bool deleteLocalReference(const Reference& reference);
+
+    ReferenceList references() const { return ReferenceList(_references.values()); }
+    ReferenceList findReachableFrom(const ReferenceList& subset, const Commit::List& commits) const;
+    ReferenceList findReachableFrom(const Commit::List& commits) const;
 
     Reference updateTarget(const Reference& directRef, const ObjectId& targetId, const QString& logMessage);
     Reference updateHeadTarget(const ObjectId& targetId, const QString& logMessage);
     Reference updateDirectReferenceTarget(const Reference& directRef, const ObjectId& targetId, const QString& logMessage);
+
+    bool rewriteHistory(RewriteHistoryOptions* options, const Commit::List& commits);
 
     virtual bool isNull() const { return false; }
 

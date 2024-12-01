@@ -3,7 +3,6 @@
 #include <gitexception.h>
 #include <repository.h>
 #include <tree.h>
-#include <utility>
 #include <utility.h>
 
 using namespace GIT;
@@ -30,7 +29,6 @@ TreeEntry::TreeEntry(Repository* repo, const ObjectId& parentTreeId, const Objec
         git_object* obj = nullptr;
         throwOnError(git_object_lookup(&obj, repository()->handle().value(), _targetObjectId.toNative(), GIT_OBJECT_ANY));
         _targetType = (ObjectType)git_object_type(obj);
-        createTarget();
         git_object_free(obj);
     }
     catch(const GitException&)
@@ -69,6 +67,71 @@ TreeEntry::~TreeEntry()
     }
 }
 
+TreeEntry TreeEntry::findForCommit(const Commit& commit, const QString& path)
+{
+    TreeEntry result;
+
+    CommitHandle commitHandle = commit.createHandle();
+    Repository* repo = commit.repository();
+
+    try
+    {
+        throwIfNull(repo, "No repository");
+        throwIfTrue(repo, commitHandle.isNull());
+
+        const git_oid* treeoid = git_commit_tree_id(commitHandle.value());
+        throwIfNull(repo, treeoid, "Tree not found for commit");
+        ObjectId treeId(treeoid);
+
+        git_tree* tree = nullptr;
+        throwOnError(repo, git_tree_lookup(&tree, commit.repository()->handle().value(), treeoid));
+
+        git_tree_entry* entry = nullptr;
+        throwOnError(repo, git_tree_entry_bypath(&entry, tree, path.toUtf8().constData()));
+
+        const git_oid* entryoid = git_tree_entry_id(entry);
+        throwIfNull(repo, entryoid);
+        ObjectId entryId(entryoid);
+
+        if(pathHasParent(path)) {
+            TreeHandle parentHandle = findParentTree(repo, TreeHandle(tree), path);
+            throwIfTrue(repo, parentHandle.isNull());
+
+            // free the old
+            git_tree_free(tree);
+
+            // get the parent
+            tree = parentHandle.value();
+            treeoid = git_tree_id(parentHandle.value());
+            throwIfNull(repo, treeoid, "Tree not found for commit");
+            treeId = ObjectId(treeoid);
+        }
+
+const git_tree_entry* validate = git_tree_entry_byid(tree, entryId.toNative());
+Q_UNUSED(validate);
+
+        QString parentPath = stripFilename(path);
+        result = TreeEntry(repo, treeId, entryoid, parentPath);
+
+        git_tree_free(tree);
+    }
+    catch(const GitException&)
+    {
+    }
+
+    commitHandle.dispose();
+
+    return result;
+}
+
+const GitObject* TreeEntry::target()
+{
+    if(_target == nullptr) {
+        createTarget();
+    }
+    return _target;
+}
+
 void TreeEntry::createTarget()
 {
     switch(_targetType) {
@@ -89,18 +152,58 @@ void TreeEntry::createTarget()
     }
 }
 
+TreeHandle TreeEntry::findParentTree(Repository* repo, TreeHandle childHandle, const QString& path)
+{
+    TreeHandle result;
+    try
+    {
+        QString parentPath = stripFilename(path);
+
+        git_tree_entry* entry = nullptr;
+        throwOnError(repo, git_tree_entry_bypath(&entry, childHandle.value(), parentPath.toUtf8().constData()));
+
+        ObjectType type = (ObjectType)git_tree_entry_type(entry);
+        throwIfFalse(repo, type == ObjectTypeTree, "Not a tree");
+
+        git_object* obj = nullptr;
+        throwOnError(repo, git_tree_entry_to_object(&obj, repo->handle().value(), entry));
+
+        const git_oid* oid = git_object_id(obj);
+        throwIfNull(repo, oid, "Failed to lookup tree object id");
+
+        git_tree* tree = nullptr;
+        throwOnError(repo, git_tree_lookup(&tree, repo->handle().value(), oid));
+
+        result = TreeHandle(tree);
+
+    }
+    catch(const GitException&)
+    {}
+    return result;
+}
+
+QString TreeEntry::stripFilename(const QString& path)
+{
+    QString result;
+    int index = path.lastIndexOf('/');
+    if(index > 0) {
+        result = path.left(index);
+    }
+    return result;
+}
+
 // ------------------------- TreeEntry::List -------------------------
 
-TreeEntry TreeEntry::List::findByPath(const QString& path) const
+TreeEntry TreeEntry::List::findByPath(const QString& path)
 {
     TreeEntry result;
-    for(const TreeEntry& entry : *this) {
+    for(TreeEntry& entry : *this) {
         if(entry.path() == path) {
             result = entry;
             break;
         }
         else if(entry.target() != nullptr && entry.targetType() == ObjectTypeTree) {
-            Tree* tree = dynamic_cast<Tree*>(entry.target());
+            const Tree* tree = dynamic_cast<const Tree*>(entry.target());
             result = tree->entries().findByPath(path);
             if(result.isValid()) {
                 break;

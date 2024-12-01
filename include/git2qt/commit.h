@@ -31,8 +31,11 @@ public:
 
     bool operator ==(const Commit& other) const;
     bool operator !=(const Commit& other) const { return !(*this == other); }
+    bool operator <(const Commit& other) const { return objectId() < other.objectId(); }
+    bool operator >(const Commit& other) const { return objectId() > other.objectId(); }
 
     static Commit lookup(Repository* repo, const ObjectId& objectId);
+    static Commit lookup(Repository* repo, const QString& commitish);
 
     Signature author() const { return _author; }
     void setAuthor(const Signature& value) { _author = value; }

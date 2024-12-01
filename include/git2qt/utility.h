@@ -36,6 +36,9 @@ public:
     static QString combine(const QString& p1, const QString& p2, const QString& p3, const QString& p4, const QString& p5, const QString& p6, const QString& p7, bool dropLeadingSlash = false);
     static QString combine(const QStringList& parts);
 
+    static bool readAllLines(const QString& filename, QStringList& lines);
+    static bool writeAllLines(const QString& filename, const QStringList& lines);
+
 private:
     static const QChar SEPERATOR;
 };

@@ -34,6 +34,7 @@ public:
     const AnnotatedTag* createAnnotatedTag(const QString& name, const QString& message, const Signature& signature, const GitObject& targetObject, bool allowOverwrite = false);
     const Tag* findTag(const QString& name) const;
     const Tag* findTag(const ObjectId& objectId) const;
+    Tag::ConstPtrList findTagsForCommit(const ObjectId& objectId) { return _tagsByCommit.value(objectId); }
     bool deleteLocalTag(const QString& name);
 
     Tag::ConstPtrList tags() const { return _tags; }
@@ -50,6 +51,7 @@ private:
     static int gitTagForeachCallback(const char *name, git_oid *oid, void *payload);
 
     Tag::PtrList _tags;
+    QMap<ObjectId, Tag::ConstPtrList> _tagsByCommit;
 };
 
 } // namespace GIT

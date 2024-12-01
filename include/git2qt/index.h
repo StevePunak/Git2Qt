@@ -26,9 +26,9 @@ public:
     Index(Repository* repo);
     virtual ~Index();
 
-    void remove(const QString& path);
-    void add(const QString& path);
-    void add(const QString& path, const ObjectId& objectId, Mode mode);
+    bool remove(const QString& path);
+    bool add(const QString& path);
+    bool add(const QString& path, const ObjectId& objectId, Mode mode);
     void replace(const Commit& commit, const QStringList& paths, const CompareOptions& compareOptions = CompareOptions());
     void replace(const TreeChanges& changes);
     void write();
@@ -38,6 +38,7 @@ public:
     IndexHandle createHandle() const;
 
     IndexEntry findByPath(const QString& path) { return _entries.findByPath(path); }
+    IndexEntry findByObjectId(const ObjectId& objectId) { return _entries.findByObjectId(objectId); }
     IndexEntry::List entries() const { return _entries; }
     virtual bool isNull() const override;
 

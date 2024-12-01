@@ -55,6 +55,41 @@ Repository* Commands::clone(const QString& remoteUrl, const QString& localPath, 
     return result;
 }
 
+Repository* Commands::createRepository(const QString& localPath, bool bare)
+{
+    Repository* result = nullptr;
+    Git2Qt::ensureInitialized();
+
+    try
+    {
+        git_repository* repo = nullptr;
+        if(git_repository_init(&repo, localPath.toUtf8().constData(), bare) != 0) {
+            throw GitException(git_error_last()->message);
+        }
+
+        if(git_repository_is_empty(repo) != 1) {
+            throw GitException("Specified path is a repository which is not empty");
+        }
+
+        // int rc = 0;
+        // git_annotated_commit* commit = nullptr;
+        // if((rc = git_annotated_commit_from_revspec(&commit, repo, "HEAD")) != 0) {
+        //     throw GitException("Failed to create HEAD annotated commit");
+        // }
+
+        result = new Repository(repo);
+    }
+    catch(const GitException& e)
+    {
+        _errorText = e.message();
+        if(result != nullptr) {
+            delete result;
+        }
+        result = nullptr;
+    }
+    return result;
+}
+
 Repository* Commands::cloneSubmodule(Repository* superRepo, const Submodule& submodule, AbstractCredentialResolver* credentialResolver, ProgressCallback* progressCallback)
 {
     Git2Qt::ensureInitialized();

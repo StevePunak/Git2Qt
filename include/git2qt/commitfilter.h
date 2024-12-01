@@ -14,7 +14,7 @@ public:
     void setIncludeReachableFrom(const QString value) { _includeReachableFromStr = value; }
 
     ObjectId::List includeReachableFromRefs() const { return _includeReachableFromRefs; }
-    void setIncludeReachableFrom(const Reference::List& value) { _includeReachableFromRefs.append(value.objectIds()); }
+    void setIncludeReachableFrom(const ReferenceList& value) { _includeReachableFromRefs.append(value.objectIds()); }
     void setIncludeReachableFrom(const Reference& value) { _includeReachableFromRefs.append(value.objectId()); }
     void setIncludeReachableFrom(const ObjectId& value) { _includeReachableFromRefs.append(value); }
     void setIncludeReachableFrom(const ObjectId::List& value) { _includeReachableFromRefs.append(value); }

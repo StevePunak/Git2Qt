@@ -266,6 +266,37 @@ Reference Reference::resolveToDirectReference() const
     return result;
 }
 
+Commit Reference::peelToCommit() const
+{
+    Commit commit;
+    git_object* obj = nullptr;
+    git_object* peeled = nullptr;
+    try
+    {
+        throwOnError(git_object_lookup(&obj, repository()->handle().value(), objectId().toNative(), GIT_OBJECT_ANY));
+
+        throwOnError(git_object_peel(&peeled, obj, GIT_OBJECT_COMMIT));
+
+        const git_oid* oid = git_object_id(peeled);
+        throwIfNull(oid);
+
+        git_object_t type = git_object_type(peeled);
+        throwIfTrue(type != GIT_OBJECT_COMMIT);
+
+        commit = Commit(repository(), ObjectId(oid));
+    }
+    catch(const GitException&)
+    {
+    }
+    if(obj != nullptr) {
+        git_object_free(obj);
+    }
+    if(peeled != nullptr) {
+        git_object_free(peeled);
+    }
+    return commit;
+}
+
 void Reference::resolveTarget()
 {
     if(_target != nullptr) {
@@ -288,6 +319,15 @@ void Reference::resolveTarget()
     catch(const GitException&)
     {
     }
+}
+
+int Reference::depth() const
+{
+    int result = 1;
+    if(isSymbolic()) {
+        result = _target->depth() + 1;
+    }
+    return result;
 }
 
 bool Reference::isNull() const

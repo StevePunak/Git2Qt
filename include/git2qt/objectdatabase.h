@@ -9,6 +9,7 @@
 #define OBJECTDATABASE_H
 #include <git2qt/commit.h>
 #include <git2qt/gitentity.h>
+#include <git2qt/trackingdetails.h>
 
 namespace GIT {
 
@@ -23,6 +24,8 @@ public:
     Commit findMergeBase(const Commit& a, const Commit& b, MergeBaseFindingStrategy strategy = MergeBaseFindStandard) const;
     Commit findMergeBase(const Commit::List& commits, MergeBaseFindingStrategy strategy = MergeBaseFindStandard) const;
     Commit findMergeBase(const ObjectId::List& objectIds, MergeBaseFindingStrategy strategy = MergeBaseFindStandard) const;
+
+    TrackingDetails calculateHistoryDivergence(const Commit& local, const Commit& upstream) const;
 
     QByteArray readBlobData(const Blob& blob);
 

@@ -98,6 +98,7 @@ void TagCollection::refreshTags()
 {
     qDeleteAll(_tags);
     _tags.clear();
+    _tagsByCommit.clear();
     try
     {
         throwOnError(git_tag_foreach(repository()->handle().value(), gitTagForeachCallback, this));
@@ -113,11 +114,16 @@ int TagCollection::gitTagForeachCallback(const char* name, git_oid* oid, void* p
     ObjectId objectId(oid);
 
     ObjectType type = GitObject::getObjectType(collection->repository(), oid);
+    Tag* tag;
     if(type == ObjectTypeTag) {
-        collection->_tags.append(new AnnotatedTag(collection->repository(), name, objectId));
+        tag = new AnnotatedTag(collection->repository(), name, objectId);
+        collection->_tags.append(tag);
+        collection->_tagsByCommit[tag->targetObjectId()].append(tag);
     }
     else {
-        collection->_tags.append(new LightweightTag(collection->repository(), name, objectId));
+        tag = new LightweightTag(collection->repository(), name, objectId);
+        collection->_tags.append(tag);
+        collection->_tagsByCommit[objectId].append(tag);
     }
     return 0;
 }

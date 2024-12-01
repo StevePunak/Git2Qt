@@ -33,7 +33,10 @@
 #include <QDirIterator>
 #include <QElapsedTimer>
 
+#include <git2qt/private/commitmessagerewriter.h>
 #include <git2qt/private/graphbuilder.h>
+#include <git2qt/private/submodulehelper.h>
+#include <git2qt/private/tagcollection.h>
 
 using namespace GIT;
 
@@ -80,6 +83,11 @@ bool Repository::isRepository(const QString& path)
     int rc = git_repository_open_ext(nullptr, path.toUtf8().constData(), GIT_REPOSITORY_OPEN_NO_SEARCH, nullptr);
     bool result = rc == 0;
     return result;
+}
+
+bool Repository::isEmpty() const
+{
+    return git_repository_is_empty(_handle.value()) == 1;
 }
 
 void Repository::commonInit()
@@ -336,7 +344,7 @@ MergeResult Repository::pull(const Signature& merger, const PullOptions& options
         // Fetch
         throwIfFalse(fetch(options.fetchOptions()));
 
-        result = mergeFetchedRefs(merger, options.mergeOptions());
+        result = mergeFetchedRefs(merger, QString(), options.mergeOptions());
     }
     catch(const GitException&)
     {
@@ -499,7 +507,8 @@ bool Repository::checkoutPaths(const QString& branchName, const QStringList& pat
     bool result = false;
     try
     {
-        Commit commit = findCommit(branchName);
+        Commit commit = branchName == "HEAD" ? headCommit() : findCommit(branchName);
+        throwIfTrue(commit.isNull(), "Failed to find commit");
 
         checkoutTree(commit.tree(), paths, options);
 
@@ -584,6 +593,23 @@ bool Repository::deleteLocalBranch(const Reference &reference)
     return result;
 }
 
+bool Repository::setUpstream(const Reference& reference, const QString& upstreamBranchName)
+{
+    bool result = false;
+    ReferenceHandle refHandle = reference.createHandle();
+    try
+    {
+        throwOnError(refHandle.isNull(), "Invalid reference");
+        throwOnError(git_branch_set_upstream(refHandle.value(), upstreamBranchName.toUtf8().constData()));
+        reloadReferences();
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
 Branch Repository::currentBranch()
 {
     Branch result;
@@ -592,10 +618,10 @@ Branch Repository::currentBranch()
         Reference head = _references->head();
         throwIfTrue(head.isNull());
         if(head.isSymbolic()) {
-            if(head.target() == nullptr) {
+            if(head.target().isNull()) {
                 logText(LVL_DEBUG, "Periodic crash.... Figure this out when it becomes reproducible (10/4/24)");
             }
-            Reference resolved = *head.target();
+            Reference resolved = head.target();
             result = Branch(this, resolved);
         }
         else {
@@ -656,6 +682,8 @@ Commit Repository::commit(const QString& message, const Signature& author, const
 
         QString logMessage = buildCommitLogMessage(result, options.amendPreviousCommit(), orphaned, parents.count() > 1);
         updateHeadAndTerminalReference(result, logMessage);
+
+        reloadReferences();
 
     }
     catch(const GitException&)
@@ -838,13 +866,115 @@ int Repository::commitDistance(const Commit& a, const Commit& b)
     return result;
 }
 
+Commit Repository::amendCommitMessage(const Commit& commit, const QString& message)
+{
+    Commit result;
+
+    CommitHandle commitHandle = commit.createHandle();
+    try
+    {
+        throwIfTrue(commitHandle.isNull(), "Failed to retrieve commit");
+
+        Commit::List commits;
+        commits.append(commit);
+
+        CommitMessageRewriter rewriteOptions(message);
+        _references->rewriteHistory(&rewriteOptions, commits);
+
+#if 0
+        git_oid oid;
+        throwOnError(git_commit_amend(&oid, commitHandle.value(), nullptr, nullptr, nullptr, nullptr, message.toUtf8().constData(), nullptr));
+
+        ObjectId commitId(oid);
+        result = findCommit(commitId);
+#endif
+        reloadReferences();
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+
+}
+
+bool Repository::addSubmodule(const QString& url, const QString& path, const CheckoutOptions& checkoutOptions, const FetchOptions& fetchOptions)
+{
+    bool result = false;
+    try
+    {
+        git_submodule* sm = nullptr;
+        throwOnError(git_submodule_add_setup(&sm, _handle.value(), url.toUtf8().constData(), path.toUtf8().constData(), false));
+
+        CheckoutOptions checkoutOpts = checkoutOptions;
+
+        git_fetch_options fetchOpts;
+        FetchOptions(fetchOptions).makeNative(&fetchOpts);
+        fetchOpts.callbacks.credentials = credentialsCallback;
+        fetchOpts.callbacks.payload = this;
+
+        git_submodule_update_options opts = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
+        opts.checkout_opts = *checkoutOpts.toNative();
+        opts.fetch_opts = fetchOpts;
+        opts.allow_fetch = true;
+
+        git_repository* repo = nullptr;
+        throwOnError(git_submodule_clone(&repo, sm, &opts));
+
+        throwOnError(git_submodule_add_finalize(sm));
+
+        _submodules->reload();
+
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
+bool Repository::deleteSubmodule(const Submodule& submodule, bool removeFromFileSystem)
+{
+    bool result = false;
+    try
+    {
+        IndexEntry indexEntry = _index->findByObjectId(submodule.indexCommitId());
+        throwIfFalse(indexEntry.isValid(), "Failed to find submodule in index");
+
+
+        QString key = QString("submodule.%1.url").arg(submodule.name());
+        ConfigurationEntry configEntry = _config->get(key);
+        throwIfTrue(configEntry.isValid() == false, "Failed to find submodule configuration entry");
+
+        QString path = Utility::combine(_localPath, submodule.path());
+
+        throwIfFalse(_index->remove(submodule.path()));
+        throwIfFalse(_config->remove(configEntry));
+
+        SubmoduleHelper gitmodules;
+        throwIfFalse(gitmodules.removeSubmodule(this, submodule), "Failed to write .gitmodules");
+
+        if(removeFromFileSystem) {
+            QDir dir(path);
+            throwIfFalse(dir.removeRecursively(), "Failed to delete directory");
+        }
+        reloadReferences();
+        _index->reload();
+        _submodules->reload();
+        result = true;
+    }
+    catch(const GitException&)
+    {
+    }
+    return result;
+}
+
 Blob Repository::findBlob(const ObjectId& objectId)
 {
     Blob result(this, objectId);
     return result;
 }
 
-bool Repository::reset(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions)
+bool Repository::resetCommit(const Commit& commit, ResetMode resetMode, const CheckoutOptions& checkoutOptions)
 {
     bool result = false;
     ObjectHandle objectHandle = commit.createObjectHandle();
@@ -1120,9 +1250,29 @@ Stash::List Repository::stashes() const
     return _stashes->stashes();
 }
 
-DiffDelta::List Repository::diffTreeToTree(const Tree& fromTree, const Tree& newTree, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
+ReferenceList Repository::findReferencesReachableFrom(const Commit::List& commits)
 {
-    return _diff->diffTreeToTree(fromTree, newTree, compareOptions, diffFlags);
+    return _references->findReachableFrom(commits);
+}
+
+ReferenceList Repository::findReferences(const QRegularExpression& regex) const
+{
+    return _references->references().findReferences(regex);
+}
+
+bool Repository::deleteLocalReference(const Reference& reference)
+{
+    return _references->deleteLocalReference(reference);
+}
+
+DiffDelta::List Repository::diffTreeToTree_DEP(const Tree& fromTree, const Tree& newTree, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
+{
+    return _diff->diffTreeToTree_DEP(fromTree, newTree, compareOptions, diffFlags);
+}
+
+DiffDelta::List Repository::diffCommitToCommit(const Commit& oldCommit, const Commit& newCommit, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
+{
+    return _diff->diffCommitToCommit(oldCommit, newCommit, compareOptions, diffFlags);
 }
 
 DiffDelta::List Repository::diffIndexToWorkDir(const QString& path, bool includeUntracked, const CompareOptions& compareOptions, DiffModifiers diffFlags) const
@@ -1187,7 +1337,38 @@ DiffDelta::List Repository::diffDeltas(const StatusEntry::List& statusEntries) c
     return deltas;
 }
 
-MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const Signature& merger, const MergeOptions& options)
+MergeResult Repository::merge(const QString& commitish, const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options)
+{
+    MergeResult result;
+    Commit commit = Commit::lookup(this, commitish);
+    if(commit.isValid()) {
+        result = merge(commit, merger, mergeCommitMessage, options);
+    }
+    return result;
+}
+
+MergeResult Repository::merge(const Commit& commit, const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options)
+{
+    MergeResult result;
+    AnnotatedCommitHandle commitHandle;
+    try
+    {
+        git_annotated_commit* anno = nullptr;
+        throwOnError(git_annotated_commit_lookup(&anno, _handle.value(), commit.objectId().toNative()));
+
+        commitHandle = AnnotatedCommitHandle(anno);
+        QList<AnnotatedCommitHandle> handles;
+        handles.append(commitHandle);
+        result = merge(handles, merger, mergeCommitMessage, options);
+    }
+    catch(const GitException&)
+    {
+    }
+    commitHandle.dispose();
+    return result;
+}
+
+MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options)
 {
     MergeResult result;
 
@@ -1209,10 +1390,10 @@ MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const
                     if(handles.count() != 1) {
                         throw GitException("Unable to perform Fast-Forward merge with mith multiple merge heads.");
                     }
-                    result = fastForwardMerge(handles.at(0), options);
+                    result = fastForwardMerge(handles.at(0), mergeCommitMessage, options);
                 }
                 else if(analysis.analysis() & MergeAnalysisNormal) {
-                    result = normalMerge(handles, merger, options);
+                    result = normalMerge(handles, merger, mergeCommitMessage, options);
                 }
                 break;
             case FastForwardOnly:
@@ -1220,7 +1401,7 @@ MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const
                     if(handles.count() != 1) {
                         throw GitException("Unable to perform Fast-Forward merge with mith multiple merge heads.");
                     }
-                    result = fastForwardMerge(handles.at(0), options);
+                    result = fastForwardMerge(handles.at(0), mergeCommitMessage, options);
                 }
                 else {
                     throw GitException("Can't perform fast-forward merge");
@@ -1228,7 +1409,7 @@ MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const
                 break;
             case NoFastForward:
                 if(analysis.analysis() & MergeAnalysisNormal) {
-                    result = normalMerge(handles, merger, options);
+                    result = normalMerge(handles, merger, mergeCommitMessage, options);
                 }
                 break;
             default:
@@ -1245,7 +1426,7 @@ MergeResult Repository::merge(const QList<AnnotatedCommitHandle>& handles, const
     return result;
 }
 
-MergeResult Repository::mergeFetchedRefs(const Signature& merger, const MergeOptions& options)
+MergeResult Repository::mergeFetchedRefs(const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options)
 {
     MergeResult result;
     QList<AnnotatedCommitHandle> handles;
@@ -1266,7 +1447,7 @@ MergeResult Repository::mergeFetchedRefs(const Signature& merger, const MergeOpt
             handles.append(AnnotatedCommitHandle(annotatedCommit));
         }
 
-        result = merge(handles, merger, options);
+        result = merge(handles, merger, mergeCommitMessage, options);
     }
     catch(const GitException&)
     {
@@ -1283,9 +1464,9 @@ Remote::List Repository::remotes() const
     return _network->remotes();
 }
 
-Reference::List Repository::remoteReferences(const QString& remoteName)
+ReferenceList Repository::remoteReferences(const QString& remoteName)
 {
-    Reference::List references;
+    ReferenceList references;
     Remote remote = _network->remoteForName(remoteName);
     if(remote.isNull() == false) {
         for(const Reference& reference : remote.references()) {
@@ -1297,9 +1478,9 @@ Reference::List Repository::remoteReferences(const QString& remoteName)
     return references;
 }
 
-Reference::List Repository::localReferences() const
+ReferenceList Repository::localReferences() const
 {
-    Reference::List references;
+    ReferenceList references;
     for(const Reference& reference : _references->references()) {
         if(reference.isRemote() == false) {
             references.append(reference);
@@ -1334,6 +1515,68 @@ GraphedCommit::List Repository::commitGraph()
     return result;
 }
 
+AnnotatedTag::List Repository::annotatedTags() const
+{
+    AnnotatedTag::List result;
+    Tag::ConstPtrList tags = _tags->tags();
+    for(const Tag* tag : tags) {
+        if(tag->isAnnotated()) {
+            result.append(*(const AnnotatedTag*)tag);
+        }
+    }
+    return result;
+}
+
+AnnotatedTag::List Repository::annotatedTags(const ObjectId& commitId) const
+{
+    AnnotatedTag::List result;
+    Tag::ConstPtrList tags = _tags->findTagsForCommit(commitId);
+    for(const Tag* tag : tags) {
+        if(tag->isAnnotated()) {
+            result.append(*(const AnnotatedTag*)tag);
+        }
+    }
+    return result;
+}
+
+LightweightTag::List Repository::lightweightTags() const
+{
+    LightweightTag::List result;
+    Tag::ConstPtrList tags = _tags->tags();
+    for(const Tag* tag : tags) {
+        if(tag->isLightweight()) {
+            result.append(*(const LightweightTag*)tag);
+        }
+    }
+    return result;
+}
+
+LightweightTag::List Repository::lightweightTags(const ObjectId& commitId) const
+{
+    LightweightTag::List result;
+    Tag::ConstPtrList tags = _tags->findTagsForCommit(commitId);
+    for(const Tag* tag : tags) {
+        if(tag->isLightweight()) {
+            result.append(*(const LightweightTag*)tag);
+        }
+    }
+    return result;
+}
+
+Tag::ConstPtrList Repository::tags_DEP() const
+{
+    return _tags != nullptr ? _tags->tags() : Tag::ConstPtrList();
+}
+
+QMap<ObjectId, Tag::ConstPtrList> Repository::tagsByCommitId_DEP() const
+{
+    QMap<ObjectId, Tag::ConstPtrList> result;
+    for(const Tag* tag : tags_DEP()) {
+        result[tag->target()->objectId()].append(tag);
+    }
+    return result;
+}
+
 Branch Repository::head()
 {
     Branch branch;
@@ -1356,9 +1599,9 @@ bool Repository::setHead(const QString& referenceName)
     return git_repository_set_head(_handle.value(), referenceName.toUtf8().constData()) == 0;
 }
 
-Reference::List Repository::references() const
+ReferenceList Repository::references() const
 {
-    Reference::List references = _references->references();
+    ReferenceList references = _references->references();
     Reference head = _references->head();
     if(head.isNull() == false && references.contains(head) == false) {
         references.prepend(head);
@@ -1399,12 +1642,6 @@ void Repository::walkerTest(const ObjectId &commitId)
 
 }
 
-void Repository::ancestorTest(const ObjectId &commitId)
-{
-    GraphBuilder builder(this);
-    builder.ancestorTest(commitId);
-}
-
 void Repository::emitProgress(uint32_t receivedBytes, uint32_t receivedObjects, uint32_t totalObjects)
 {
     emit progress(receivedBytes, receivedObjects, totalObjects);
@@ -1434,6 +1671,8 @@ bool Repository::reloadReferences()
 
         // reload remotes
         _network->reload();
+
+        _branches->reloadBranches();
 
         result = true;
     }
@@ -1497,7 +1736,7 @@ MergeAnalysisResult Repository::mergeAnalysys(const QList<AnnotatedCommitHandle>
     return result;
 }
 
-MergeResult Repository::fastForwardMerge(const AnnotatedCommitHandle& annotatedCommit, const MergeOptions& options)
+MergeResult Repository::fastForwardMerge(const AnnotatedCommitHandle& annotatedCommit, const QString& mergeCommitMessage, const MergeOptions& options)
 {
     MergeResult result;
     try
@@ -1512,7 +1751,9 @@ MergeResult Repository::fastForwardMerge(const AnnotatedCommitHandle& annotatedC
         throwIfFalse(checkoutTree(fastForwardCommit.tree(), QStringList()));        // TODO: need to use options here? Repository.cs line 1624
 
         Reference reference = head().reference().resolveToDirectReference();
-        QString refLogEntry = QString("merge %1: Fast-forward").arg(fastForwardCommit.objectId().toString());
+        QString refLogEntry = mergeCommitMessage.isEmpty()
+                              ? QString("merge %1: Fast-forward").arg(fastForwardCommit.objectId().toString())
+                              : mergeCommitMessage;
 
         if(reference.isNull()) {
             // ref doesn't exist. create it
@@ -1531,7 +1772,7 @@ MergeResult Repository::fastForwardMerge(const AnnotatedCommitHandle& annotatedC
     return result;
 }
 
-MergeResult Repository::normalMerge(const QList<AnnotatedCommitHandle>& annotatedCommits, const Signature& merger, const MergeOptions& options)
+MergeResult Repository::normalMerge(const QList<AnnotatedCommitHandle>& annotatedCommits, const Signature& merger, const QString& mergeCommitMessage, const MergeOptions& options)
 {
     MergeResult result;
     try
@@ -1566,7 +1807,10 @@ MergeResult Repository::normalMerge(const QList<AnnotatedCommitHandle>& annotate
             if(_index->isFullyMerged()) {
                 Commit mergeCommit;
                 if(options.commitOnSuccess()) {
-                    mergeCommit = commit(info()->message(), merger, merger);
+                    QString message = mergeCommitMessage.isEmpty()
+                                      ? info()->message()
+                                      : mergeCommitMessage;
+                    mergeCommit = commit(message, merger, merger);
                 }
                 result = MergeResult(MergeResult::NonFastForward, mergeCommit);
             }
@@ -1635,12 +1879,12 @@ void Repository::updateHeadAndTerminalReference(const Commit& commit, const QStr
         }
         else {
             Reference symRef = reference;
-            if(symRef.target() == nullptr) {
+            if(symRef.target().isNull()) {
                 _references->appendDirectReference(symRef.targetIdentifier(), commit.objectId(), reflogMessage);
                 break;
             }
             else {
-                reference = *symRef.target();
+                reference = symRef.target();
             }
         }
     }

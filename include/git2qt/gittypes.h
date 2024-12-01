@@ -546,6 +546,7 @@ enum GitEntityType {
     DiffEntity,
     GraphBuilderEntity,
     GraphedCommitEntity,
+    HistoryRewriterEntity,
     IndexEntity,
     NetworkEntity,
     ObjectDatabaseEntity,
