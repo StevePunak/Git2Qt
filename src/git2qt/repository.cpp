@@ -317,6 +317,8 @@ bool Repository::push(const Remote& remote, const QStringList& pushRefSpecs)
         StringArray strs(pushRefSpecs);
         throwOnError(git_remote_push(remoteHandle.value(), strs.toNative(), &opts));
 
+        reloadReferences();
+
         result = true;
     }
     catch(const GitException&)
@@ -324,7 +326,6 @@ bool Repository::push(const Remote& remote, const QStringList& pushRefSpecs)
         result = false;
     }
     remoteHandle.dispose();
-    reloadReferences();
     return result;
 }
 
